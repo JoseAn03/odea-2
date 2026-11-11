@@ -1,9 +1,9 @@
 {
-  "name": "odea-2-fase0",
-  "version": "0.1.0-fase0",
+  "name": "odea-2",
+  "version": "0.2.0-fase1",
   "private": true,
   "type": "module",
-  "description": "Fase 0 de ODEA 2 (Costa Neón): especificación y validación de la migración de progreso ODEA 1 → ODEA 2. Sin UI ni juego.",
+  "description": "ODEA 2 (Costa Neón): esqueleto PWA con migración de progreso desde ODEA 1. Sin juego todavía.",
   "scripts": {
     "test": "node --test",
     "extract-catalog": "node tools/extract-catalog.mjs",

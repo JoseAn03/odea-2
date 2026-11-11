@@ -257,6 +257,66 @@ export function readOdea2(storage) {
   return JSON.parse(raw);
 }
 
+/**
+ * Detecta el formato de un archivo soltado por el usuario, SIN migrarlo.
+ * Permite que la UI mande cada formato por su ruta:
+ *   odea_bundle_v2   → migración ODEA 1 (D1–D5, una sola vez)
+ *   odea2_bundle_v1 → restauración de respaldo propio (no es re-migración)
+ */
+export function detectBundleFormat(obj) {
+  if (obj && obj._format === ODEA2_BUNDLE_FORMAT) return ODEA2_BUNDLE_FORMAT;
+  if (obj && obj._format === "odea_bundle_v2") return "odea_bundle_v2";
+  return "unknown";
+}
+
+/**
+ * Restauración de un respaldo propio `odea2_bundle_v1`.
+ *
+ * NO es una reimportación de ODEA 1 y por eso no choca con D4: no toca la
+ * huella del origen ni el guardia `ALREADY_IMPORTED`.
+ *
+ * Garantías:
+ *   1. El archivo debe ser un respaldo ODEA 2 activo y de schema soportado.
+ *   2. Se valida que las fuentes sigan cuadrando con el snapshot (XP_DRIFT).
+ *   3. Se respalda el save actual (`kind: "save"`) ANTES de reemplazarlo.
+ *   4. La confirmación explícita del usuario es responsabilidad de la UI.
+ */
+export function restoreBundle(bundle2, opts = {}) {
+  const { storage, catalog } = opts;
+  if (!storage) throw new MigrationError("NO_STORAGE", "Falta el storage de destino.");
+  if (!catalog) throw new MigrationError("NO_CATALOG", "Falta el catálogo estático de juego.");
+  if (!bundle2 || bundle2._format !== ODEA2_BUNDLE_FORMAT) {
+    throw new MigrationError(
+      "BAD_RESTORE_FORMAT",
+      `El archivo no es un respaldo de ODEA 2 (${bundle2 && bundle2._format}).`
+    );
+  }
+  if (bundle2.schemaVersion !== MIGRATION_SCHEMA_VERSION) {
+    throw new MigrationError(
+      "BAD_SCHEMA_VERSION",
+      `schemaVersion ${bundle2.schemaVersion} no soportada (esperada ${MIGRATION_SCHEMA_VERSION}).`
+    );
+  }
+  if (!bundle2.import || bundle2.import.state !== "active") {
+    throw new MigrationError(
+      "IMPORT_NOT_ACTIVE",
+      `El respaldo está en estado "${bundle2.import && bundle2.import.state}". Solo se restaura un save activo.`
+    );
+  }
+
+  /* Valida ANTES de escribir: si el respaldo está corrupto, no se toca nada. */
+  const at = opts.at || nowIso();
+  const restored = loadOdea2(bundle2, catalog, { referenceDate: opts.referenceDate });
+  const current = readOdea2(storage);
+  const backupOfCurrent = current ? backupBundle(current, storage, { at, kind: "save" }) : null;
+
+  restored.import = { ...restored.import, restoredAt: at };
+  storage.setItem(STORAGE_KEYS.bundle, JSON.stringify(restored));
+  storage.removeItem(STORAGE_KEYS.quarantine);
+  return { bundle: restored, backupOfCurrent };
+}
+
+
 export function readQuarantine(storage) {
   const raw = storage.getItem(STORAGE_KEYS.quarantine);
   if (!raw) return null;
