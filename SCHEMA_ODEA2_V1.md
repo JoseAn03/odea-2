@@ -428,9 +428,14 @@ Reglas:
 ```
 
 - `kind: "source"` = backup del bundle legacy importado.
-- `kind: "save"` = backup del save ODEA 2 actual antes de un «reset + reimportar».
+- `kind: "save"` = backup del save ODEA 2 actual antes de un «reset + reimportar»
+  o de una restauración.
 - El backup se hace **siempre antes** de cualquier escritura, incluso si la
   importación termina en `aborted`.
+- **Retención (Fase 1):** los backups `kind: "save"` se rotan automáticamente a
+  los **últimos 3**; al crear el cuarto se elimina el más viejo. Los
+  `kind: "source"` **no se rotan nunca**. Para conservar una copia puntual, el
+  usuario debe exportarla antes con «Exportar respaldo».
 
 ### 7.4 Reimportación
 

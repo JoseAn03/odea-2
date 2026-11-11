@@ -14,7 +14,9 @@ import { fileURLToPath } from "node:url";
 
 import {
   STORAGE_KEYS,
+  SAVE_BACKUP_RETENTION,
   createMemoryStorage,
+  backupBundle,
   importBundle,
   resetAndReimport,
   restoreBundle,
@@ -230,4 +232,59 @@ test("fase 1: parseFileText clasifica el archivo y falla con JSON inválido", ()
 
   assert.throws(() => parseFileText("{no es json"), /JSON válido/);
   assert.equal(parseFileText(JSON.stringify({ _format: "otra_cosa" })).format, "unknown");
+});
+
+/* ========================================================================== */
+/* Retención de backups (decisión de Fase 1): últimos 3 de save               */
+/* ========================================================================== */
+test("fase 1: rota los backups de save y conserva los últimos 3", () => {
+  const fixture = loadFixture();
+  const storage = createMemoryStorage();
+  const times = [
+    "2026-11-10T10:00:00.000Z",
+    "2026-11-10T11:00:00.000Z",
+    "2026-11-10T12:00:00.000Z",
+    "2026-11-10T13:00:00.000Z",
+    "2026-11-10T14:00:00.000Z"
+  ];
+
+  for (const at of times) backupBundle(fixture, storage, { at, kind: "save" });
+
+  const keys = storage._keys().filter((k) => k.startsWith(STORAGE_KEYS.backupPrefix + "save_"));
+  assert.equal(keys.length, SAVE_BACKUP_RETENTION);
+  assert.ok(!keys.some((k) => k.includes(times[0])), "el más viejo debe eliminarse");
+  assert.ok(!keys.some((k) => k.includes(times[1])), "el segundo más viejo debe eliminarse");
+  for (const recent of times.slice(-3)) {
+    assert.ok(keys.some((k) => k.includes(recent)), `debe conservar ${recent}`);
+  }
+});
+
+test("fase 1: los backups del origen nunca se rotan", () => {
+  const fixture = loadFixture();
+  const storage = createMemoryStorage();
+
+  for (let i = 0; i < 6; i++) {
+    backupBundle(fixture, storage, { at: `2026-11-10T1${i}:00:00.000Z`, kind: "source" });
+  }
+
+  const keys = storage._keys().filter((k) => k.startsWith(STORAGE_KEYS.backupPrefix + "source_"));
+  assert.equal(keys.length, 6, "el backup del archivo importado se conserva siempre");
+});
+
+test("fase 1: restoreBundle también aplica la rotación de backups de save", () => {
+  const catalog = loadCatalog();
+  const storage = createMemoryStorage();
+  importFixture(storage, loadFixture());
+  const exported = JSON.parse(JSON.stringify(readOdea2(storage)));
+
+  for (let i = 0; i < 5; i++) {
+    restoreBundle(exported, {
+      catalog,
+      storage,
+      at: `2026-11-1${i + 1}T10:00:00.000Z`
+    });
+  }
+
+  const keys = storage._keys().filter((k) => k.startsWith(STORAGE_KEYS.backupPrefix + "save_"));
+  assert.equal(keys.length, SAVE_BACKUP_RETENTION);
 });

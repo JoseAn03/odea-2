@@ -45,15 +45,44 @@ function nowIso() {
   return new Date().toISOString();
 }
 
+/** Retención de respaldos automáticos de save (decisión de Fase 1). */
+export const SAVE_BACKUP_RETENTION = 3;
+
+/**
+ * Rota los respaldos de un tipo dado, conservando los `keep` más recientes.
+ * Las claves terminan en un ISO timestamp, así que el orden lexicográfico es
+ * cronológico. Devuelve las claves eliminadas (vacío si no hubo exceso).
+ */
+export function pruneBackups(storage, kind, keep) {
+  if (!Number.isFinite(keep) || keep < 0) return [];
+  const prefix = `${STORAGE_KEYS.backupPrefix}${kind}_`;
+  const keys = [];
+  for (let i = 0; i < storage.length; i++) {
+    const key = storage.key(i);
+    if (key && key.startsWith(prefix)) keys.push(key);
+  }
+  keys.sort();
+  const excess = keys.length - keep;
+  if (excess <= 0) return [];
+  const removed = keys.slice(0, excess);
+  for (const key of removed) storage.removeItem(key);
+  return removed;
+}
+
 /**
  * Guarda el bundle ORIGINAL intacto. Se llama antes de cualquier escritura,
  * incluso si la importación va a abortarse.
+ *
+ * Retención: los respaldos `kind: "save"` se rotan a los últimos 3. El respaldo
+ * del origen (`kind: "source"`) NO se rota nunca: es la copia del archivo que
+ * el usuario importó y debe poder auditarse siempre.
  */
 export function backupBundle(bundle, storage, { at = nowIso(), kind = "source" } = {}) {
   const fp = fingerprintOf(bundle);
   const key = `${STORAGE_KEYS.backupPrefix}${kind}_${fp.digest.slice(0, 8)}_${at}`;
   storage.setItem(key, JSON.stringify(bundle));
-  return { key, digest: fp.digest, createdAt: at, kind };
+  const pruned = kind === "save" ? pruneBackups(storage, kind, SAVE_BACKUP_RETENTION) : [];
+  return { key, digest: fp.digest, createdAt: at, kind, ...(pruned.length ? { pruned } : {}) };
 }
 
 /**
