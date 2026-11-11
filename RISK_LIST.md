@@ -61,7 +61,16 @@ bloqueada · **S3** = deuda/depuración.
 | D4 | Reimportación | **Rechazada por defecto**. Solo «reset + reimportar» explícito, con backup previo del save actual. Huella del origen (`sourceFingerprint`) para detectar duplicados. |
 | D5 | `odea_quiz_v1` | **Archivada indefinidamente.** No se elimina automáticamente en ninguna versión; solo con decisión explícita del usuario y verificando que no alimenta totales. |
 
-### 3.1 Decisiones todavía abiertas (no bloquean Fase 0)
+### 3.1 Decisiones de Fase 1 (cerradas)
+
+| # | Decisión | Resolución |
+|---|---|---|
+| F1-1 | Aviso de versión nueva del service worker | Se implementa en **Fase 2**: aviso «Hay una versión nueva» con botón **Recargar**. La actualización se aplica **solo** cuando el usuario la toca. Nunca recarga forzada ni silenciosa a mitad de uso. |
+| F1-2 | Retención de backups `odea2_backup_save_*` | **Últimos 3**, con rotación automática: al crear el cuarto se elimina el más viejo. El backup del **origen** (`kind: source`) **nunca** se rota. **Implementado en Fase 1** (`SAVE_BACKUP_RETENTION = 3`). |
+| F1-3 | Multi-pestaña | Se resuelve en **Fase 2** con listener del evento `storage`: si otra pestaña escribió el save, se muestra aviso y se recarga el estado desde `localStorage`. Sin bloqueos distribuidos. |
+| F1-4 | GitHub Pages | Se habilita al **cerrar Fase 1**, en orden: (a) verificación externa, (b) merge de los PRs a `main`, (c) activar Pages desde `main`. **No** se activa durante la fase. |
+
+### 3.2 Decisiones todavía abiertas (no bloquean Fase 0)
 
 | # | Decisión | Opciones | Recomendación |
 |---|---|---|---|
@@ -69,7 +78,6 @@ bloqueada · **S3** = deuda/depuración.
 | A2 | `stats` | recalcular siempre / conservar snapshot. | Recalcular al cargar; conservar el snapshot solo para auditoría. |
 | A3 | Retención de `odea_events` | archivar todo / recortar a 500 / descartar. | Archivar (máx. 500 ya viene recortado). No es estado de juego; sirve para auditar. |
 | A4 | Normalización de `hunt` | crudo / normalizar en migración. | Crudo (ya implementado); normalizar al cargar con el núcleo portado. |
-| A5 | Retención de backups `odea2_backup_*` | todos / últimos N. | Conservar el del origen siempre; recortar los de save a los últimos 3 en Fase 1. |
 
 ---
 

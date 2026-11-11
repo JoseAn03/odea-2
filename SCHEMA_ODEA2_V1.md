@@ -21,7 +21,7 @@ no exija otro cambio de formato.
 {
   "_format": "odea2_bundle_v1",
   "schemaVersion": 1,
-  "appVersion": "0.1.0-fase0",
+  "appVersion": "0.2.0-fase1",
 
   "migratedFrom": {
     "format": "odea_bundle_v2",
@@ -428,9 +428,14 @@ Reglas:
 ```
 
 - `kind: "source"` = backup del bundle legacy importado.
-- `kind: "save"` = backup del save ODEA 2 actual antes de un «reset + reimportar».
+- `kind: "save"` = backup del save ODEA 2 actual antes de un «reset + reimportar»
+  o de una restauración.
 - El backup se hace **siempre antes** de cualquier escritura, incluso si la
   importación termina en `aborted`.
+- **Retención (Fase 1):** los backups `kind: "save"` se rotan automáticamente a
+  los **últimos 3**; al crear el cuarto se elimina el más viejo. Los
+  `kind: "source"` **no se rotan nunca**. Para conservar una copia puntual, el
+  usuario debe exportarla antes con «Exportar respaldo».
 
 ### 7.4 Reimportación
 
@@ -482,7 +487,7 @@ Reglas:
 {
   "_format": "odea2_bundle_v1",
   "schemaVersion": 1,
-  "appVersion": "0.1.0-fase0",
+  "appVersion": "0.2.0-fase1",
   "migratedFrom": { "format": "odea_bundle_v2", "appVersion": "5.99", "saveVersion": 3, "migratedAt": "…" },
   "sourceFingerprint": { "algorithm": "fnv1a64", "digest": "…", "appVersion": "5.99", "totalXP": 6915, "lastDailyDate": "2026-11-10" },
   "import": { "state": "active", "checksumOk": true, "reconciled": true, "attemptedAt": "…",

@@ -1,0 +1,20 @@
+{
+  "name": "ODEA 2 — Costa Neón",
+  "short_name": "ODEA 2",
+  "description": "Fase 1: migración de progreso desde ODEA 1. El juego todavía no está construido.",
+  "lang": "es",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#12081F",
+  "theme_color": "#12081F",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
