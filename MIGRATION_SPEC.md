@@ -218,7 +218,7 @@ Claves desconocidas se preservan en `migration.unmapped.keys`.
 {
   "_format": "odea2_bundle_v1",
   "schemaVersion": 1,
-  "appVersion": "0.2.0-fase1",
+  "appVersion": "0.3.0-fase2",
   "migratedFrom":      { "format", "appVersion", "saveVersion", "migratedAt" },
   "sourceFingerprint": { "algorithm", "digest", "appVersion", "totalXP", "lastDailyDate" },
   "import":            { "state", "checksumOk", "reconciled", "report", "backup", … },

@@ -1,2 +1,2 @@
-/** version.js — versión visible de la app (Fase 1). */
-export const APP_VERSION = "0.2.0-fase1";
+/** version.js — versión visible de la app (Fase 2 · Costa Neón). */
+export const APP_VERSION = "0.3.0-fase2";

@@ -1,7 +1,7 @@
 {
   "name": "ODEA 2 — Costa Neón",
   "short_name": "ODEA 2",
-  "description": "Fase 1: migración de progreso desde ODEA 1. El juego todavía no está construido.",
+  "description": "Fase 2: ciudad 2D cenital sobre el progreso migrado desde ODEA 1. Las misiones llegan en la Fase 3.",
   "lang": "es",
   "start_url": "./",
   "scope": "./",

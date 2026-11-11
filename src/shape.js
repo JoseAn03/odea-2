@@ -22,7 +22,7 @@
 
 export const MIGRATION_SCHEMA_VERSION = 1;
 export const ODEA2_BUNDLE_FORMAT = "odea2_bundle_v1";
-export const ODEA2_APP_VERSION = "0.2.0-fase1";
+export const ODEA2_APP_VERSION = "0.3.0-fase2";
 
 /** Secciones internas del bundle único (decisión D1 de Fase 0). */
 export const BUNDLE_SECTIONS = ["core", "worlds", "legacy"];
