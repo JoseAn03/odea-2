@@ -15,7 +15,8 @@ Canvas 2D, sobre la paleta oficial (`#12081F`, `#FF2E93`, `#00E5FF`, `#FF8A3D`).
 | **Fase 0** | ✅ completa | Especificación de la migración (36 campos + 11 claves), decisiones D1–D5, código de validación y 33 tests. |
 | **Fase 1** | ✅ completa | PWA instalable, importación con validación/cuarentena/aborto, respaldo y restauración. |
 | **Fase 2** | ✅ esta rama (`fase2-ciudad`) | Ciudad 2D cenital con HUD, distritos y paneles de datos reales. Sin misiones. |
-| Fase 3+ | pendiente | Jugar misiones dentro de los distritos (con aprobación explícita). |
+| Fase 3 | 📋 decidida, no iniciada | Hub (tutorial + bucle diario), luego Empleo y Vida jugables. El resto sigue de solo lectura. Arranca solo con la Fase 2 verificada. |
+| Fase 4+ | pendiente | Resto de distritos jugables. |
 
 ## Correr la app en local
 
@@ -186,6 +187,24 @@ capa que escribe el save es `src/storage.js`, a través de `js/importer.js`.
 | Multi-pestaña | **Fase 2, implementada**: listener del evento `storage`; si otra pestaña escribió el save, aviso y recarga del estado desde `localStorage`. Sin bloqueos distribuidos. |
 | GitHub Pages | La Fase 1 se publicó tras verificación externa. La Fase 2 **no** toca Pages ni se mergea hasta la revisión del PR. |
 | Solo lectura | **Fase 2**: la ciudad, el HUD y los paneles leen el save y derivan con `src/derive.js`; no mutan `odea2_bundle_v1`. |
+
+### Fase 3 (decidida, no iniciada)
+
+Registrada en `RISK_LIST.md` §3.2. **No se implementa hasta que la Fase 2 esté
+verificada.**
+
+- **Navegación**: las misiones se abren **desde la hoja del distrito**; la hoja
+  se expande a una vista completa del sistema sobre la ciudad, que queda visible
+  y atenuada detrás. Un solo mundo continuo: al cerrar, se vuelve al mapa en el
+  mismo lugar (cámara y selección preservadas).
+- **Orden**: primero **El Hub** (tutorial y bucle diario: ruta del día,
+  check-in, racha) para probar la escritura de punta a punta; después **Empleo**
+  y **Vida**. Los demás distritos siguen de solo lectura hasta la Fase 4.
+- **Escritura**: todo pasa por `src/storage.js`, con backup previo y rotación de
+  los últimos 3. XP y monedas siempre derivados (nunca se editan totales);
+  validación fail-closed; completaciones idempotentes por ID; cada tipo de
+  escritura con test de ida y vuelta y test negativo. La cuarentena sigue siendo
+  exclusiva de importación/restauración.
 
 ## Datos personales
 
