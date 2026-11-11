@@ -32,9 +32,9 @@ no exija otro cambio de formato.
 
   "sourceFingerprint": {
     "algorithm": "fnv1a64",
-    "digest": "38b0986e2d16778a",
+    "digest": "178c5e1d4329f87a",
     "appVersion": "5.99",
-    "totalXP": 14053,
+    "totalXP": 6915,
     "lastDailyDate": "2026-11-10"
   },
 
@@ -47,7 +47,7 @@ no exija otro cambio de formato.
     "acceptedChecks": [],
     "failedChecks": [],
     "report": { /* totales: ver §7.2 */ },
-    "backup": { "key": "odea2_backup_source_38b0986e_…", "digest": "…", "createdAt": "…", "kind": "source" }
+    "backup": { "key": "odea2_backup_source_178c5e1d_…", "digest": "…", "createdAt": "…", "kind": "source" }
   },
 
   "migration": {
@@ -406,11 +406,11 @@ Reglas:
 {
   "referenceDate": "2026-11-10",
   "totals": {
-    "totalXP":     { "stored": 14053, "recomputed": 14053, "ok": true },
+    "totalXP":     { "stored": 6915, "recomputed": 6915, "ok": true },
     "xpBreakdown": { "stored": { … }, "recomputed": { … }, "diffs": [], "ok": true },
     "shop": {
-      "spent": { "stored": 150, "recomputed": 150, "ok": true },
-      "coins": { "earned": 274, "spent": 150, "balance": 124 }
+      "spent": { "stored": 100, "recomputed": 100, "ok": true },
+      "coins": { "earned": 141, "spent": 100, "balance": 41 }
     }
   },
   "missing":   { "fields": [], "keys": [], "criticals": [] },
@@ -421,8 +421,8 @@ Reglas:
 ### 7.3 `import.backup`
 
 ```jsonc
-{ "key": "odea2_backup_source_38b0986e_2026-11-10T12:00:00.000Z",
-  "digest": "38b0986e2d16778a",
+{ "key": "odea2_backup_source_178c5e1d_2026-11-10T12:00:00.000Z",
+  "digest": "178c5e1d4329f87a",
   "createdAt": "2026-11-10T12:00:00.000Z",
   "kind": "source" }
 ```

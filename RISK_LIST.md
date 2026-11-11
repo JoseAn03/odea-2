@@ -114,12 +114,13 @@ bloqueada · **S3** = deuda/depuración.
 - Fixture sintético: **33/33 tests OK**. Incluye los negativos de `eventRL`,
   `farm` y `canje`, los dos candados (aborto y cuarentena), aceptar/abortar
   cuarentena, rechazo de reimportación, huella del origen e ida y vuelta.
-- Bundle real del usuario (solo en local, no commiteado): importación
+- Importación del fixture sintético (`fixtures/odea-progreso-sintetico.json`):
   `status: active`, `checksumOk: true`, `reconciled: true`, validación **OK**,
   backup del origen idéntico, con paridad exacta:
-  - `career=6703, ach=2130, vida=1445, capital=1520, focus=0, diary=15,
-    bosses=0, hunt=2158, evento=80, farm=2`, `totalXP=14053`.
-  - `campaignLevel=14`, `odeLevel=19`.
-  - Monedas: `earned=274`, `spent=150`, `balance=124`.
-  - Secciones: `worlds=8`, `legacy=3`; huella `38b0986e2d16778a`.
-- Cualquier cambio futuro que rompa estos números debe fallar en CI.
+  - `career=2903, ach=330, vida=1705, capital=630, focus=50, diary=30,
+    bosses=1100, hunt=95, evento=60, farm=12`, `totalXP=6915`.
+  - `campaignLevel=3`, `odeLevel=13`.
+  - Monedas: `earned=141`, `spent=100`, `balance=41`.
+  - Secciones: `worlds=8`, `legacy=3`; huella `178c5e1d4329f87a`.
+- Estos son los únicos totales que pueden aparecer en el repo. Cualquier
+  cambio futuro que rompa estos números debe fallar en CI.

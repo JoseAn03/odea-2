@@ -28,7 +28,10 @@ derivación de v5.99 (`src/derive.js`) y un **checksum** contra
 | Conjunto | totalXP | 10 componentes | campaignLevel | odeLevel | Monedas (earned/spent/balance) |
 |---|---|---|---|---|---|
 | Fixture sintético | 6.915 | idénticos | 3 | 13 | 141 / 100 / 41 |
-| **Bundle real del usuario** (probado en local, no commiteado) | **14.053** | **idénticos** | **14** | **19** | **274 / 150 / 124** |
+
+> Todos los valores de ejemplo de este documento corresponden al **fixture
+> sintético** (`fixtures/odea-progreso-sintetico.json`). El bundle real del
+> usuario nunca se publica.
 
 ---
 
@@ -263,9 +266,9 @@ En toda importación se genera:
 ```jsonc
 {
   "totals": {
-    "totalXP":     { "stored": 14053, "recomputed": 14053, "ok": true },
+    "totalXP":     { "stored": 6915, "recomputed": 6915, "ok": true },
     "xpBreakdown": { "stored": { … }, "recomputed": { … }, "diffs": [], "ok": true },
-    "shop":        { "spent": { "stored": 150, "recomputed": 150, "ok": true }, "coins": { … } }
+    "shop":        { "spent": { "stored": 100, "recomputed": 100, "ok": true }, "coins": { … } }
   },
   "missing":    { "fields": [], "keys": [], "criticals": [] },
   "criticals":  { "eventRL": true, "farm": true, "canje": true }
@@ -441,13 +444,13 @@ validador deja de detectarlos.
 
 ## 14. Manejo del archivo real
 
-- El archivo `odea-progreso-2026-11-10*.json` **no se copia, ni se commitea,
-  ni se sube** a ningún repo. `.gitignore` bloquea `odea-progreso-20*.json`
-  (con excepción del fixture sintético).
-- Se usó **solo en local** para verificar estructura y probar el importador.
-  Resultado: 36 campos, 11 claves, 8 + 3 secciones, XP 14.053 exacto, monedas
-  274/150/124, backup del origen idéntico.
-- Lo que sí se commitea es `fixtures/odea-progreso-sintetico.json`: misma forma
+- El bundle real del usuario **no se copia, ni se commitea, ni se sube** a
+  ningún repo. `.gitignore` bloquea `odea-progreso-*.json` y
+  `*progreso-real*` (con excepción del fixture sintético).
+- Con el fixture sintético se verifica estructura y se prueba el importador:
+  36 campos, 11 claves, 8 + 3 secciones, XP 6.915 exacto, monedas 141/100/41,
+  backup del origen idéntico.
+- Lo que se commitea es `fixtures/odea-progreso-sintetico.json`: misma forma
   (36 + 11), valores falsos.
 
 ---
