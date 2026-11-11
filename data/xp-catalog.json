@@ -1,0 +1,2476 @@
+{
+  "meta": {
+    "source": "ODEA 1",
+    "appVersion": "5.99",
+    "generatedAt": "2026-11-11T00:14:27.077Z",
+    "sourceFiles": {
+      "odea.html": {
+        "sha256": "f8cdb1d6d63b3e4e9cc31b788da36848c2ea8aeb99ffae893f49ae902f9b26f3"
+      },
+      "flujos_odea.js": {
+        "sha256": "51a1461af26552c75e1c7025490ad27f990c096e663edab3dc61d21d651f32b4"
+      }
+    },
+    "note": "Catálogos estáticos de juego. No contiene progreso de usuario."
+  },
+  "campaign": {
+    "fl1_1": 150,
+    "fl1_2": 160,
+    "fl1_3": 180,
+    "fl1_4": 180,
+    "fl1_5": 180,
+    "fl1_6": 350,
+    "fl2_1": 220,
+    "fl2_2": 220,
+    "fl2_3": 220,
+    "fl2_4": 220,
+    "fl2_5": 220,
+    "fl2_6": 400,
+    "fl3_1": 200,
+    "fl3_2": 200,
+    "fl3_3": 240,
+    "fl3_4": 240,
+    "fl3_5": 220,
+    "fl3_6": 240,
+    "fl3_7": 260,
+    "fl3_8": 300,
+    "fl4_1": 180,
+    "fl4_2": 220,
+    "fl4_3": 260,
+    "fl4_4": 200,
+    "fl4_5": 280,
+    "fl4_6": 220,
+    "fl4_7": 260,
+    "fl4_8": 530,
+    "fl5_1": 200,
+    "fl5_2": 220,
+    "fl5_3": 240,
+    "fl5_4": 200,
+    "fl5_5": 220,
+    "fl5_6": 260,
+    "fl5_7": 280,
+    "fl5_8": 580,
+    "fl6_1": 260,
+    "fl6_2": 240,
+    "fl6_3": 260,
+    "fl6_4": 300,
+    "fl6_5": 220,
+    "fl6_6": 320,
+    "fl6_7": 300,
+    "fl6_8": 600,
+    "fl7_1": 200,
+    "fl7_2": 240,
+    "fl7_3": 240,
+    "fl7_4": 260,
+    "fl7_5": 320,
+    "fl7_6": 240,
+    "fl7_7": 260,
+    "fl7_8": 590,
+    "fl8_1": 240,
+    "fl8_2": 240,
+    "fl8_3": 280,
+    "fl8_4": 280,
+    "fl8_5": 260,
+    "fl8_6": 260,
+    "fl8_7": 260,
+    "fl8_8": 220,
+    "fl8_9": 260,
+    "fl8_10": 500,
+    "fl9_1": 300,
+    "fl9_2": 300,
+    "fl9_3": 280,
+    "fl9_4": 260,
+    "fl9_5": 280,
+    "fl9_6": 300,
+    "fl9_7": 680,
+    "fl10_1": 200,
+    "fl10_2": 400,
+    "fl10_3": 300,
+    "fl10_4": 350,
+    "fl10_5": 850
+  },
+  "campaignBossIds": [
+    "fl1_6",
+    "fl2_6",
+    "fl3_8",
+    "fl4_8",
+    "fl5_8",
+    "fl6_8",
+    "fl7_8",
+    "fl8_10",
+    "fl9_7",
+    "fl10_5"
+  ],
+  "daily": {
+    "1A": {
+      "xp": 60,
+      "day": 1,
+      "slot": "A"
+    },
+    "1B": {
+      "xp": 150,
+      "day": 1,
+      "slot": "B"
+    },
+    "1C": {
+      "xp": 50,
+      "day": 1,
+      "slot": "C"
+    },
+    "2A": {
+      "xp": 60,
+      "day": 2,
+      "slot": "A"
+    },
+    "2B": {
+      "xp": 160,
+      "day": 2,
+      "slot": "B"
+    },
+    "2C": {
+      "xp": 50,
+      "day": 2,
+      "slot": "C"
+    },
+    "3A": {
+      "xp": 60,
+      "day": 3,
+      "slot": "A"
+    },
+    "3B": {
+      "xp": 170,
+      "day": 3,
+      "slot": "B"
+    },
+    "3C": {
+      "xp": 50,
+      "day": 3,
+      "slot": "C"
+    },
+    "4A": {
+      "xp": 60,
+      "day": 4,
+      "slot": "A"
+    },
+    "4B": {
+      "xp": 160,
+      "day": 4,
+      "slot": "B"
+    },
+    "4C": {
+      "xp": 50,
+      "day": 4,
+      "slot": "C"
+    },
+    "5A": {
+      "xp": 60,
+      "day": 5,
+      "slot": "A"
+    },
+    "5B": {
+      "xp": 160,
+      "day": 5,
+      "slot": "B"
+    },
+    "5C": {
+      "xp": 50,
+      "day": 5,
+      "slot": "C"
+    },
+    "6A": {
+      "xp": 60,
+      "day": 6,
+      "slot": "A"
+    },
+    "6B": {
+      "xp": 120,
+      "day": 6,
+      "slot": "B"
+    },
+    "6C": {
+      "xp": 50,
+      "day": 6,
+      "slot": "C"
+    },
+    "7A": {
+      "xp": 60,
+      "day": 7,
+      "slot": "A"
+    },
+    "7B": {
+      "xp": 150,
+      "day": 7,
+      "slot": "B"
+    },
+    "7C": {
+      "xp": 100,
+      "day": 7,
+      "slot": "C"
+    },
+    "8A": {
+      "xp": 60,
+      "day": 8,
+      "slot": "A"
+    },
+    "8B": {
+      "xp": 150,
+      "day": 8,
+      "slot": "B"
+    },
+    "8C": {
+      "xp": 50,
+      "day": 8,
+      "slot": "C"
+    },
+    "9A": {
+      "xp": 60,
+      "day": 9,
+      "slot": "A"
+    },
+    "9B": {
+      "xp": 160,
+      "day": 9,
+      "slot": "B"
+    },
+    "9C": {
+      "xp": 50,
+      "day": 9,
+      "slot": "C"
+    },
+    "10A": {
+      "xp": 60,
+      "day": 10,
+      "slot": "A"
+    },
+    "10B": {
+      "xp": 170,
+      "day": 10,
+      "slot": "B"
+    },
+    "10C": {
+      "xp": 50,
+      "day": 10,
+      "slot": "C"
+    },
+    "11A": {
+      "xp": 60,
+      "day": 11,
+      "slot": "A"
+    },
+    "11B": {
+      "xp": 140,
+      "day": 11,
+      "slot": "B"
+    },
+    "11C": {
+      "xp": 50,
+      "day": 11,
+      "slot": "C"
+    },
+    "12A": {
+      "xp": 60,
+      "day": 12,
+      "slot": "A"
+    },
+    "12B": {
+      "xp": 170,
+      "day": 12,
+      "slot": "B"
+    },
+    "12C": {
+      "xp": 50,
+      "day": 12,
+      "slot": "C"
+    },
+    "13A": {
+      "xp": 60,
+      "day": 13,
+      "slot": "A"
+    },
+    "13B": {
+      "xp": 150,
+      "day": 13,
+      "slot": "B"
+    },
+    "13C": {
+      "xp": 50,
+      "day": 13,
+      "slot": "C"
+    },
+    "14A": {
+      "xp": 60,
+      "day": 14,
+      "slot": "A"
+    },
+    "14B": {
+      "xp": 180,
+      "day": 14,
+      "slot": "B"
+    },
+    "14C": {
+      "xp": 100,
+      "day": 14,
+      "slot": "C"
+    },
+    "15A": {
+      "xp": 60,
+      "day": 15,
+      "slot": "A"
+    },
+    "15B": {
+      "xp": 160,
+      "day": 15,
+      "slot": "B"
+    },
+    "15C": {
+      "xp": 50,
+      "day": 15,
+      "slot": "C"
+    },
+    "16A": {
+      "xp": 60,
+      "day": 16,
+      "slot": "A"
+    },
+    "16B": {
+      "xp": 150,
+      "day": 16,
+      "slot": "B"
+    },
+    "16C": {
+      "xp": 50,
+      "day": 16,
+      "slot": "C"
+    },
+    "17A": {
+      "xp": 60,
+      "day": 17,
+      "slot": "A"
+    },
+    "17B": {
+      "xp": 160,
+      "day": 17,
+      "slot": "B"
+    },
+    "17C": {
+      "xp": 50,
+      "day": 17,
+      "slot": "C"
+    },
+    "18A": {
+      "xp": 60,
+      "day": 18,
+      "slot": "A"
+    },
+    "18B": {
+      "xp": 160,
+      "day": 18,
+      "slot": "B"
+    },
+    "18C": {
+      "xp": 50,
+      "day": 18,
+      "slot": "C"
+    },
+    "19A": {
+      "xp": 60,
+      "day": 19,
+      "slot": "A"
+    },
+    "19B": {
+      "xp": 140,
+      "day": 19,
+      "slot": "B"
+    },
+    "19C": {
+      "xp": 50,
+      "day": 19,
+      "slot": "C"
+    },
+    "20A": {
+      "xp": 60,
+      "day": 20,
+      "slot": "A"
+    },
+    "20B": {
+      "xp": 160,
+      "day": 20,
+      "slot": "B"
+    },
+    "20C": {
+      "xp": 50,
+      "day": 20,
+      "slot": "C"
+    },
+    "21A": {
+      "xp": 60,
+      "day": 21,
+      "slot": "A"
+    },
+    "21B": {
+      "xp": 160,
+      "day": 21,
+      "slot": "B"
+    },
+    "21C": {
+      "xp": 100,
+      "day": 21,
+      "slot": "C"
+    },
+    "22A": {
+      "xp": 60,
+      "day": 22,
+      "slot": "A"
+    },
+    "22B": {
+      "xp": 150,
+      "day": 22,
+      "slot": "B"
+    },
+    "22C": {
+      "xp": 50,
+      "day": 22,
+      "slot": "C"
+    },
+    "23A": {
+      "xp": 60,
+      "day": 23,
+      "slot": "A"
+    },
+    "23B": {
+      "xp": 150,
+      "day": 23,
+      "slot": "B"
+    },
+    "23C": {
+      "xp": 50,
+      "day": 23,
+      "slot": "C"
+    },
+    "24A": {
+      "xp": 60,
+      "day": 24,
+      "slot": "A"
+    },
+    "24B": {
+      "xp": 150,
+      "day": 24,
+      "slot": "B"
+    },
+    "24C": {
+      "xp": 50,
+      "day": 24,
+      "slot": "C"
+    },
+    "25A": {
+      "xp": 60,
+      "day": 25,
+      "slot": "A"
+    },
+    "25B": {
+      "xp": 160,
+      "day": 25,
+      "slot": "B"
+    },
+    "25C": {
+      "xp": 50,
+      "day": 25,
+      "slot": "C"
+    },
+    "26A": {
+      "xp": 60,
+      "day": 26,
+      "slot": "A"
+    },
+    "26B": {
+      "xp": 150,
+      "day": 26,
+      "slot": "B"
+    },
+    "26C": {
+      "xp": 50,
+      "day": 26,
+      "slot": "C"
+    },
+    "27A": {
+      "xp": 60,
+      "day": 27,
+      "slot": "A"
+    },
+    "27B": {
+      "xp": 150,
+      "day": 27,
+      "slot": "B"
+    },
+    "27C": {
+      "xp": 50,
+      "day": 27,
+      "slot": "C"
+    },
+    "28A": {
+      "xp": 60,
+      "day": 28,
+      "slot": "A"
+    },
+    "28B": {
+      "xp": 160,
+      "day": 28,
+      "slot": "B"
+    },
+    "28C": {
+      "xp": 100,
+      "day": 28,
+      "slot": "C"
+    },
+    "29A": {
+      "xp": 60,
+      "day": 29,
+      "slot": "A"
+    },
+    "29B": {
+      "xp": 160,
+      "day": 29,
+      "slot": "B"
+    },
+    "29C": {
+      "xp": 50,
+      "day": 29,
+      "slot": "C"
+    },
+    "30A": {
+      "xp": 60,
+      "day": 30,
+      "slot": "A"
+    },
+    "30B": {
+      "xp": 160,
+      "day": 30,
+      "slot": "B"
+    },
+    "30C": {
+      "xp": 50,
+      "day": 30,
+      "slot": "C"
+    },
+    "31A": {
+      "xp": 60,
+      "day": 31,
+      "slot": "A"
+    },
+    "31B": {
+      "xp": 160,
+      "day": 31,
+      "slot": "B"
+    },
+    "31C": {
+      "xp": 50,
+      "day": 31,
+      "slot": "C"
+    },
+    "32A": {
+      "xp": 60,
+      "day": 32,
+      "slot": "A"
+    },
+    "32B": {
+      "xp": 120,
+      "day": 32,
+      "slot": "B"
+    },
+    "32C": {
+      "xp": 50,
+      "day": 32,
+      "slot": "C"
+    },
+    "33A": {
+      "xp": 60,
+      "day": 33,
+      "slot": "A"
+    },
+    "33B": {
+      "xp": 160,
+      "day": 33,
+      "slot": "B"
+    },
+    "33C": {
+      "xp": 50,
+      "day": 33,
+      "slot": "C"
+    },
+    "34A": {
+      "xp": 60,
+      "day": 34,
+      "slot": "A"
+    },
+    "34B": {
+      "xp": 160,
+      "day": 34,
+      "slot": "B"
+    },
+    "34C": {
+      "xp": 50,
+      "day": 34,
+      "slot": "C"
+    },
+    "35A": {
+      "xp": 60,
+      "day": 35,
+      "slot": "A"
+    },
+    "35B": {
+      "xp": 160,
+      "day": 35,
+      "slot": "B"
+    },
+    "35C": {
+      "xp": 100,
+      "day": 35,
+      "slot": "C"
+    },
+    "36A": {
+      "xp": 60,
+      "day": 36,
+      "slot": "A"
+    },
+    "36B": {
+      "xp": 160,
+      "day": 36,
+      "slot": "B"
+    },
+    "36C": {
+      "xp": 50,
+      "day": 36,
+      "slot": "C"
+    },
+    "37A": {
+      "xp": 60,
+      "day": 37,
+      "slot": "A"
+    },
+    "37B": {
+      "xp": 150,
+      "day": 37,
+      "slot": "B"
+    },
+    "37C": {
+      "xp": 50,
+      "day": 37,
+      "slot": "C"
+    },
+    "38A": {
+      "xp": 60,
+      "day": 38,
+      "slot": "A"
+    },
+    "38B": {
+      "xp": 160,
+      "day": 38,
+      "slot": "B"
+    },
+    "38C": {
+      "xp": 50,
+      "day": 38,
+      "slot": "C"
+    },
+    "39A": {
+      "xp": 60,
+      "day": 39,
+      "slot": "A"
+    },
+    "39B": {
+      "xp": 170,
+      "day": 39,
+      "slot": "B"
+    },
+    "39C": {
+      "xp": 50,
+      "day": 39,
+      "slot": "C"
+    },
+    "40A": {
+      "xp": 60,
+      "day": 40,
+      "slot": "A"
+    },
+    "40B": {
+      "xp": 160,
+      "day": 40,
+      "slot": "B"
+    },
+    "40C": {
+      "xp": 50,
+      "day": 40,
+      "slot": "C"
+    },
+    "41A": {
+      "xp": 60,
+      "day": 41,
+      "slot": "A"
+    },
+    "41B": {
+      "xp": 160,
+      "day": 41,
+      "slot": "B"
+    },
+    "41C": {
+      "xp": 50,
+      "day": 41,
+      "slot": "C"
+    },
+    "42A": {
+      "xp": 60,
+      "day": 42,
+      "slot": "A"
+    },
+    "42B": {
+      "xp": 160,
+      "day": 42,
+      "slot": "B"
+    },
+    "42C": {
+      "xp": 100,
+      "day": 42,
+      "slot": "C"
+    },
+    "43A": {
+      "xp": 60,
+      "day": 43,
+      "slot": "A"
+    },
+    "43B": {
+      "xp": 150,
+      "day": 43,
+      "slot": "B"
+    },
+    "43C": {
+      "xp": 50,
+      "day": 43,
+      "slot": "C"
+    },
+    "44A": {
+      "xp": 60,
+      "day": 44,
+      "slot": "A"
+    },
+    "44B": {
+      "xp": 150,
+      "day": 44,
+      "slot": "B"
+    },
+    "44C": {
+      "xp": 50,
+      "day": 44,
+      "slot": "C"
+    },
+    "45A": {
+      "xp": 60,
+      "day": 45,
+      "slot": "A"
+    },
+    "45B": {
+      "xp": 140,
+      "day": 45,
+      "slot": "B"
+    },
+    "45C": {
+      "xp": 50,
+      "day": 45,
+      "slot": "C"
+    },
+    "46A": {
+      "xp": 60,
+      "day": 46,
+      "slot": "A"
+    },
+    "46B": {
+      "xp": 200,
+      "day": 46,
+      "slot": "B"
+    },
+    "46C": {
+      "xp": 50,
+      "day": 46,
+      "slot": "C"
+    },
+    "47A": {
+      "xp": 60,
+      "day": 47,
+      "slot": "A"
+    },
+    "47B": {
+      "xp": 150,
+      "day": 47,
+      "slot": "B"
+    },
+    "47C": {
+      "xp": 50,
+      "day": 47,
+      "slot": "C"
+    },
+    "48A": {
+      "xp": 60,
+      "day": 48,
+      "slot": "A"
+    },
+    "48B": {
+      "xp": 140,
+      "day": 48,
+      "slot": "B"
+    },
+    "48C": {
+      "xp": 50,
+      "day": 48,
+      "slot": "C"
+    },
+    "49A": {
+      "xp": 60,
+      "day": 49,
+      "slot": "A"
+    },
+    "49B": {
+      "xp": 150,
+      "day": 49,
+      "slot": "B"
+    },
+    "49C": {
+      "xp": 100,
+      "day": 49,
+      "slot": "C"
+    },
+    "50A": {
+      "xp": 60,
+      "day": 50,
+      "slot": "A"
+    },
+    "50B": {
+      "xp": 150,
+      "day": 50,
+      "slot": "B"
+    },
+    "50C": {
+      "xp": 50,
+      "day": 50,
+      "slot": "C"
+    },
+    "51A": {
+      "xp": 60,
+      "day": 51,
+      "slot": "A"
+    },
+    "51B": {
+      "xp": 170,
+      "day": 51,
+      "slot": "B"
+    },
+    "51C": {
+      "xp": 50,
+      "day": 51,
+      "slot": "C"
+    },
+    "52A": {
+      "xp": 60,
+      "day": 52,
+      "slot": "A"
+    },
+    "52B": {
+      "xp": 180,
+      "day": 52,
+      "slot": "B"
+    },
+    "52C": {
+      "xp": 50,
+      "day": 52,
+      "slot": "C"
+    },
+    "53A": {
+      "xp": 60,
+      "day": 53,
+      "slot": "A"
+    },
+    "53B": {
+      "xp": 150,
+      "day": 53,
+      "slot": "B"
+    },
+    "53C": {
+      "xp": 50,
+      "day": 53,
+      "slot": "C"
+    },
+    "54A": {
+      "xp": 60,
+      "day": 54,
+      "slot": "A"
+    },
+    "54B": {
+      "xp": 180,
+      "day": 54,
+      "slot": "B"
+    },
+    "54C": {
+      "xp": 50,
+      "day": 54,
+      "slot": "C"
+    },
+    "55A": {
+      "xp": 60,
+      "day": 55,
+      "slot": "A"
+    },
+    "55B": {
+      "xp": 150,
+      "day": 55,
+      "slot": "B"
+    },
+    "55C": {
+      "xp": 50,
+      "day": 55,
+      "slot": "C"
+    },
+    "56A": {
+      "xp": 60,
+      "day": 56,
+      "slot": "A"
+    },
+    "56B": {
+      "xp": 200,
+      "day": 56,
+      "slot": "B"
+    },
+    "56C": {
+      "xp": 50,
+      "day": 56,
+      "slot": "C"
+    }
+  },
+  "dailyTotalDays": 56,
+  "weekly": {
+    "1": 350,
+    "2": 400,
+    "3": 450,
+    "4": 500,
+    "5": 550,
+    "6": 600,
+    "7": 650,
+    "8": 700
+  },
+  "jobs": {
+    "n1": 60,
+    "n2": 80,
+    "n3": 90,
+    "n4": 70,
+    "n5": 70,
+    "n6": 80,
+    "n7": 60,
+    "n8": 80,
+    "n9": 60,
+    "n10": 70,
+    "n11": 60,
+    "n12": 80,
+    "n13": 70,
+    "n14": 80,
+    "n15": 70,
+    "n16": 80,
+    "n17": 100,
+    "n18": 60,
+    "n19": 70,
+    "n20": 80,
+    "n21": 80,
+    "n22": 70,
+    "n23": 60,
+    "n24": 90,
+    "n25": 60,
+    "n26": 70,
+    "n27": 60,
+    "n28": 60,
+    "n29": 80,
+    "n30": 90
+  },
+  "b2b": {
+    "b0_1": 150,
+    "b0_2": 150,
+    "b0_3": 200,
+    "b1_1": 300,
+    "b1_2": 300,
+    "b1_3": 150,
+    "b2_1": 100,
+    "b2_2": 250,
+    "b2_3": 300,
+    "b3_1": 250,
+    "b3_2": 200,
+    "b3_3": 150,
+    "b4_1": 150,
+    "b4_2": 200,
+    "b4_3": 200,
+    "b5_1": 300,
+    "b5_2": 350,
+    "b5_3": 400
+  },
+  "puente": {
+    "pg1": 100,
+    "pg2": 200,
+    "pg3": 100,
+    "pg4": 150,
+    "pg5": 150,
+    "pg6": 150,
+    "pg7": 150,
+    "pg8": 200,
+    "pg9": 150,
+    "pg10": 200,
+    "pg11": 150,
+    "pg12": 200,
+    "pg13": 100,
+    "pg14": 150,
+    "pg15": 150,
+    "pg16": 150,
+    "pg17": 150,
+    "pg18": 150,
+    "pg19": 150,
+    "pg20": 200,
+    "pg21": 200,
+    "pg22": 200,
+    "pg23": 200,
+    "pg24": 150,
+    "pg25": 200,
+    "pg26": 200,
+    "pg27": 150,
+    "pg28": 150,
+    "pg29": 200,
+    "pg30": 200,
+    "pg31": 200,
+    "pg32": 500
+  },
+  "achievements": {
+    "ach_first": 50,
+    "ach_ten": 100,
+    "ach_d21": 200,
+    "ach_d42": 300,
+    "ach_d56": 500,
+    "ach_st7": 100,
+    "ach_st14": 150,
+    "ach_st21": 150,
+    "ach_st30": 200,
+    "ach_w3": 200,
+    "ach_w6": 300,
+    "ach_j5": 80,
+    "ach_j25": 150,
+    "ach_j50": 250,
+    "ach_ch0": 150,
+    "ach_ch1": 150,
+    "ach_ch2": 150,
+    "ach_ch3": 150,
+    "ach_ch4": 150,
+    "ach_ch5": 150,
+    "ach_ch6": 150,
+    "ach_ch7": 150,
+    "ach_ch8": 150,
+    "ach_ch9": 200,
+    "ach_ai": 150,
+    "ach_legend": 700,
+    "ach_xp1k": 100,
+    "ach_xp5k": 200,
+    "ach_xp10k": 300,
+    "ach_xp25k": 500,
+    "ach_xp50k": 800,
+    "ach_xp75k": 1000,
+    "ach_god_cronos": 600,
+    "ach_god_atenea": 600,
+    "ach_god_hermes": 600,
+    "ach_god_hestia": 600,
+    "ach_god_pluto": 600,
+    "ach_god_zeus": 1000,
+    "ach_god_all": 1500,
+    "ach_titan_hades": 500,
+    "ach_titan_apolo": 500,
+    "ach_titan_prometeo": 500,
+    "ach_titan_all": 1000,
+    "ach_vida_all": 1000,
+    "ach_hunt_first": 100,
+    "ach_hunt_10": 250,
+    "ach_hunt_50": 500,
+    "ach_hunt_100": 1000,
+    "ach_hunt_r25": 100,
+    "ach_hunt_r75": 200,
+    "ach_hunt_r150": 300,
+    "ach_hunt_burst": 200,
+    "ach_hunt_boss": 300,
+    "ach_hunt_legend": 1000,
+    "ach_hunt_interview": 300,
+    "ach_hunt_offer": 800,
+    "ach_hunt_st7": 200,
+    "ach_hunt_st30": 500
+  },
+  "capital": {
+    "done": {
+      "ca1_1": 150,
+      "ca1_2": 150,
+      "ca1_3": 180,
+      "ca1_4": 250,
+      "ca2_1": 180,
+      "ca2_2": 200,
+      "ca2_3": 220,
+      "ca2_4": 200,
+      "ca2_5": 220,
+      "ca3_1": 220,
+      "ca3_2": 220,
+      "ca3_3": 200,
+      "ca3_4": 240,
+      "ca3_5": 300,
+      "ca4_1": 150,
+      "ca4_2": 180,
+      "ca4_3": 240,
+      "ca4_4": 220,
+      "ca4_5": 220,
+      "ca5_1": 150,
+      "ca5_2": 220,
+      "ca5_3": 200,
+      "ca5_4": 220,
+      "ca5_5": 400,
+      "ca6_1": 150,
+      "ca6_2": 250,
+      "ca6_3": 200,
+      "ca6_4": 200,
+      "ca6_5": 300,
+      "ca7_1": 250,
+      "ca7_2": 250,
+      "ca7_3": 250,
+      "ca7_4": 450,
+      "ca7_5": 300,
+      "ca8_1": 200,
+      "ca8_2": 250,
+      "ca8_3": 220,
+      "ca8_4": 250,
+      "ca8_5": 300,
+      "ca8_6": 400
+    },
+    "eng": {
+      "en1_1": 150,
+      "en1_2": 180,
+      "en1_3": 120,
+      "en1_4": 160,
+      "en1_5": 300,
+      "en2_1": 150,
+      "en2_2": 160,
+      "en2_3": 140,
+      "en2_4": 200,
+      "en2_5": 280,
+      "en3_1": 150,
+      "en3_2": 150,
+      "en3_3": 150,
+      "en3_4": 200,
+      "en3_5": 280,
+      "en4_1": 180,
+      "en4_2": 200,
+      "en4_3": 180,
+      "en4_4": 220,
+      "en4_5": 300,
+      "en5_1": 150,
+      "en5_2": 160,
+      "en5_3": 180,
+      "en5_4": 140,
+      "en5_5": 300,
+      "en6_1": 250,
+      "en6_2": 220,
+      "en6_3": 200,
+      "en6_4": 250,
+      "en6_5": 400
+    },
+    "ai": {
+      "ia1_1": 150,
+      "ia1_2": 150,
+      "ia1_3": 160,
+      "ia1_4": 280,
+      "ia2_1": 180,
+      "ia2_2": 180,
+      "ia2_3": 220,
+      "ia2_4": 200,
+      "ia2_5": 300,
+      "ia3_1": 160,
+      "ia3_2": 240,
+      "ia3_3": 200,
+      "ia3_4": 220,
+      "ia3_5": 400,
+      "ia4_1": 160,
+      "ia4_2": 240,
+      "ia4_3": 280,
+      "ia4_4": 400,
+      "ia5_1": 180,
+      "ia5_2": 200,
+      "ia5_3": 240,
+      "ia5_4": 240,
+      "ia5_5": 400,
+      "ia6_1": 240,
+      "ia6_2": 240,
+      "ia6_3": 220,
+      "ia6_4": 400,
+      "ia7_1": 320,
+      "ia7_2": 280,
+      "ia7_3": 220,
+      "ia7_4": 500
+    }
+  },
+  "vida": {
+    "hab-gym": {
+      "xp": 25,
+      "cat": "eq",
+      "kind": "daily",
+      "p": "cuerpo"
+    },
+    "hab-sueno": {
+      "xp": 20,
+      "cat": "eq",
+      "kind": "daily",
+      "p": "cuerpo"
+    },
+    "hab-agua": {
+      "xp": 15,
+      "cat": "eq",
+      "kind": "daily",
+      "p": "cuerpo"
+    },
+    "hab-mov": {
+      "xp": 15,
+      "cat": "eq",
+      "kind": "daily",
+      "p": "cuerpo"
+    },
+    "hab-leer": {
+      "xp": 25,
+      "cat": "eq",
+      "kind": "daily",
+      "p": "mente"
+    },
+    "hab-journal": {
+      "xp": 15,
+      "cat": "eq",
+      "kind": "daily",
+      "p": "mente"
+    },
+    "hab-calma": {
+      "xp": 15,
+      "cat": "eq",
+      "kind": "daily",
+      "p": "mente"
+    },
+    "hab-estudio": {
+      "xp": 20,
+      "cat": "eq",
+      "kind": "daily",
+      "p": "mente"
+    },
+    "hab-reg": {
+      "xp": 15,
+      "cat": "eq",
+      "kind": "daily",
+      "p": "dinero"
+    },
+    "hab-edufin": {
+      "xp": 25,
+      "cat": "eq",
+      "kind": "daily",
+      "p": "dinero"
+    },
+    "hab-ahorro": {
+      "xp": 20,
+      "cat": "eq",
+      "kind": "daily",
+      "p": "dinero"
+    },
+    "hab-idear": {
+      "xp": 20,
+      "cat": "eq",
+      "kind": "daily",
+      "p": "dinero"
+    },
+    "grw-libro": {
+      "xp": 200,
+      "cat": "eq",
+      "kind": "one"
+    },
+    "grw-biblio": {
+      "xp": 400,
+      "cat": "eq",
+      "kind": "one"
+    },
+    "grw-presu": {
+      "xp": 250,
+      "cat": "eq",
+      "kind": "one"
+    },
+    "grw-fondo": {
+      "xp": 300,
+      "cat": "eq",
+      "kind": "one"
+    },
+    "grw-curso": {
+      "xp": 250,
+      "cat": "eq",
+      "kind": "one"
+    },
+    "grw-ideas": {
+      "xp": 200,
+      "cat": "eq",
+      "kind": "one"
+    },
+    "grw-micro": {
+      "xp": 400,
+      "cat": "eq",
+      "kind": "one"
+    },
+    "grw-mente": {
+      "xp": 300,
+      "cat": "eq",
+      "kind": "one"
+    },
+    "grw-cuerpo": {
+      "xp": 300,
+      "cat": "eq",
+      "kind": "one"
+    },
+    "grw-888": {
+      "xp": 500,
+      "cat": "eq",
+      "kind": "one"
+    },
+    "kd-cuento": {
+      "xp": 20,
+      "cat": "kid",
+      "kind": "daily"
+    },
+    "kd-letras": {
+      "xp": 20,
+      "cat": "kid",
+      "kind": "daily"
+    },
+    "kd-juego": {
+      "xp": 20,
+      "cat": "kid",
+      "kind": "daily"
+    },
+    "kd-crea": {
+      "xp": 20,
+      "cat": "kid",
+      "kind": "daily"
+    },
+    "kd-fruta": {
+      "xp": 15,
+      "cat": "kid",
+      "kind": "daily"
+    },
+    "kd-orden": {
+      "xp": 15,
+      "cat": "kid",
+      "kind": "daily"
+    },
+    "kd-sueno": {
+      "xp": 15,
+      "cat": "kid",
+      "kind": "daily"
+    },
+    "kwk-parque": {
+      "xp": 40,
+      "cat": "kid",
+      "kind": "weekly"
+    },
+    "kwk-cocina": {
+      "xp": 40,
+      "cat": "kid",
+      "kind": "weekly"
+    },
+    "kwk-biblio": {
+      "xp": 40,
+      "cat": "kid",
+      "kind": "weekly"
+    },
+    "kwk-leccion": {
+      "xp": 40,
+      "cat": "kid",
+      "kind": "weekly"
+    },
+    "kwk-familia": {
+      "xp": 50,
+      "cat": "kid",
+      "kind": "weekly"
+    },
+    "kht-zapatos": {
+      "xp": 100,
+      "cat": "kid",
+      "kind": "one"
+    },
+    "kht-bici": {
+      "xp": 150,
+      "cat": "kid",
+      "kind": "one"
+    },
+    "kht-100": {
+      "xp": 120,
+      "cat": "kid",
+      "kind": "one"
+    },
+    "kht-leer": {
+      "xp": 150,
+      "cat": "kid",
+      "kind": "one"
+    },
+    "kht-nadar": {
+      "xp": 120,
+      "cat": "kid",
+      "kind": "one"
+    },
+    "kht-dientes": {
+      "xp": 150,
+      "cat": "kid",
+      "kind": "one"
+    },
+    "kht-bloques": {
+      "xp": 100,
+      "cat": "kid",
+      "kind": "one"
+    },
+    "kht-cocina": {
+      "xp": 120,
+      "cat": "kid",
+      "kind": "one"
+    },
+    "kht-amable": {
+      "xp": 100,
+      "cat": "kid",
+      "kind": "one"
+    },
+    "kht-pregunton": {
+      "xp": 100,
+      "cat": "kid",
+      "kind": "one"
+    },
+    "kht-escribir": {
+      "xp": 120,
+      "cat": "kid",
+      "kind": "one"
+    },
+    "kht-sumas": {
+      "xp": 120,
+      "cat": "kid",
+      "kind": "one"
+    },
+    "kht-ingles20": {
+      "xp": 150,
+      "cat": "kid",
+      "kind": "one"
+    },
+    "kht-lee-solo": {
+      "xp": 150,
+      "cat": "kid",
+      "kind": "one"
+    },
+    "kln-lectura": {
+      "xp": 40,
+      "cat": "kid",
+      "kind": "weekly"
+    },
+    "kln-numeros": {
+      "xp": 40,
+      "cat": "kid",
+      "kind": "weekly"
+    },
+    "kln-ciencia": {
+      "xp": 40,
+      "cat": "kid",
+      "kind": "weekly"
+    },
+    "kln-ingles": {
+      "xp": 40,
+      "cat": "kid",
+      "kind": "weekly"
+    },
+    "kln-valores": {
+      "xp": 35,
+      "cat": "kid",
+      "kind": "weekly"
+    },
+    "kln-musica": {
+      "xp": 35,
+      "cat": "kid",
+      "kind": "weekly"
+    },
+    "kln-preguntas": {
+      "xp": 35,
+      "cat": "kid",
+      "kind": "weekly"
+    },
+    "kln-geo": {
+      "xp": 35,
+      "cat": "kid",
+      "kind": "weekly"
+    },
+    "kln-natura": {
+      "xp": 35,
+      "cat": "kid",
+      "kind": "weekly"
+    },
+    "kln-arte": {
+      "xp": 35,
+      "cat": "kid",
+      "kind": "weekly"
+    },
+    "kfn-parque": {
+      "xp": 40,
+      "cat": "kid",
+      "kind": "weekly"
+    },
+    "kfn-bici": {
+      "xp": 40,
+      "cat": "kid",
+      "kind": "weekly"
+    },
+    "kfn-mesa": {
+      "xp": 35,
+      "cat": "kid",
+      "kind": "weekly"
+    },
+    "kfn-pelota": {
+      "xp": 35,
+      "cat": "kid",
+      "kind": "weekly"
+    },
+    "kfn-nadar": {
+      "xp": 40,
+      "cat": "kid",
+      "kind": "weekly"
+    },
+    "kfn-manualidad": {
+      "xp": 35,
+      "cat": "kid",
+      "kind": "weekly"
+    },
+    "kfn-cocina": {
+      "xp": 40,
+      "cat": "kid",
+      "kind": "weekly"
+    },
+    "kfn-carrera": {
+      "xp": 35,
+      "cat": "kid",
+      "kind": "weekly"
+    },
+    "kfn-baile": {
+      "xp": 30,
+      "cat": "kid",
+      "kind": "weekly"
+    },
+    "kfn-escena": {
+      "xp": 35,
+      "cat": "kid",
+      "kind": "weekly"
+    },
+    "cpw-cita": {
+      "xp": 50,
+      "cat": "cpl",
+      "kind": "weekly"
+    },
+    "cpw-habla": {
+      "xp": 40,
+      "cat": "cpl",
+      "kind": "weekly"
+    },
+    "cpw-camina": {
+      "xp": 35,
+      "cat": "cpl",
+      "kind": "weekly"
+    },
+    "cpw-cumbre": {
+      "xp": 45,
+      "cat": "cpl",
+      "kind": "weekly"
+    },
+    "cpw-equipo": {
+      "xp": 30,
+      "cat": "cpl",
+      "kind": "weekly"
+    },
+    "cpw-nopant": {
+      "xp": 45,
+      "cat": "cpl",
+      "kind": "weekly"
+    },
+    "cgo-presu": {
+      "xp": 150,
+      "cat": "cpl",
+      "kind": "one"
+    },
+    "cgo-vision": {
+      "xp": 150,
+      "cat": "cpl",
+      "kind": "one"
+    },
+    "cgo-ahorro": {
+      "xp": 300,
+      "cat": "cpl",
+      "kind": "one"
+    },
+    "cgo-extra": {
+      "xp": 350,
+      "cat": "cpl",
+      "kind": "one"
+    },
+    "cgo-plan": {
+      "xp": 200,
+      "cat": "cpl",
+      "kind": "one"
+    },
+    "cgo-viaje": {
+      "xp": 200,
+      "cat": "cpl",
+      "kind": "one"
+    },
+    "cgo-ritual": {
+      "xp": 250,
+      "cat": "cpl",
+      "kind": "one"
+    },
+    "reto1": {
+      "xp": 45,
+      "cat": "eq",
+      "kind": "daily"
+    },
+    "reto2": {
+      "xp": 45,
+      "cat": "eq",
+      "kind": "daily"
+    },
+    "reto3": {
+      "xp": 40,
+      "cat": "eq",
+      "kind": "daily"
+    },
+    "reto4": {
+      "xp": 35,
+      "cat": "eq",
+      "kind": "daily"
+    },
+    "reto5": {
+      "xp": 35,
+      "cat": "eq",
+      "kind": "daily"
+    },
+    "reto6": {
+      "xp": 45,
+      "cat": "eq",
+      "kind": "daily"
+    },
+    "reto7": {
+      "xp": 40,
+      "cat": "eq",
+      "kind": "daily"
+    },
+    "reto8": {
+      "xp": 40,
+      "cat": "eq",
+      "kind": "daily"
+    },
+    "reto9": {
+      "xp": 40,
+      "cat": "eq",
+      "kind": "daily"
+    },
+    "reto10": {
+      "xp": 40,
+      "cat": "eq",
+      "kind": "daily"
+    },
+    "reto11": {
+      "xp": 35,
+      "cat": "eq",
+      "kind": "daily"
+    },
+    "reto12": {
+      "xp": 45,
+      "cat": "eq",
+      "kind": "daily"
+    },
+    "reto13": {
+      "xp": 35,
+      "cat": "eq",
+      "kind": "daily"
+    },
+    "reto14": {
+      "xp": 40,
+      "cat": "eq",
+      "kind": "daily"
+    },
+    "reto15": {
+      "xp": 35,
+      "cat": "eq",
+      "kind": "daily"
+    },
+    "reto16": {
+      "xp": 35,
+      "cat": "eq",
+      "kind": "daily"
+    },
+    "reto17": {
+      "xp": 40,
+      "cat": "eq",
+      "kind": "daily"
+    },
+    "reto18": {
+      "xp": 45,
+      "cat": "eq",
+      "kind": "daily"
+    },
+    "reto19": {
+      "xp": 40,
+      "cat": "eq",
+      "kind": "daily"
+    },
+    "reto20": {
+      "xp": 50,
+      "cat": "eq",
+      "kind": "daily"
+    },
+    "reto21": {
+      "xp": 40,
+      "cat": "eq",
+      "kind": "daily"
+    },
+    "reto22": {
+      "xp": 35,
+      "cat": "eq",
+      "kind": "daily"
+    },
+    "pwk-ley": {
+      "xp": 45,
+      "cat": "pow",
+      "kind": "weekly"
+    },
+    "pwk-pres": {
+      "xp": 35,
+      "cat": "pow",
+      "kind": "weekly"
+    },
+    "pwk-img": {
+      "xp": 35,
+      "cat": "pow",
+      "kind": "weekly"
+    },
+    "pwk-habla": {
+      "xp": 40,
+      "cat": "pow",
+      "kind": "weekly"
+    },
+    "pwk-jugada": {
+      "xp": 40,
+      "cat": "pow",
+      "kind": "weekly"
+    },
+    "pwk-oferta": {
+      "xp": 45,
+      "cat": "pow",
+      "kind": "weekly"
+    },
+    "pow-48": {
+      "xp": 350,
+      "cat": "pow",
+      "kind": "one"
+    },
+    "pow-3m": {
+      "xp": 250,
+      "cat": "pow",
+      "kind": "one"
+    },
+    "pow-silen": {
+      "xp": 200,
+      "cat": "pow",
+      "kind": "one"
+    },
+    "pow-ropa": {
+      "xp": 200,
+      "cat": "pow",
+      "kind": "one"
+    },
+    "pow-marca": {
+      "xp": 250,
+      "cat": "pow",
+      "kind": "one"
+    },
+    "pow-oferta": {
+      "xp": 350,
+      "cat": "pow",
+      "kind": "one"
+    },
+    "pow-cli": {
+      "xp": 450,
+      "cat": "pow",
+      "kind": "one"
+    },
+    "pow-video": {
+      "xp": 250,
+      "cat": "pow",
+      "kind": "one"
+    },
+    "pow-pitch": {
+      "xp": 200,
+      "cat": "pow",
+      "kind": "one"
+    },
+    "pow-net": {
+      "xp": 250,
+      "cat": "pow",
+      "kind": "one"
+    },
+    "pow-neg": {
+      "xp": 350,
+      "cat": "pow",
+      "kind": "one"
+    },
+    "pow-rutina": {
+      "xp": 350,
+      "cat": "pow",
+      "kind": "one"
+    },
+    "pow-blind": {
+      "xp": 250,
+      "cat": "pow",
+      "kind": "one"
+    },
+    "pow-mentor": {
+      "xp": 200,
+      "cat": "pow",
+      "kind": "one"
+    },
+    "men-ep": {
+      "xp": 40,
+      "cat": "men",
+      "kind": "weekly"
+    },
+    "men-fig": {
+      "xp": 45,
+      "cat": "men",
+      "kind": "weekly"
+    },
+    "men-clase": {
+      "xp": 35,
+      "cat": "men",
+      "kind": "weekly"
+    },
+    "men-app": {
+      "xp": 40,
+      "cat": "men",
+      "kind": "weekly"
+    },
+    "men-comp": {
+      "xp": 35,
+      "cat": "men",
+      "kind": "weekly"
+    },
+    "men-ng": {
+      "xp": 200,
+      "cat": "men",
+      "kind": "one"
+    },
+    "men-kozy": {
+      "xp": 200,
+      "cat": "men",
+      "kind": "one"
+    },
+    "men-silver": {
+      "xp": 220,
+      "cat": "men",
+      "kind": "one"
+    },
+    "men-marr": {
+      "xp": 180,
+      "cat": "men",
+      "kind": "one"
+    },
+    "men-patil": {
+      "xp": 200,
+      "cat": "men",
+      "kind": "one"
+    },
+    "men-godin": {
+      "xp": 220,
+      "cat": "men",
+      "kind": "one"
+    },
+    "men-vayner": {
+      "xp": 200,
+      "cat": "men",
+      "kind": "one"
+    },
+    "men-ogilvy": {
+      "xp": 200,
+      "cat": "men",
+      "kind": "one"
+    },
+    "men-cial": {
+      "xp": 220,
+      "cat": "men",
+      "kind": "one"
+    },
+    "men-naval": {
+      "xp": 250,
+      "cat": "men",
+      "kind": "one"
+    },
+    "men-munger": {
+      "xp": 250,
+      "cat": "men",
+      "kind": "one"
+    },
+    "men-buffett": {
+      "xp": 250,
+      "cat": "men",
+      "kind": "one"
+    },
+    "men-dalio": {
+      "xp": 220,
+      "cat": "men",
+      "kind": "one"
+    },
+    "men-housel": {
+      "xp": 220,
+      "cat": "men",
+      "kind": "one"
+    },
+    "men-aurelio": {
+      "xp": 220,
+      "cat": "men",
+      "kind": "one"
+    },
+    "men-seneca": {
+      "xp": 200,
+      "cat": "men",
+      "kind": "one"
+    },
+    "men-tzu": {
+      "xp": 200,
+      "cat": "men",
+      "kind": "one"
+    },
+    "men-carnegie": {
+      "xp": 200,
+      "cat": "men",
+      "kind": "one"
+    },
+    "men-frankl": {
+      "xp": 250,
+      "cat": "men",
+      "kind": "one"
+    },
+    "men-clear": {
+      "xp": 200,
+      "cat": "men",
+      "kind": "one"
+    },
+    "men-pods": {
+      "xp": 200,
+      "cat": "men",
+      "kind": "one"
+    },
+    "men-10h": {
+      "xp": 400,
+      "cat": "men",
+      "kind": "one"
+    },
+    "pln-piscina": {
+      "xp": 45,
+      "cat": "plan",
+      "kind": "weekly"
+    },
+    "pln-playa": {
+      "xp": 50,
+      "cat": "plan",
+      "kind": "weekly"
+    },
+    "pln-parque": {
+      "xp": 40,
+      "cat": "plan",
+      "kind": "weekly"
+    },
+    "pln-cafe": {
+      "xp": 40,
+      "cat": "plan",
+      "kind": "weekly"
+    },
+    "pln-comer": {
+      "xp": 40,
+      "cat": "plan",
+      "kind": "weekly"
+    },
+    "pln-cocinar": {
+      "xp": 45,
+      "cat": "plan",
+      "kind": "weekly"
+    },
+    "pln-cine": {
+      "xp": 35,
+      "cat": "plan",
+      "kind": "weekly"
+    },
+    "pln-caminar": {
+      "xp": 35,
+      "cat": "plan",
+      "kind": "weekly"
+    },
+    "pln-juegos": {
+      "xp": 35,
+      "cat": "plan",
+      "kind": "weekly"
+    },
+    "pln-helado": {
+      "xp": 30,
+      "cat": "plan",
+      "kind": "weekly"
+    },
+    "phit-viaje": {
+      "xp": 300,
+      "cat": "plan",
+      "kind": "one"
+    },
+    "phit-celebrar": {
+      "xp": 150,
+      "cat": "plan",
+      "kind": "one"
+    },
+    "phit-tradicion": {
+      "xp": 250,
+      "cat": "plan",
+      "kind": "one"
+    },
+    "phit-dia": {
+      "xp": 300,
+      "cat": "plan",
+      "kind": "one"
+    },
+    "phit-foto": {
+      "xp": 150,
+      "cat": "plan",
+      "kind": "one"
+    },
+    "phit-anfitrion": {
+      "xp": 200,
+      "cat": "plan",
+      "kind": "one"
+    },
+    "phit-aventura": {
+      "xp": 250,
+      "cat": "plan",
+      "kind": "one"
+    },
+    "phit-ritual": {
+      "xp": 300,
+      "cat": "plan",
+      "kind": "one"
+    },
+    "ord-cama": {
+      "xp": 15,
+      "cat": "orden",
+      "kind": "daily"
+    },
+    "ord-cuarto": {
+      "xp": 15,
+      "cat": "orden",
+      "kind": "daily"
+    },
+    "ord-zapatos": {
+      "xp": 10,
+      "cat": "orden",
+      "kind": "daily"
+    },
+    "ord-ropa": {
+      "xp": 15,
+      "cat": "orden",
+      "kind": "daily"
+    },
+    "ord-platos": {
+      "xp": 15,
+      "cat": "orden",
+      "kind": "daily"
+    },
+    "ord-escritorio": {
+      "xp": 15,
+      "cat": "orden",
+      "kind": "daily"
+    },
+    "ord-basura": {
+      "xp": 10,
+      "cat": "orden",
+      "kind": "daily"
+    },
+    "ord-planear": {
+      "xp": 10,
+      "cat": "orden",
+      "kind": "daily"
+    },
+    "orw-limpieza": {
+      "xp": 50,
+      "cat": "orden",
+      "kind": "weekly"
+    },
+    "orw-closet": {
+      "xp": 40,
+      "cat": "orden",
+      "kind": "weekly"
+    },
+    "orw-declutter": {
+      "xp": 30,
+      "cat": "orden",
+      "kind": "weekly"
+    },
+    "orw-compras": {
+      "xp": 35,
+      "cat": "orden",
+      "kind": "weekly"
+    },
+    "orw-papeles": {
+      "xp": 35,
+      "cat": "orden",
+      "kind": "weekly"
+    },
+    "orw-digital": {
+      "xp": 35,
+      "cat": "orden",
+      "kind": "weekly"
+    },
+    "orw-ropa-sem": {
+      "xp": 40,
+      "cat": "orden",
+      "kind": "weekly"
+    },
+    "orw-mant": {
+      "xp": 35,
+      "cat": "orden",
+      "kind": "weekly"
+    },
+    "ohit-declutter": {
+      "xp": 250,
+      "cat": "orden",
+      "kind": "one"
+    },
+    "ohit-donar": {
+      "xp": 150,
+      "cat": "orden",
+      "kind": "one"
+    },
+    "ohit-oficina": {
+      "xp": 250,
+      "cat": "orden",
+      "kind": "one"
+    },
+    "ohit-rutina": {
+      "xp": 400,
+      "cat": "orden",
+      "kind": "one"
+    },
+    "ohit-cocina": {
+      "xp": 200,
+      "cat": "orden",
+      "kind": "one"
+    },
+    "ohit-organizar": {
+      "xp": 200,
+      "cat": "orden",
+      "kind": "one"
+    },
+    "ohit-hogar": {
+      "xp": 250,
+      "cat": "orden",
+      "kind": "one"
+    },
+    "ohit-minimal": {
+      "xp": 300,
+      "cat": "orden",
+      "kind": "one"
+    }
+  },
+  "bosses": {
+    "cronos": 600,
+    "atenea": 600,
+    "hermes": 600,
+    "hestia": 600,
+    "pluto": 600,
+    "zeus": 1000,
+    "hades": 500,
+    "apolo": 500,
+    "prometeo": 500,
+    "vida_temis": 400,
+    "vida_demeter": 400,
+    "vida_eros": 400,
+    "vida_ares": 400,
+    "vida_metis": 400,
+    "vida_dioniso": 400,
+    "vida_hefesto": 400
+  },
+  "sagas": [
+    {
+      "id": "video",
+      "split": {
+        "kid": 0.6,
+        "pow": 0.4
+      },
+      "chapters": [
+        {
+          "id": "video-1",
+          "xp": 200
+        },
+        {
+          "id": "video-2",
+          "xp": 220
+        },
+        {
+          "id": "video-3",
+          "xp": 240
+        },
+        {
+          "id": "video-4",
+          "xp": 240
+        },
+        {
+          "id": "video-5",
+          "xp": 260
+        }
+      ]
+    },
+    {
+      "id": "roblox",
+      "split": {
+        "kid": 0.75,
+        "pow": 0.25
+      },
+      "chapters": [
+        {
+          "id": "roblox-1",
+          "xp": 240
+        },
+        {
+          "id": "roblox-2",
+          "xp": 240
+        },
+        {
+          "id": "roblox-3",
+          "xp": 240
+        },
+        {
+          "id": "roblox-4",
+          "xp": 240
+        },
+        {
+          "id": "roblox-5",
+          "xp": 280
+        },
+        {
+          "id": "roblox-6",
+          "xp": 240
+        },
+        {
+          "id": "roblox-7",
+          "xp": 240
+        }
+      ]
+    }
+  ],
+  "sagaWeeklyXp": 150,
+  "odeLadder": [
+    {
+      "xp": 0
+    },
+    {
+      "xp": 88
+    },
+    {
+      "xp": 295
+    },
+    {
+      "xp": 599
+    },
+    {
+      "xp": 991
+    },
+    {
+      "xp": 1465
+    },
+    {
+      "xp": 2015
+    },
+    {
+      "xp": 2639
+    },
+    {
+      "xp": 3334
+    },
+    {
+      "xp": 4097
+    },
+    {
+      "xp": 4926
+    },
+    {
+      "xp": 5820
+    },
+    {
+      "xp": 6777
+    },
+    {
+      "xp": 7796
+    },
+    {
+      "xp": 8876
+    },
+    {
+      "xp": 10015
+    },
+    {
+      "xp": 11213
+    },
+    {
+      "xp": 12468
+    },
+    {
+      "xp": 13779
+    },
+    {
+      "xp": 15147
+    },
+    {
+      "xp": 16569
+    },
+    {
+      "xp": 18046
+    },
+    {
+      "xp": 19577
+    },
+    {
+      "xp": 21160
+    },
+    {
+      "xp": 22796
+    },
+    {
+      "xp": 24484
+    },
+    {
+      "xp": 26224
+    },
+    {
+      "xp": 28014
+    },
+    {
+      "xp": 29855
+    },
+    {
+      "xp": 31746
+    },
+    {
+      "xp": 33687
+    },
+    {
+      "xp": 35676
+    },
+    {
+      "xp": 37714
+    },
+    {
+      "xp": 39801
+    },
+    {
+      "xp": 41936
+    },
+    {
+      "xp": 44118
+    },
+    {
+      "xp": 46347
+    },
+    {
+      "xp": 48624
+    },
+    {
+      "xp": 50947
+    },
+    {
+      "xp": 53316
+    },
+    {
+      "xp": 55732
+    },
+    {
+      "xp": 58193
+    },
+    {
+      "xp": 60699
+    },
+    {
+      "xp": 63251
+    },
+    {
+      "xp": 65847
+    },
+    {
+      "xp": 68489
+    },
+    {
+      "xp": 71174
+    },
+    {
+      "xp": 73904
+    },
+    {
+      "xp": 76678
+    },
+    {
+      "xp": 79495
+    },
+    {
+      "xp": 82356
+    },
+    {
+      "xp": 85260
+    },
+    {
+      "xp": 88207
+    },
+    {
+      "xp": 91197
+    },
+    {
+      "xp": 94229
+    },
+    {
+      "xp": 97304
+    },
+    {
+      "xp": 100421
+    },
+    {
+      "xp": 103580
+    },
+    {
+      "xp": 106781
+    },
+    {
+      "xp": 110024
+    },
+    {
+      "xp": 113308
+    },
+    {
+      "xp": 116633
+    },
+    {
+      "xp": 120000
+    }
+  ],
+  "counters": {
+    "campaign": 74,
+    "daily": 168,
+    "weekly": 8,
+    "jobs": 30,
+    "puente": 32,
+    "achievements": 58,
+    "capital": 101,
+    "vida": 192,
+    "bosses": 16,
+    "sagas": 2
+  }
+}

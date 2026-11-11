@@ -1,0 +1,9 @@
+node_modules/
+*.log
+.DS_Store
+
+# PROHIBIDO commitear el progreso real del usuario.
+# El fixture sintético vive en fixtures/ y está explícitamente exceptuado.
+odea-progreso-*.json
+*progreso-real*
+!fixtures/odea-progreso-sintetico.json
