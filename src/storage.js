@@ -14,6 +14,7 @@
  */
 import { derive, deriveStreak, localDateKey, sourcesFromMigrated } from "./derive.js";
 import {
+  MAX_PLAY_VERSION,
   MIGRATION_SCHEMA_VERSION,
   ODEA2_BUNDLE_FORMAT,
   deepEqual,
@@ -376,6 +377,18 @@ export function applyGameplayMutation(storage, catalog, mutation, opts = {}) {
     return rejected(
       "SAVE_NOT_ACTIVE",
       `La importación está en estado "${state}"; no es un save activo.`,
+      { bundle }
+    );
+  }
+
+  /* Fail-closed por versión: un `play` más nuevo que este cliente deja el save
+     en solo lectura/exportación. Nunca se sobrescribe lo que no se entiende. */
+  const playVersion = bundle.play && Number(bundle.play.version);
+  if (Number.isInteger(playVersion) && playVersion > MAX_PLAY_VERSION) {
+    return rejected(
+      "BUNDLE_TOO_NEW",
+      `La sección de juego es v${playVersion} y este cliente entiende hasta v${MAX_PLAY_VERSION}: ` +
+        "solo lectura y exportación.",
       { bundle }
     );
   }

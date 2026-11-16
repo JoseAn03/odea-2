@@ -22,7 +22,7 @@
 
 export const MIGRATION_SCHEMA_VERSION = 1;
 export const ODEA2_BUNDLE_FORMAT = "odea2_bundle_v1";
-export const ODEA2_APP_VERSION = "0.9.0-fase3";
+export const ODEA2_APP_VERSION = "0.11.0-fase3";
 
 /** Secciones internas del bundle único (decisión D1 de Fase 0). */
 export const BUNDLE_SECTIONS = ["core", "worlds", "legacy"];
@@ -33,7 +33,32 @@ export const BUNDLE_SECTIONS = ["core", "worlds", "legacy"];
  * válido y la sección se crea perezosamente en la primera escritura.
  */
 export const PLAY_SECTION = "play";
-export const PLAY_VERSION = 1;
+
+/**
+ * Versión de la sección aditiva.
+ *
+ *   1 → registros sin recompensa: la derivación relee el catálogo vigente.
+ *   2 → R1: cada completación nueva CONGELA `reward` (xp y monedas) y la
+ *       `rulesVersion` usada al escribir. Un cambio futuro del catálogo ya no
+ *       reinterpreta el historial.
+ *
+ * Se aceptan bundles v1 (compatibilidad) y v2. Un `play.version` MAYOR que
+ * esta constante deja el bundle en solo lectura/exportación: un cliente viejo
+ * nunca debe sobrescribir datos que no entiende.
+ */
+export const PLAY_VERSION = 2;
+
+/**
+ * Versión de reglas con la que se congeló una recompensa.
+ *
+ * Sube cuando cambia CÓMO se calcula una recompensa (no cuando cambia un valor
+ * del catálogo). El registro guarda la versión usada, así una regla futura no
+ * reescribe lo ya reconocido.
+ */
+export const RULES_VERSION = 1;
+
+/** Máxima versión de `play` que este cliente sabe leer y escribir. */
+export const MAX_PLAY_VERSION = PLAY_VERSION;
 
 /** Estados posibles de una importación. `aborted` nunca se escribe como save. */
 export const IMPORT_STATES = ["active", "quarantine", "aborted"];
