@@ -144,7 +144,7 @@ function openDistrict(id) {
     center: () => {
       if (city) city.focusDistrict(id);
     },
-    completeMission: (missionId) => completeMission(missionId),
+    completeMission: (missionId, system) => completeMission(missionId, system),
     checkin: () => checkin()
   });
   els.sheet.hidden = false;
@@ -188,12 +188,12 @@ function gameplayDate() {
   return { at: now.toISOString(), date: localDateKey(now) };
 }
 
-function completeMission(missionId) {
+function completeMission(missionId, system = "hub") {
   if (!storage || !catalog) return;
   return applyGameplayMutationLocked(
     storage,
     catalog,
-    { type: "mission.complete", system: "hub", missionId },
+    { type: "mission.complete", system, missionId },
     gameplayDate()
   ).then((result) =>
     afterGameplay(result, `Misión ${missionId} completada.`, "Esa misión ya estaba completada.")

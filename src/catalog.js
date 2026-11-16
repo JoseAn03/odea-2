@@ -99,3 +99,32 @@ export function systemOfMap(map) {
   }
   return null;
 }
+
+/**
+ * Lista TODAS las misiones de un sistema jugable, en orden estable de mapa y
+ * clave. Devuelve `{ id, map, xp, cls, entry }`.
+ *
+ * No conoce completaciones: eso lo agrega `src/gameplay.js`. Vida mezcla
+ * `one`, `daily` y `weekly` en el mismo mapa, así que `cls` sale de cada
+ * entrada y nunca se asume una frecuencia.
+ */
+export function missionsOf(catalog, system) {
+  if (!PHASE3_SYSTEMS.includes(system)) return [];
+  const out = [];
+  for (const map of SYSTEM_MAPS[system] || []) {
+    const entryMap = mapOf(catalog, map);
+    if (!entryMap) continue;
+    for (const id of Object.keys(entryMap)) {
+      const entry = entryMap[id];
+      const numeric = typeof entry === "object" && entry !== null ? Number(entry.xp) : Number(entry);
+      out.push({
+        id,
+        map,
+        xp: Number.isFinite(numeric) ? numeric : 0,
+        cls: missionClassOf(entry),
+        entry
+      });
+    }
+  }
+  return out;
+}

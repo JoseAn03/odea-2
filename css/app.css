@@ -877,6 +877,43 @@ body.no-city #city-canvas { display: none; }
   font-weight: 700;
 }
 
+/* Grupos plegables de misiones (Empleo por mapa, Vida por frecuencia). */
+.sheet-group-details {
+  margin: 10px 0 0;
+  padding: 0 10px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: rgba(18, 8, 31, 0.45);
+}
+.sheet-group-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 2px;
+  cursor: pointer;
+  list-style: none;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(243, 236, 255, 0.82);
+}
+.sheet-group-summary::-webkit-details-marker { display: none; }
+.sheet-group-summary::after {
+  content: "▾";
+  font-size: 0.8rem;
+  transition: transform 0.15s ease;
+}
+.sheet-group-details[open] > .sheet-group-summary { color: var(--cyan); }
+.sheet-group-details[open] > .sheet-group-summary::after { transform: rotate(180deg); }
+.sheet-group-summary:hover { color: var(--text); }
+.sheet-group-summary:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
 .sheet-row {
   display: flex;
   align-items: flex-start;

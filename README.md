@@ -1,10 +1,11 @@
 # ODEA 2 — Costa Neón
 
-**Fase 3: la ciudad 2D cenital y el Hub jugable sobre tu progreso real.**
+**Fase 3: la ciudad 2D cenital y el Hub, Empleo y Vida jugables sobre tu progreso real.**
 La ciudad se ve, se recorre y muestra el estado real de cada sistema importado
-desde ODEA 1. El **Hub** ya se juega desde la hoja del distrito (ruta del día,
-check-in, completaciones idempotentes y racha derivada); el resto de distritos
-sigue en **solo lectura** hasta las próximas fases.
+desde ODEA 1. El **Hub** (ruta del día, check-in y racha), **Empleo** (trabajos,
+B2B y puente) y **Vida** (diarias, semanales y únicas) ya se juegan desde la hoja
+del distrito con completaciones idempotentes; el resto de distritos sigue en
+**solo lectura** hasta las próximas fases.
 
 No hay frameworks ni assets externos: toda la ciudad se dibuja por código con
 Canvas 2D, sobre la paleta oficial (`#12081F`, `#FF2E93`, `#00E5FF`, `#FF8A3D`).
@@ -16,8 +17,8 @@ Canvas 2D, sobre la paleta oficial (`#12081F`, `#FF2E93`, `#00E5FF`, `#FF8A3D`).
 | **Fase 0** | ✅ completa | Especificación de la migración (36 campos + 11 claves), decisiones D1–D5, código de validación y 33 tests. |
 | **Fase 1** | ✅ completa | PWA instalable, importación con validación/cuarentena/aborto, respaldo y restauración. |
 | **Fase 2** | ✅ completa | Ciudad 2D cenital con HUD, distritos y paneles de datos reales. Sin misiones. |
-| **Fase 3** | ✅ Hub implementado | Hub (tutorial + bucle diario) jugable sobre la ciudad: sección `play`, escritura única por `applyGameplayMutation`, ruta del día, idempotencia y racha derivada. Empleo y Vida siguen de solo lectura. |
-| Fase 4+ | pendiente | Resto de distritos jugables (Empleo, Vida). |
+| **Fase 3** | ✅ completa | Hub, Empleo y Vida jugables: sección `play`, escritura única por `applyGameplayMutation`, ruta del día, idempotencia por frecuencia real y racha derivada. El resto de distritos sigue de solo lectura. |
+| Fase 4+ | pendiente | Resto de distritos (Academia, Capital, Tesoro, Garaje, Sagas, Anomalía). |
 
 ## Correr la app en local
 
@@ -44,7 +45,7 @@ Sin save, la ciudad se muestra atenuada y la pantalla de importación de la
 Fase 1 queda al frente. No hay datos de ejemplo: el progreso siempre es el real.
 
 La app funciona sin conexión después de la primera carga (service worker
-`odea2-v0.5.0-fase3`). El catálogo de juego se sirve con estrategia
+`odea2-v0.6.0-fase3`). El catálogo de juego se sirve con estrategia
 *network-first* y cae a la caché si no hay red.
 
 ## Correr los tests
@@ -53,7 +54,7 @@ La app funciona sin conexión después de la primera carga (service worker
 npm test
 ```
 
-**101 tests** (Node ≥ 20):
+**111 tests** (Node ≥ 20):
 
 - **33 de Fase 0**: no-pérdida, paridad de los 10 componentes de XP, monedas,
   `eventRL`/`farm`/`canje`, cuarentena, aborto, reimportación, huella, ida y
@@ -79,6 +80,11 @@ npm test
 - **6 de navegación**: los 4 destinos en orden, ids y etiquetas únicos, la barra
   solo con save activo, un id desconocido cae en Ciudad y cerrar vuelve siempre
   a Ciudad.
+- **10 de dominios (Empleo y Vida)**: inventario completo (80 y 192 misiones),
+  frecuencia real por misión (Vida: 49 diarias, 60 semanales, 83 únicas), una
+  diaria vuelve a estar pendiente mañana, una semanal cambia de periodo, una
+  única queda hecha para siempre, escritura por la ruta única y sin colisiones
+  entre sistemas.
 
 ## La ciudad: distritos y mapeo cerrado
 
@@ -182,7 +188,7 @@ Todo ocurre en el dispositivo. Nada se envía a ningún servidor.
 ```
 index.html              cascarón: canvas, HUD, barra de destinos, chips, hoja, overlay y toasts
 manifest.webmanifest    PWA (ODEA 2 — Costa Neón)
-sw.js                   service worker versionado (odea2-v0.5.0-fase3)
+sw.js                   service worker versionado (odea2-v0.6.0-fase3)
 css/app.css             tema neón + capa de ciudad (HUD, hoja, overlay, toasts)
 js/app.js               orquestador: ciudad, HUD, importación, watchers
 js/city/                layout, world, cámara, renderer, entrada y motor rAF
@@ -224,11 +230,11 @@ capa que escribe el save es `src/storage.js`, a través de `js/importer.js`.
 | Backups | **Fase 1, implementada**: rotación a los últimos 3 respaldos de save; el backup del origen nunca se rota. |
 | Multi-pestaña | **Fase 2 + Fase 3**: listener del evento `storage` para avisar y recargar el estado. **Exclusión de escritura con Web Locks** (`applyGameplayMutationLocked`): la mutación entera corre bajo un lock exclusivo de origen. Fallback a CAS (`CONCURRENT_CHANGE`) en navegadores sin Web Locks, informado como `locked: false`. |
 | GitHub Pages | Publicado desde `main` tras verificación externa. Las Fases 2 y 3 se mergearon en cadena (#5 → #4 → #3) y se publicaron tras 88/88 tests y `npm run check:write-path` en un clon limpio. |
-| Solo lectura | **Fase 2**: la ciudad, el HUD y los paneles leen el save y derivan con `src/derive.js`. **Fase 3**: el Hub escribe únicamente por `applyGameplayMutation` (`src/storage.js`). |
+| Solo lectura | **Fase 2**: la ciudad, el HUD y los paneles leen el save y derivan con `src/derive.js`. **Fase 3**: Hub, Empleo y Vida escriben únicamente por `applyGameplayMutation` (`src/storage.js`); los demás distritos siguen de lectura. |
 | Navegación | **Fase 3, implementada**: barra de cuatro destinos (Ciudad · Hoy · Personaje · Menú) definida en `js/tabs.js`. «Hoy» es un acceso directo al Hub, no una pantalla con lógica duplicada; los 9 distritos viven dentro de Ciudad. Sin save no hay barra. Registrada como F3-5 en `RISK_LIST.md`. |
-| Gameplay | **Fase 3, Hub implementado**: ruta del día derivada, completaciones idempotentes, check-in y racha derivada. Empleo y Vida siguen el mismo contrato de escritura. |
+| Gameplay | **Fase 3, completa**: ruta del día derivada, completaciones idempotentes, check-in y racha derivada en el Hub. Empleo y Vida juegan por el mismo contrato, con la frecuencia REAL de cada misión: diaria, semanal o única. Empleo son 80 misiones de una sola vez; Vida mezcla 49 diarias, 60 semanales y 83 únicas en el mismo mapa. |
 
-### Fase 3 (Hub implementado y publicado)
+### Fase 3 (Hub, Empleo y Vida implementados y publicados)
 
 Registrada en `RISK_LIST.md` §3.2 y especificada en `docs/FASE3_SPEC.md`.
 
@@ -236,9 +242,18 @@ Registrada en `RISK_LIST.md` §3.2 y especificada en `docs/FASE3_SPEC.md`.
   se expande a una vista completa del sistema sobre la ciudad, que queda visible
   y atenuada detrás. Un solo mundo continuo: al cerrar, se vuelve al mapa en el
   mismo lugar (cámara y selección preservadas).
-- **Orden**: primero **El Hub** (tutorial y bucle diario: ruta del día,
-  check-in, racha) para probar la escritura de punta a punta; después **Empleo**
-  y **Vida**. Los demás distritos siguen de solo lectura hasta la Fase 4.
+- **Orden**: primero **El Hub** (tutorial y bucle diario), que probó la escritura
+  de punta a punta; después **Empleo** y **Vida**. Los demás distritos siguen de
+  solo lectura hasta la Fase 4.
+- **Frecuencia real**: la clave de idempotencia sale de la clase de cada misión,
+  no del sistema. En Vida conviven diarias (`id@fecha`), semanales
+  (`id@semana ISO`) y únicas (`id`), así que una diaria vuelve a estar pendiente
+  mañana mientras una única queda hecha para siempre.
+- **Presentación**: Empleo agrupa por mapa (Trabajos, B2B, Puente) y Vida por
+  frecuencia. Cada grupo es un `<details>` nativo: con 192 misiones, volcarlas
+  todas abiertas convertiría la hoja en una pared de botones donde es fácil
+  completar por error algo que no hiciste. Solo se listan las pendientes; las
+  completadas se resumen en el conteo.
 - **Escritura**: todo pasa por `applyGameplayMutation` (`src/storage.js`), con
   backup exacto verificado y rotación de los últimos 3. XP y monedas siempre
   derivados (nunca se editan totales); validación fail-closed; completaciones
