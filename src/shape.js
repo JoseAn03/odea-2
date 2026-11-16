@@ -27,6 +27,14 @@ export const ODEA2_APP_VERSION = "0.3.0-fase2";
 /** Secciones internas del bundle único (decisión D1 de Fase 0). */
 export const BUNDLE_SECTIONS = ["core", "worlds", "legacy"];
 
+/**
+ * Sección ADITIVA de gameplay (Fase 3, decisión aprobada 2026-11-15).
+ * No entra en BUNDLE_SECTIONS: un bundle migrado sin `play` sigue siendo
+ * válido y la sección se crea perezosamente en la primera escritura.
+ */
+export const PLAY_SECTION = "play";
+export const PLAY_VERSION = 1;
+
 /** Estados posibles de una importación. `aborted` nunca se escribe como save. */
 export const IMPORT_STATES = ["active", "quarantine", "aborted"];
 

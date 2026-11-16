@@ -7,7 +7,7 @@
  * (nivel máximo), no se calcula porcentaje.
  */
 
-import { derive, sourcesFromMigrated, odeLevelFor } from "../src/derive.js";
+import { derive, deriveStreak, sourcesFromMigrated, odeLevelFor } from "../src/derive.js";
 
 function clamp01(n) {
   return Math.max(0, Math.min(1, n));
@@ -22,7 +22,7 @@ export function referenceDateOf(bundle2) {
 }
 
 export function deriveBundle(bundle2, catalog) {
-  return derive(sourcesFromMigrated(bundle2), catalog, referenceDateOf(bundle2));
+  return derive(sourcesFromMigrated(bundle2, catalog), catalog, referenceDateOf(bundle2));
 }
 
 /**
@@ -32,6 +32,7 @@ export function deriveBundle(bundle2, catalog) {
 export function buildHud(bundle2, catalog) {
   const derived = deriveBundle(bundle2, catalog);
   const identity = (bundle2.core && bundle2.core.identity) || {};
+  const streak = deriveStreak(bundle2);
   const ladder = Array.isArray(catalog.odeLadder) ? catalog.odeLadder : [];
   const odeLevel = odeLevelFor(derived.totalXP, catalog);
 
@@ -58,7 +59,8 @@ export function buildHud(bundle2, catalog) {
       atMax: nextXp === null
     },
     coins: { earned: derived.coins.earned, spent: derived.coins.spent, balance: derived.coins.balance },
-    streak: Number(identity.streak) || 0,
+    streak: streak.streak,
+    streakDate: streak.streakDate,
     fullDays: derived.meta.fullDays,
     xpBreakdown: derived.xpBreakdown
   };

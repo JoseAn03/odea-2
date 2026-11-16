@@ -9,14 +9,17 @@
  *  - avisar de una versión nueva del SW y reaccionar a cambios de otra pestaña.
  *
  * La capa visual es SOLO LECTURA: el único módulo que escribe el save es
- * src/storage.js, a través de js/importer.js. Acá nunca se llama a saveOdea2.
+ * src/storage.js, a través de js/importer.js. Las misiones del Hub usan la
+ * ruta ÚNICA `applyGameplayMutation`; acá nunca se llama a saveOdea2.
  */
 import { APP_VERSION } from "./version.js";
 import { loadCatalog } from "./catalog.js";
 import { getStorage } from "./browser-storage.js";
+import { localDateKey } from "../src/derive.js";
 import * as ui from "./ui.js";
 import { buildWorld } from "./city/world.js";
 import { createCityView } from "./city/engine.js";
+import { createViewSession } from "./city/view-session.js";
 import { buildHud } from "./hud.js";
 import { buildDistrictPanel } from "./district-figures.js";
 import { renderHud, renderChips, renderSheet } from "./hud-ui.js";
@@ -33,7 +36,8 @@ import {
   acceptQuarantine,
   rejectQuarantine,
   resetAndReimport,
-  restoreBundle
+  restoreBundle,
+  applyGameplayMutation
 } from "./importer.js";
 
 const MAX_FILE_BYTES = 25 * 1024 * 1024;
@@ -63,6 +67,8 @@ let storageWatcher = null;
 let overlayOpen = false;
 let autoOpened = false;
 let sheetOpen = false;
+let sheetDistrictId = null;
+let viewSession = null;
 let flash = null;
 let lastOdea1 = null;
 let fileInput = null;
@@ -103,6 +109,7 @@ function initCity() {
       world,
       onSelectDistrict: openDistrict
     });
+    viewSession = createViewSession(city.camera);
   } catch (error) {
     document.body.classList.add("no-city");
     if (els.canvas) els.canvas.hidden = true;
@@ -114,17 +121,23 @@ function openDistrict(id) {
   const panel = buildDistrictPanel(id, bundle, catalog);
   if (!panel) return;
 
-  if (sheetOpen) closeSheet();
+  /* Snapshot en memoria de sesión: se conserva el de la PRIMERA apertura. */
+  if (viewSession) viewSession.capture();
+  hideSheet();
+
   renderSheet(els.sheet, panel, {
     close: closeSheet,
     center: () => {
       if (city) city.focusDistrict(id);
-    }
+    },
+    completeMission: (missionId) => completeMission(missionId),
+    checkin: () => checkin()
   });
   els.sheet.hidden = false;
   els.backdrop.hidden = false;
   document.body.classList.add("sheet-open");
   sheetOpen = true;
+  sheetDistrictId = id;
 
   if (city) {
     city.selectDistrict(id);
@@ -135,13 +148,61 @@ function openDistrict(id) {
   if (close) close.focus({ preventScroll: true });
 }
 
-function closeSheet() {
-  if (!sheetOpen) return;
+function hideSheet() {
   els.sheet.hidden = true;
   els.backdrop.hidden = true;
   document.body.classList.remove("sheet-open");
   sheetOpen = false;
+  sheetDistrictId = null;
   if (city) city.clearSelection();
+}
+
+function closeSheet() {
+  if (!sheetOpen) return;
+  hideSheet();
+  /* Restauración exacta de la cámara previa a la primera apertura (§5). */
+  if (viewSession) viewSession.restore();
+}
+
+/* ------------------------------ gameplay Hub ------------------------------ */
+
+function gameplayDate() {
+  const now = new Date();
+  return { at: now.toISOString(), date: localDateKey(now) };
+}
+
+function completeMission(missionId) {
+  if (!storage || !catalog) return;
+  const result = applyGameplayMutation(
+    storage,
+    catalog,
+    { type: "mission.complete", system: "hub", missionId },
+    gameplayDate()
+  );
+  afterGameplay(result, `Misión ${missionId} completada.`, "Esa misión ya estaba completada.");
+}
+
+function checkin() {
+  if (!storage || !catalog) return;
+  const result = applyGameplayMutation(storage, catalog, { type: "hub.checkin" }, gameplayDate());
+  afterGameplay(result, "Día registrado. Racha actualizada.", "El día ya estaba registrado.");
+}
+
+function afterGameplay(result, okMessage, duplicateMessage) {
+  if (result.status === "rejected") {
+    if (toasts) {
+      toasts.show(`No se pudo guardar: ${result.error.code}`, { tone: "error" });
+    }
+    return;
+  }
+  if (result.status === "duplicate") {
+    if (toasts) toasts.show(duplicateMessage, { tone: "info" });
+    refresh();
+    return;
+  }
+  if (toasts) toasts.show(okMessage, { tone: "ok" });
+  refresh();
+  if (sheetOpen && sheetDistrictId) openDistrict(sheetDistrictId);
 }
 
 /* -------------------------------- overlay -------------------------------- */

@@ -861,6 +861,68 @@ body.no-city #city-canvas { display: none; }
   color: var(--muted);
 }
 
+/* ------------------------- misiones del Hub (Fase 3) ---------------------- */
+
+.sheet-play {
+  display: grid;
+  gap: 12px;
+  padding: 4px 0 2px;
+}
+
+.sheet-missions {
+  display: grid;
+  gap: 6px;
+}
+
+.sheet-mission {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(12, 7, 24, 0.45);
+}
+
+.sheet-mission.is-done {
+  opacity: 0.72;
+}
+
+.sheet-mission-info {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.sheet-mission-id {
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+}
+
+.sheet-mission-done {
+  flex: none;
+  color: var(--accent, #ff2e93);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.sheet-mission-btn,
+.sheet-checkin-btn {
+  flex: none;
+  min-width: 104px;
+}
+
+.sheet-checkin {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
 .sheet-footnote {
   margin: 16px 0 0;
   padding: 10px 12px;

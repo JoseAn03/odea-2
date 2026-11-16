@@ -163,7 +163,7 @@ js/browser-storage.js   adaptador de localStorage
 src/                    lógica de migración/validación de Fase 0 (reutilizada)
 data/xp-catalog.json    catálogo estático de juego (sin progreso de usuario)
 fixtures/               bundle sintético (36 campos + 11 claves, valores falsos)
-tests/                  Fase 0 + Fase 1 + Fase 2
+tests/                  Fase 0 + Fase 1 + Fase 2 + Fase 3
 ```
 
 `js/` no reimplementa la validación: importa `src/shape.js`, `src/migrate.js`,
@@ -177,6 +177,7 @@ capa que escribe el save es `src/storage.js`, a través de `js/importer.js`.
 | `MIGRATION_SPEC.md` | Mapa de los 36 campos + 11 claves, decisiones D1–D5 y contrato de validación. |
 | `SCHEMA_ODEA2_V1.md` | Schema `odea2_bundle_v1` con secciones `core` / `worlds` / `legacy`. |
 | `RISK_LIST.md` | Campos en riesgo, decisiones cerradas/abiertas, versionado y caché PWA. |
+| `docs/FASE3_SPEC.md` | Spec de Fase 3: sección `play`, función única de escritura, ruta del día, racha derivada y cámara. Revisión del orquestador aprobada con precisiones (2026-11-15); **implementación del Hub en curso** en la rama `fase3-hub`. |
 
 ## Decisiones registradas
 
@@ -186,12 +187,12 @@ capa que escribe el save es `src/storage.js`, a través de `js/importer.js`.
 | Backups | **Fase 1, implementada**: rotación a los últimos 3 respaldos de save; el backup del origen nunca se rota. |
 | Multi-pestaña | **Fase 2, implementada**: listener del evento `storage`; si otra pestaña escribió el save, aviso y recarga del estado desde `localStorage`. Sin bloqueos distribuidos. |
 | GitHub Pages | La Fase 1 se publicó tras verificación externa. La Fase 2 **no** toca Pages ni se mergea hasta la revisión del PR. |
-| Solo lectura | **Fase 2**: la ciudad, el HUD y los paneles leen el save y derivan con `src/derive.js`; no mutan `odea2_bundle_v1`. |
+| Solo lectura | **Fase 2**: la ciudad, el HUD y los paneles leen el save y derivan con `src/derive.js`. **Fase 3**: el Hub escribe únicamente por `applyGameplayMutation` (`src/storage.js`). |
+| Gameplay | **Fase 3, Hub implementado**: ruta del día derivada, completaciones idempotentes, check-in y racha derivada. Empleo y Vida siguen el mismo contrato de escritura. |
 
-### Fase 3 (decidida, no iniciada)
+### Fase 3 (Hub implementado en `fase3-hub`)
 
-Registrada en `RISK_LIST.md` §3.2. **No se implementa hasta que la Fase 2 esté
-verificada.**
+Registrada en `RISK_LIST.md` §3.2 y especificada en `docs/FASE3_SPEC.md`.
 
 - **Navegación**: las misiones se abren **desde la hoja del distrito**; la hoja
   se expande a una vista completa del sistema sobre la ciudad, que queda visible
@@ -200,11 +201,13 @@ verificada.**
 - **Orden**: primero **El Hub** (tutorial y bucle diario: ruta del día,
   check-in, racha) para probar la escritura de punta a punta; después **Empleo**
   y **Vida**. Los demás distritos siguen de solo lectura hasta la Fase 4.
-- **Escritura**: todo pasa por `src/storage.js`, con backup previo y rotación de
-  los últimos 3. XP y monedas siempre derivados (nunca se editan totales);
-  validación fail-closed; completaciones idempotentes por ID; cada tipo de
-  escritura con test de ida y vuelta y test negativo. La cuarentena sigue siendo
-  exclusiva de importación/restauración.
+- **Escritura**: todo pasa por `applyGameplayMutation` (`src/storage.js`), con
+  backup exacto verificado y rotación de los últimos 3. XP y monedas siempre
+  derivados (nunca se editan totales); validación fail-closed; completaciones
+  idempotentes por ID; racha derivada de fechas, nunca un contador. La cuarentena
+  sigue siendo exclusiva de importación/restauración.
+- **Cumplimiento**: `npm run check:write-path` falla si otro módulo toca la clave
+  del save.
 
 ## Datos personales
 

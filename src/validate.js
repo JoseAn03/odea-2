@@ -20,11 +20,15 @@ import {
   CRITICAL_FIELDS,
   CRITICAL_TARGETS,
   BUNDLE_SECTIONS,
+  PLAY_VERSION,
   fingerprintOf,
   deepEqual,
   getPath
 } from "./shape.js";
-import { derive, sourcesFromLegacy, sourcesFromMigrated } from "./derive.js";
+import { derive, deriveStreak, isoWeekKey, sourcesFromLegacy, sourcesFromMigrated } from "./derive.js";
+import { missionOf, PHASE3_SYSTEMS } from "./catalog.js";
+import { occurrenceKey } from "./gameplay.js";
+import { loadOdea2 } from "./storage.js";
 import { legacyProjection, XP_COMPONENTS } from "./migrate.js";
 
 function check(id, ok, detail) {
@@ -33,6 +37,53 @@ function check(id, ok, detail) {
 
 function has(obj, key) {
   return obj != null && Object.prototype.hasOwnProperty.call(obj, key);
+}
+
+/**
+ * Base estructural COMPARTIDA entre la validación de migración y la de
+ * gameplay (Fase 3). Devuelve los mismos tres checks con los mismos ids:
+ * `FORMAT`, `SECTIONS`, `IMPORT_STATE`.
+ *
+ * `validateMigration` los inserta en su orden histórico (0 y 8); la validación
+ * de gameplay los usa como base. Así los dos validadores no se desincronizan.
+ */
+export function bundleBaseChecks(bundle2) {
+  const format = check(
+    "FORMAT",
+    bundle2 && bundle2._format === "odea2_bundle_v1" && bundle2.schemaVersion === 1,
+    `format=${bundle2 && bundle2._format} schemaVersion=${bundle2 && bundle2.schemaVersion}`
+  );
+
+  const sectionOk =
+    bundle2 &&
+    BUNDLE_SECTIONS.every((s) => bundle2[s] && typeof bundle2[s] === "object") &&
+    !has(bundle2, "save");
+  const sections = check(
+    "SECTIONS",
+    sectionOk,
+    sectionOk
+      ? `secciones ${BUNDLE_SECTIONS.join("/")} presentes; sin \`save\` en la raíz`
+      : `secciones incompletas o \`save\` en la raíz: ${bundle2 ? Object.keys(bundle2).join(", ") : "sin bundle"}`
+  );
+
+  const imp = (bundle2 && bundle2.import) || {};
+  const failed = Array.isArray(imp.failedChecks) ? imp.failedChecks : [];
+  const accepted = Array.isArray(imp.acceptedChecks) ? imp.acceptedChecks : [];
+  const acceptedCovers = failed.every((f) => accepted.includes(f));
+  const stateOk = imp.state === "active" && acceptedCovers && imp.reconciled === true;
+  const importState = check(
+    "IMPORT_STATE",
+    stateOk,
+    imp.state === "quarantine"
+      ? `EN CUARENTENA: pendiente de aceptación explícita. Checks fallidos: ${failed.join(", ") || "—"}`
+      : imp.state === "aborted"
+        ? `ABORTADA: los totales no reconcilian (${failed.join(", ") || "sin detalle"})`
+        : !imp.reconciled
+          ? "totales sin reconciliar"
+          : `state=${imp.state} accepted=${accepted.length}`
+  );
+
+  return { format, sections, importState, imp };
 }
 
 /**
@@ -47,25 +98,10 @@ export function validateMigration(legacy, migrated, catalog, opts = {}) {
   const srcSave = (legacy && legacy.save) || {};
   const srcKeys = (legacy && legacy.keys) || {};
   const ref = opts.referenceDate || (migrated && migrated.migration && migrated.migration.referenceDate) || srcSave.lastDailyDate;
+  const base = bundleBaseChecks(migrated);
 
   /* ---------- 0. Formato y secciones ---------- */
-  checks.push(check(
-    "FORMAT",
-    migrated && migrated._format === "odea2_bundle_v1" && migrated.schemaVersion === 1,
-    `format=${migrated && migrated._format} schemaVersion=${migrated && migrated.schemaVersion}`
-  ));
-
-  const sectionOk =
-    migrated &&
-    BUNDLE_SECTIONS.every((s) => migrated[s] && typeof migrated[s] === "object") &&
-    !has(migrated, "save");
-  checks.push(check(
-    "SECTIONS",
-    sectionOk,
-    sectionOk
-      ? `secciones ${BUNDLE_SECTIONS.join("/")} presentes; sin \`save\` en la raíz`
-      : `secciones incompletas o \`save\` en la raíz: ${migrated ? Object.keys(migrated).join(", ") : "sin bundle"}`
-  ));
+  checks.push(base.format, base.sections);
 
   /* ---------- 1. Cobertura de los 36 campos ---------- */
   const decisions = (migrated.migration && migrated.migration.decisions) || [];
@@ -263,22 +299,8 @@ export function validateMigration(legacy, migrated, catalog, opts = {}) {
   ));
 
   /* ---------- 8. Estado de importación ---------- */
-  const imp = migrated.import || {};
-  const failed = Array.isArray(imp.failedChecks) ? imp.failedChecks : [];
-  const accepted = Array.isArray(imp.acceptedChecks) ? imp.acceptedChecks : [];
-  const acceptedCovers = failed.every((f) => accepted.includes(f));
-  const stateOk = imp.state === "active" && acceptedCovers && imp.reconciled === true;
-  checks.push(check(
-    "IMPORT_STATE",
-    stateOk,
-    imp.state === "quarantine"
-      ? `EN CUARENTENA: pendiente de aceptación explícita. Checks fallidos: ${failed.join(", ") || "—"}`
-      : imp.state === "aborted"
-        ? `ABORTADA: los totales no reconcilian (${failed.join(", ") || "sin detalle"})`
-        : !imp.reconciled
-          ? "totales sin reconciliar"
-          : `state=${imp.state} accepted=${accepted.length}`
-  ));
+  const imp = base.imp;
+  checks.push(base.importState);
 
   /* ---------- 9. Backup previo a la escritura ---------- */
   if (opts.requireBackup) {
@@ -312,7 +334,7 @@ export function validateMigration(legacy, migrated, catalog, opts = {}) {
   return {
     ok: errors.length === 0,
     state: imp.state || null,
-    accepted: imp.state === "active" && accepted.length > 0,
+    accepted: imp.state === "active" && (imp.acceptedChecks || []).length > 0,
     checks,
     errors
   };
@@ -327,4 +349,189 @@ export function assertValidMigration(legacy, migrated, catalog, opts = {}) {
     throw err;
   }
   return report;
+}
+
+/* ========================================================================== */
+/* Fase 3 — validación de la sección aditiva de gameplay                      */
+/* ========================================================================== */
+
+function stripDerived(bundle2) {
+  const core = { ...((bundle2 && bundle2.core) || {}) };
+  delete core.derived;
+  return core;
+}
+
+function isDateKey(value) {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const [y, m, d] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(y, m - 1, d));
+  return date.getUTCFullYear() === y && date.getUTCMonth() === m - 1 && date.getUTCDate() === d;
+}
+
+/** Compara la parte migrada contra el bundle persistido anterior. */
+export function migratedUnchanged(draft, previous) {
+  if (!previous) return [check("MIGRATED_UNCHANGED", true, "sin bundle previo: no hay paridad que exigir")];
+  const sameCore = deepEqual(stripDerived(draft), stripDerived(previous));
+  const sameWorlds = deepEqual(draft.worlds, previous.worlds);
+  const sameLegacy = deepEqual(draft.legacy, previous.legacy);
+  const ok = sameCore && sameWorlds && sameLegacy;
+  return [
+    check(
+      ok ? "MIGRATED_UNCHANGED" : "IMMUTABLE_CHANGED",
+      ok,
+      ok ? "core (salvo derived), worlds y legacy intactos" : "la mutación tocó datos migrados"
+    )
+  ];
+}
+
+/** Capa aditiva: SOLO la forma y la coherencia de `play`. */
+export function validatePlaySection(bundle2, catalog) {
+  const checks = [];
+  const play = bundle2 && bundle2.play;
+
+  if (play == null) {
+    checks.push(check("PLAY_PRESENT", true, "sin sección play: bundle migrado válido"));
+    return checks;
+  }
+
+  const plain = typeof play === "object" && !Array.isArray(play);
+  checks.push(check("PLAY_SHAPE", plain, plain ? "play es un objeto plano" : "play no es un objeto plano"));
+  if (!plain) return checks;
+
+  checks.push(
+    check("PLAY_VERSION", play.version === PLAY_VERSION, `version=${play.version} esperada=${PLAY_VERSION}`)
+  );
+
+  const completions = play.completions;
+  const checkins = play.checkins;
+  checks.push(
+    check(
+      "PLAY_MAPS",
+      !!completions && typeof completions === "object" && !Array.isArray(completions) &&
+        !!checkins && typeof checkins === "object" && !Array.isArray(checkins),
+      "completions y checkins deben ser mapas"
+    )
+  );
+
+  const problems = [];
+  const seen = new Set();
+  for (const [key, record] of Object.entries(completions || {})) {
+    if (!record || typeof record !== "object") {
+      problems.push(`${key}: registro inválido`);
+      continue;
+    }
+    if (typeof record.missionId !== "string") problems.push(`${key}: missionId`);
+    if (!isDateKey(record.date)) problems.push(`${key}: date`);
+    if (typeof record.at !== "string" || Number.isNaN(Date.parse(record.at))) problems.push(`${key}: at`);
+    if (!PHASE3_SYSTEMS.includes(record.system)) problems.push(`${key}: system`);
+
+    const mission = missionOf(catalog, record.system, record.missionId);
+    if (!mission) {
+      problems.push(`${key}: missionId desconocido`);
+      continue;
+    }
+    const expected = occurrenceKey(record.missionId, mission.cls, record.date);
+    if (key !== expected) problems.push(`${key}: occurrenceKey esperada ${expected}`);
+    if (mission.cls === "one") {
+      if (record.period != null) problems.push(`${key}: misión única sin period`);
+    } else {
+      const expectedPeriod = mission.cls === "weekly" ? isoWeekKey(record.date) : record.date;
+      if (record.period !== expectedPeriod) problems.push(`${key}: period esperada ${expectedPeriod}`);
+    }
+
+    const occurrence = `${record.missionId}|${record.period || ""}`;
+    if (seen.has(occurrence)) problems.push(`${key}: ocurrencia duplicada`);
+    seen.add(occurrence);
+  }
+
+  for (const [date, record] of Object.entries(checkins || {})) {
+    if (!isDateKey(date)) problems.push(`checkin ${date}: fecha`);
+    if (!record || typeof record !== "object" || typeof record.at !== "string" || Number.isNaN(Date.parse(record.at))) {
+      problems.push(`checkin ${date}: at`);
+    }
+  }
+
+  checks.push(
+    check(
+      "PLAY_RECORDS",
+      problems.length === 0,
+      problems.length ? problems.join("; ") : `${Object.keys(completions || {}).length} completaciones, ${Object.keys(checkins || {}).length} check-ins`
+    )
+  );
+
+  return checks;
+}
+
+function derivedMatches(draft, catalog) {
+  const ref = draft.migration && draft.migration.referenceDate;
+  const d = derive(sourcesFromMigrated(draft, catalog), catalog, ref);
+  const streak = deriveStreak(draft);
+  const snapshot = (draft.core && draft.core.derived) || {};
+
+  const problems = [];
+  if (Number(snapshot.totalXP) !== Number(d.totalXP)) problems.push("totalXP");
+  if (!deepEqual(snapshot.xpBreakdown, d.xpBreakdown)) problems.push("xpBreakdown");
+  if (Number(snapshot.campaignLevel) !== Number(d.campaignLevel)) problems.push("campaignLevel");
+  if (Number(snapshot.odeLevel) !== Number(d.odeLevel)) problems.push("odeLevel");
+  if (Number(snapshot.streak) !== Number(streak.streak)) problems.push("streak");
+  if ((snapshot.streakDate || null) !== (streak.streakDate || null)) problems.push("streakDate");
+
+  return { ok: problems.length === 0, problems, derived: d, streak };
+}
+
+/**
+ * Validación de una escritura de gameplay. NO es un fork de `validateMigration`:
+ *   1. base estructural compartida (`bundleBaseChecks`),
+ *   2. validación runtime existente (`loadOdea2`: formato, save activo, drift),
+ *   3. capa aditiva (`validatePlaySection`),
+ *   4. parte migrada intacta (`migratedUnchanged`).
+ * Devuelve `{ ok, checks, errors, derived, streak }`.
+ */
+export function validatePlayState(draft, catalog, opts = {}) {
+  const checks = [];
+  const base = bundleBaseChecks(draft);
+  checks.push(base.format, base.sections, base.importState);
+
+  let runtimeOk = true;
+  let runtimeDetail = "loadOdea2 válido";
+  try {
+    loadOdea2(draft, catalog);
+  } catch (error) {
+    runtimeOk = false;
+    runtimeDetail = error.message;
+  }
+  checks.push(check("RUNTIME_LOAD", runtimeOk, runtimeDetail));
+
+  checks.push(...validatePlaySection(draft, catalog));
+
+  const derived = derivedMatches(draft, catalog);
+  checks.push(
+    check(
+      "DERIVED_MATCH",
+      derived.ok,
+      derived.ok ? `totalXP=${derived.derived.totalXP} streak=${derived.streak.streak}` : `desajuste en ${derived.problems.join(", ")}`
+    )
+  );
+
+  checks.push(...migratedUnchanged(draft, opts.previous));
+
+  const errors = checks.filter((c) => !c.ok).map((c) => `${c.id}: ${c.detail}`);
+  return {
+    ok: errors.length === 0,
+    checks,
+    errors,
+    derived: derived.derived,
+    streak: derived.streak
+  };
+}
+
+/** Traduce un reporte fallido de `validatePlayState` al código de error tipado. */
+export function playFailureCode(report) {
+  const failed = (report.checks || []).filter((c) => !c.ok).map((c) => c.id);
+  if (failed.includes("IMMUTABLE_CHANGED")) return "IMMUTABLE_CHANGED";
+  if (failed.includes("DERIVED_MATCH")) return "DERIVE_DRIFT";
+  if (failed.includes("RUNTIME_LOAD") && (report.errors || []).some((e) => /^RUNTIME_LOAD: XP_DRIFT/.test(e))) {
+    return "DERIVE_DRIFT";
+  }
+  return "SCHEMA_INVALID";
 }
