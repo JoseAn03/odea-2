@@ -55,6 +55,59 @@ export function isMissionDone(bundle2, missionId) {
 }
 
 /**
+ * Claves de ocurrencia que YA estaban completas en el progreso MIGRADO.
+ *
+ * Sin esto, un distrito ofrece como pendiente algo que ODEA 1 ya tenía hecho:
+ * el jugador lo "completa" y no gana nada, porque `derive` deduplica. El
+ * problema no es de XP —esa nunca se duplica— sino de honestidad de la UI y de
+ * no ensuciar `play.completions` con registros que no aportan.
+ *
+ * Devuelve el mismo espacio de claves que `occurrenceKey`, así que compara
+ * directo contra lo persistido.
+ */
+export function migratedKeys(bundle2, catalog, system, dateKey = localDateKey()) {
+  const core = (bundle2 && bundle2.core) || {};
+  const progress = core.progress || {};
+  const keys = new Set();
+  const add = (id, cls, date) => {
+    if (typeof id === "string" || typeof id === "number") {
+      keys.add(occurrenceKey(String(id), cls, date));
+    }
+  };
+
+  if (system === "hub") {
+    for (const id of progress.completedDaily || []) add(id, "one", dateKey);
+  }
+
+  if (system === "empleo") {
+    for (const id of progress.completedJobs || []) add(id, "one", dateKey);
+    for (const id of progress.completedB2b || []) add(id, "one", dateKey);
+    for (const id of progress.completedPuente || []) add(id, "one", dateKey);
+  }
+
+  if (system === "capital") {
+    const capital = core.capital || {};
+    for (const id of capital.done || []) add(id, "one", dateKey);
+    for (const id of capital.eng || []) add(id, "one", dateKey);
+    for (const id of capital.ai || []) add(id, "one", dateKey);
+  }
+
+  if (system === "vida") {
+    /* El log heredado es `id|YYYY-MM-DD`; la clase la decide el catálogo,
+       nunca la forma del log. */
+    for (const entry of core.vida && core.vida.log ? core.vida.log : []) {
+      const [id, date] = String(entry).split("|");
+      if (!id || !isValidDateKey(date)) continue;
+      const mission = missionOf(catalog, "vida", id);
+      if (!mission) continue;
+      add(id, mission.cls, date);
+    }
+  }
+
+  return keys;
+}
+
+/**
  * Ruta del día del Hub: 3 misiones derivadas de la fecha local.
  * `missions` incluye las ya completadas con su flag; `pending` es la ruta
  * jugable. No se guarda nada.
@@ -144,6 +197,11 @@ export function applyMutation(draft, mutation, catalog, { at, date } = {}) {
   if (play.completions[key]) {
     return { changed: false, duplicate: true, reason: "DUPLICATE", paths: [] };
   }
+  /* Ya venía completo de ODEA 1: no se registra de nuevo, porque `derive`
+     deduplica y el resultado sería un "aplicado" sin XP ganada. */
+  if (migratedKeys(draft, catalog, system, dateKey).has(key)) {
+    return { changed: false, duplicate: true, reason: "DUPLICATE", paths: [] };
+  }
 
   play.completions[key] = {
     missionId: mutation.missionId,
@@ -168,13 +226,15 @@ export function applyMutation(draft, mutation, catalog, { at, date } = {}) {
  */
 export function systemMissions(bundle2, catalog, system, dateKey = localDateKey()) {
   const play = playStateOf(bundle2);
+  const migrated = migratedKeys(bundle2, catalog, system, dateKey);
   const missions = missionsOf(catalog, system).map((mission) => {
     const key = occurrenceKey(mission.id, mission.cls, dateKey);
     return {
       ...mission,
       key,
       period: mission.cls === "one" ? null : mission.cls === "weekly" ? isoWeekKey(dateKey) : dateKey,
-      completed: Boolean(play.completions[key])
+      completed: migrated.has(key) || Boolean(play.completions[key]),
+      migrated: migrated.has(key)
     };
   });
 

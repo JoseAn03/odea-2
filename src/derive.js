@@ -192,7 +192,14 @@ export function sourcesFromMigrated(bundle2, catalog = null) {
       unlockedAch: clone(s.progress && s.progress.unlockedAch || [])
     },
     vida: { ...clone(s.vida || {}), log: union(s.vida && s.vida.log, extra.vida) },
-    capital: clone(s.capital || {}),
+    /* Capital: lo migrado y lo nuevo se unen con deduplicación, así que
+       completar algo que ODEA 1 ya tenía nunca suma XP dos veces. */
+    capital: {
+      ...clone(s.capital || {}),
+      done: union(s.capital && s.capital.done, extra.capital.done),
+      eng: union(s.capital && s.capital.eng, extra.capital.eng),
+      ai: union(s.capital && s.capital.ai, extra.capital.ai)
+    },
     gods: clone(s.gods || {}),
     focus: clone(s.focus || { log: [] }),
     diary: clone(s.diary || { log: [] }),
@@ -219,7 +226,15 @@ function union(base, extra) {
  * No muta el bundle: devuelve listas para unir en memoria.
  */
 function mergePlaySources(bundle2, catalog) {
-  const out = { daily: [], weekly: [], jobs: [], b2b: [], puente: [], vida: [] };
+  const out = {
+    daily: [],
+    weekly: [],
+    jobs: [],
+    b2b: [],
+    puente: [],
+    vida: [],
+    capital: { done: [], eng: [], ai: [] }
+  };
   const play = bundle2 && bundle2.play;
   if (!play || !play.completions) return out;
 
@@ -240,6 +255,13 @@ function mergePlaySources(bundle2, catalog) {
     }
     if (record.system === "vida") {
       out.vida.push(`${id}|${record.period || "once"}`);
+      continue;
+    }
+    if (record.system === "capital" && catalog && catalog.capital) {
+      /* El id decide el submódulo; nunca se asume cuál es. */
+      if (hasId(catalog.capital.done, id)) out.capital.done.push(id);
+      else if (hasId(catalog.capital.eng, id)) out.capital.eng.push(id);
+      else if (hasId(catalog.capital.ai, id)) out.capital.ai.push(id);
     }
   }
   return out;

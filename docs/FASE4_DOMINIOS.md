@@ -28,8 +28,8 @@ es activable o no.
 
 ## 1. Capital — La Torre
 
-**Veredicto: activable ya.** Es el único de los seis con catálogo completo y
-sin moneda propia. Se implementa con el mismo patrón que Empleo.
+**Veredicto: IMPLEMENTADO** (`0.8.0-fase3`). Tenía catálogo completo y ningún
+componente económico, y se resolvió con el patrón de Empleo.
 
 | Campo | Valor |
 |---|---|
@@ -50,12 +50,20 @@ directamente, que es exactamente lo que faltaba en Academia.
 
 **Trabajo requerido**
 
-1. Añadir `capital` a `SYSTEM_MAPS` y `PHASE3_SYSTEMS` (`src/catalog.js`).
-2. Sub-mapas anidados: `capital.done`, `capital.eng`, `capital.ai` — el
-   `SYSTEM_MAPS` actual solo conoce rutas de un nivel, así que `missionsOf` debe
-   aceptar la ruta anidada (ya soporta `capital.done` en `MISSION_MAPS`).
-3. Grupo de UI por submódulo: Ahorro, Inglés, IA.
-4. Tests de paridad: 101 misiones, ninguna duplicada, idempotencia `one`.
+1. Añadir `capital` a `SYSTEM_MAPS` y `PHASE3_SYSTEMS` (`src/catalog.js`). ✅
+2. Sub-mapas anidados: `capital.done`, `capital.eng`, `capital.ai`. ✅
+3. Enseñar Capital a `mergePlaySources` y `sourcesFromMigrated` para que las
+   completaciones nuevas sumen XP **sin duplicar** lo migrado (`union`). ✅
+4. Grupo de UI por submódulo: Ahorro, Inglés, IA. ✅
+5. Tests de paridad: 101 misiones, ninguna duplicada, idempotencia `one` y
+   no doble conteo del XP migrado. ✅
+
+**Hallazgo colateral (corregido):** al implementarlo apareció que Empleo, Hub y
+Vida ofrecían como pendientes misiones que ODEA 1 **ya tenía completas**. El XP
+nunca se duplicaba —`derive` deduplica— pero la UI mentía y se ensuciaba
+`play.completions` con registros inútiles. Se añadió `migratedKeys()` en
+`src/gameplay.js`, que traduce el progreso heredado al mismo espacio de claves
+de ocurrencia y hace que la UI y la mutación lo traten como duplicado.
 
 **Riesgo:** bajo. No toca saldo ni precios.
 
