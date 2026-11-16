@@ -177,7 +177,7 @@ capa que escribe el save es `src/storage.js`, a través de `js/importer.js`.
 | `MIGRATION_SPEC.md` | Mapa de los 36 campos + 11 claves, decisiones D1–D5 y contrato de validación. |
 | `SCHEMA_ODEA2_V1.md` | Schema `odea2_bundle_v1` con secciones `core` / `worlds` / `legacy`. |
 | `RISK_LIST.md` | Campos en riesgo, decisiones cerradas/abiertas, versionado y caché PWA. |
-| `docs/FASE3_SPEC.md` | Spec de Fase 3: sección `play`, función única de escritura, ruta del día y cámara. No implementada. |
+| `docs/FASE3_SPEC.md` | Spec de Fase 3: sección `play`, función única de escritura, ruta del día, racha derivada y cámara. Revisión del orquestador aprobada con precisiones (2026-11-15); no implementada. |
 
 ## Decisiones registradas
 
