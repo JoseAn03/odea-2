@@ -175,6 +175,37 @@ export function sourcesFromLegacy(bundle) {
   };
 }
 
+/* --- Academia -------------------------------------------------------------
+ * ODEA 1 no guarda un catálogo de actividades de Academia: guarda un mapa
+ * `hechas` y calcula el avance con una regla fija (odea.html, cálculo de
+ * `acPct`):
+ *
+ *     n = min(28, count(hechas))
+ *     si n >= 28 → n = 29
+ *     pct = round(n / 29 * 100)
+ *
+ * El 29 es el denominador REAL del juego, no una invención nuestra. Los ids y
+ * el XP de cada actividad viven en `assets/odea-academia.js`, que no forma
+ * parte del export: por eso Academia se muestra con paridad de avance pero
+ * sigue sin ser jugable.
+ */
+export const ACADEMIA_TOTAL = 29;
+
+export function academiaProgress(data) {
+  const hechas =
+    data && data.hechas && typeof data.hechas === "object" && !Array.isArray(data.hechas)
+      ? data.hechas
+      : {};
+  const count = Object.keys(hechas).length;
+  const effective = count >= 28 ? 29 : count;
+  return {
+    count,
+    total: ACADEMIA_TOTAL,
+    effective,
+    pct: Math.round((effective / ACADEMIA_TOTAL) * 100)
+  };
+}
+
 /* --- Normalización de fuentes (ODE A2 v1) --- */
 export function sourcesFromMigrated(bundle2, catalog = null) {
   const s = bundle2.core || {};

@@ -20,7 +20,7 @@ es activable o no.
 | **Capital** | La Torre | ✅ `capital.done` (40) · `capital.eng` (30) · `capital.ai` (31) | `core.capital.done/eng/ai` | **Bajo** | **Activable ya** |
 | Sagas | Mirador | ⚠️ `sagas` (2) · `bosses` (16) | `worlds.sagas`, `worlds.jefe` | Medio | Ficha profunda pendiente: el XP es compartido por capítulo |
 | Tesoro | El Mercado | ❌ | `worlds.tesoro` | **Alto** | No activar sin reglas de precio y tests de no duplicación |
-| Academia | Distrito IA | ❌ | `worlds.academia.hechas` | — | **Bloqueado**: falta catálogo |
+| Academia | Distrito IA | ❌ (live en `odea-academia.js`) | `worlds.academia.hechas` | — | Avance con paridad (29) · juego bloqueado |
 | Garaje | El Garaje | ❌ | `worlds.garaje` | — | **Bloqueado**: falta catálogo |
 | Anomalía | Rincón Anomalía | ❌ | `worlds.anomalia` | — | **Bloqueado**: el quiz es archivo, no progreso |
 
@@ -118,31 +118,55 @@ escribir tests de **no duplicación** y de **no doble cargo** antes de tocar la 
 
 ## 4. Academia — Distrito IA
 
-**Veredicto: bloqueado. No es el candidato simple que parecía.**
+**Veredicto: avance con paridad, juego bloqueado.** Ya no es «no sabemos nada»:
+con el fuente de ODEA 1 en mano se pudieron verificar tres cosas.
 
 | Campo | Valor |
 |---|---|
 | **Entradas** | `worlds.academia.data.hechas` (id → fecha), `rutasAvisadas` (array) |
-| **Catálogo** | ❌ **Ninguno** |
+| **Catálogo** | ❌ **Ninguno en el export** |
 | **Componente de XP** | ❌ Academia no aparece en `xpBreakdown` |
+| **Denominador real** | **29** (regla de ODEA 1, verificada) |
 | **Moneda propia** | No |
 
-**El hallazgo:** los ids del fixture (`ina-ia`, `li-vitrina`, `cv-final`) no
-existen en `campaign`, `daily`, `weekly`, `jobs`, `b2b`, `puente` ni `vida`.
-Tampoco hay un mapa `academia` en el catálogo.
+### Lo que se verificó contra `odea.html`
 
-**Salvedad honesta:** el fixture es **sintético**, así que sus ids no prueban
-nada sobre los datos reales. Lo que sí es un hecho es que **el catálogo no tiene
-un mapa de Academia**, y sin mapa no hay ids válidos.
+1. **El catálogo del repo está en sync.** Se re-ejecutó
+   `tools/extract-catalog.mjs` contra `odea.html` + `flujos_odea.js`
+   (v5.99) y el resultado es **idéntico** a `data/xp-catalog.json` salvo la
+   marca de tiempo y los hashes de `meta`. No hay misiones perdidas en los
+   mapas existentes.
 
-**Lo que hay que verificar** contra `odea.html` de ODEA 1:
-- ¿Las actividades de Academia son un reskin de los flujos de campaña (`fl*`)?
-  El `MIGRATION_SPEC.md` la describe como *«reskin, sin tocar lógica»*.
-- Si lo son, el catálogo es `campaign` (74) y el dominio se vuelve activable.
-- Si tienen ids propios, hay que extraerlos y ampliar el catálogo.
+2. **Academia no está en `odea.html`.** Se carga desde un asset externo:
+   `assets/odea-academia.js` y `assets/odea-academia.css`. Los ids y el XP de
+   cada actividad viven ahí, y ese archivo **no forma parte del export**.
 
-**Hasta entonces:** solo lectura, mostrando el inventario real de lo hecho con
-una explicación honesta. Nunca un contador falso ni misiones de relleno.
+3. **El denominador sí está en `odea.html`.** ODEA 1 calcula el avance así:
+   ```js
+   n = Math.min(28, count(hechas));
+   if (n >= 28) n = 29;
+   acPct = Math.round((n / 29) * 100);
+   ```
+
+### Lo que se implementó
+
+`academiaProgress()` en `src/derive.js` reproduce **exactamente** esa regla, y el
+panel de Distrito IA muestra `N de 29` con su porcentaje. Antes era un contador
+suelto sin denominador — justo lo que la guía prohíbe (pág. 29: los porcentajes
+solo se calculan cuando hay un denominador real). Ahora el denominador es una
+regla del juego, no una invención.
+
+### Lo que sigue bloqueado
+
+Registrar una actividad nueva exige validar su id contra un catálogo, y ese
+catálogo está en `odea-academia.js`. Sin él, `missionOf` no puede resolver nada
+y una completación se rechazaría con `UNKNOWN_MISSION`.
+
+**Para desbloquearlo hace falta `assets/odea-academia.js`.** Con ese archivo se
+extraen las 29 actividades, su XP y su equivalencia en `xpBreakdown`, y el
+dominio se vuelve activable igual que Capital.
+
+**Hasta entonces:** solo lectura, con avance fiel al original.
 
 ---
 
@@ -195,3 +219,8 @@ Tesoro.
 > Distrito IA por ser *«solo lectura por catálogo»*. La lectura del catálogo
 > muestra lo contrario: IA **no tiene** catálogo y no es activable. El candidato
 > real es Capital.
+>
+> **Actualización con el fuente de ODEA 1:** Capital quedó implementado, y de
+> Academia se recuperó lo que sí estaba en el fuente —su denominador real de
+> 29— así que su avance ya es fiel. Lo que falta para jugarla es
+> `assets/odea-academia.js`, un archivo aparte que el export no incluye.
