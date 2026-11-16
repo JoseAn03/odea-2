@@ -44,7 +44,7 @@ Sin save, la ciudad se muestra atenuada y la pantalla de importación de la
 Fase 1 queda al frente. No hay datos de ejemplo: el progreso siempre es el real.
 
 La app funciona sin conexión después de la primera carga (service worker
-`odea2-v0.4.0-fase3`). El catálogo de juego se sirve con estrategia
+`odea2-v0.5.0-fase3`). El catálogo de juego se sirve con estrategia
 *network-first* y cae a la caché si no hay red.
 
 ## Correr los tests
@@ -53,7 +53,7 @@ La app funciona sin conexión después de la primera carga (service worker
 npm test
 ```
 
-**94 tests** (Node ≥ 20):
+**101 tests** (Node ≥ 20):
 
 - **33 de Fase 0**: no-pérdida, paridad de los 10 componentes de XP, monedas,
   `eventRL`/`farm`/`canje`, cuarentena, aborto, reimportación, huella, ida y
@@ -67,7 +67,7 @@ npm test
   `src/derive.js`; crédito permanente = evento + farm; paneles con cifras del
   save; watchers de versión nueva y multi-pestaña con eventos simulados; la capa
   visual no escribe el bundle (byte a byte); versión de app/SW/paquete
-  sincronizada y aislamiento de caché por release.
+  sincronizada, aislamiento de caché por release y cobertura del `SHELL` del SW.
 - **25 de Fase 3**: `play` perezoso, forma migrada intacta, idempotencia por
   ocurrencia (`one`/`daily`/`weekly`), fail-closed de schema y de derivación,
   backup exacto byte a byte, cuota, concurrencia (CAS), ruta del día
@@ -76,6 +76,9 @@ npm test
   exclusivo, serializa dos mutaciones concurrentes (una aplica, otra duplica y
   solo la aplicada respalda), el fallback sin Web Locks informa `locked: false`
   y conserva la idempotencia, y un error libera el lock.
+- **6 de navegación**: los 4 destinos en orden, ids y etiquetas únicos, la barra
+  solo con save activo, un id desconocido cae en Ciudad y cerrar vuelve siempre
+  a Ciudad.
 
 ## La ciudad: distritos y mapeo cerrado
 
@@ -104,12 +107,31 @@ Notas de mapeo:
   real (`campaign`, `daily`, `weekly`, `jobs`, `b2b`, `puente`,
   `achievements`, `bosses`, `capital`, sagas). En el resto se muestran conteos.
 
+## Navegación: cuatro destinos
+
+Barra inferior fija con cuatro destinos (decisión F3-5). La barra queda siempre
+alcanzable: la hoja y el overlay se elevan por encima de ella, así se cambia de
+destino sin cerrar lo que está abierto.
+
+| Destino | Qué hace |
+|---|---|
+| **Ciudad** | El mapa. Aquí vive la fila de los 9 distritos. |
+| **Hoy** | Abre el Hub directamente: es un acceso directo, no una pantalla nueva con lógica diaria duplicada. |
+| **Personaje** | Nivel, XP por componente, racha y monedas. Solo lectura. |
+| **Menú** | Exportar respaldo, restaurar o importar archivo y versión de la app. |
+
+Sin save la barra no existe: la pantalla de importación de la Fase 1 sigue siendo
+la única entrada. Cerrar cualquier capa vuelve a Ciudad, y el foco regresa al
+control que la abrió.
+
 ## HUD e interacción
 
 - **HUD superior**: nombre, nivel de campaña, nivel ODEA, barra de XP con
   `XP actual / próximo umbral` según `odeLadder`, balance de monedas
-  (ganadas − gastadas), racha y accesos a «Respaldo» y «Mi progreso».
-- **Chips inferiores**: acceso directo a los 9 distritos.
+  (ganadas − gastadas) y racha. Sin acciones: exportar e importar viven en Menú
+  y el progreso detallado en Personaje.
+- **Fila de distritos**: acceso directo a los 9 distritos dentro de Ciudad, para
+  no depender de acertar un edificio del mapa.
 - **Panel de distrito**: hoja inferior en móvil (panel lateral en pantallas
   anchas) con descripción, cifras reales y la leyenda:
   «Las misiones de este distrito se juegan aquí a partir de la Fase 3».
@@ -141,10 +163,10 @@ Notas de mapeo:
 2. **Ver la ciudad y los paneles**: derivación con `src/derive.js` (sin lógica
    duplicada). Ningún módulo visual escribe el save; los tests lo verifican
    comparando el bundle byte a byte antes y después de abrir todos los paneles.
-3. **Exportar respaldo**: descarga el `odea2_bundle_v1` actual desde el HUD.
+3. **Exportar respaldo**: descarga el `odea2_bundle_v1` actual desde **Menú**.
 4. **Restaurar respaldo** (`odea2_bundle_v1`): ruta distinta de la migración,
    con backup automático del save actual y confirmación explícita. Vive en
-   «Mi progreso» junto al estado de la Fase 1.
+   **Menú** junto al estado de la Fase 1.
 
 ### Retención de respaldos
 
@@ -158,15 +180,16 @@ Todo ocurre en el dispositivo. Nada se envía a ningún servidor.
 ## Estructura
 
 ```
-index.html              cascarón: canvas, HUD, chips, hoja, overlay y toasts
+index.html              cascarón: canvas, HUD, barra de destinos, chips, hoja, overlay y toasts
 manifest.webmanifest    PWA (ODEA 2 — Costa Neón)
-sw.js                   service worker versionado (odea2-v0.4.0-fase3)
+sw.js                   service worker versionado (odea2-v0.5.0-fase3)
 css/app.css             tema neón + capa de ciudad (HUD, hoja, overlay, toasts)
 js/app.js               orquestador: ciudad, HUD, importación, watchers
 js/city/                layout, world, cámara, renderer, entrada y motor rAF
 js/districts.js         los 9 distritos, paleta y mapeo XP/claves → distrito
 js/hud.js               modelo del HUD derivado del save (sin DOM)
-js/hud-ui.js            HUD, chips y hoja de distrito (DOM)
+js/tabs.js              contrato de los 4 destinos (puro, sin DOM)
+js/hud-ui.js            HUD, barra de destinos, chips y hoja (DOM)
 js/district-figures.js  cifras reales de cada panel (sin DOM)
 js/toast.js             avisos efímeros y aviso de versión nueva
 js/update-watcher.js    versión nueva: aviso + SKIP_WAITING a pedido
@@ -202,6 +225,7 @@ capa que escribe el save es `src/storage.js`, a través de `js/importer.js`.
 | Multi-pestaña | **Fase 2 + Fase 3**: listener del evento `storage` para avisar y recargar el estado. **Exclusión de escritura con Web Locks** (`applyGameplayMutationLocked`): la mutación entera corre bajo un lock exclusivo de origen. Fallback a CAS (`CONCURRENT_CHANGE`) en navegadores sin Web Locks, informado como `locked: false`. |
 | GitHub Pages | Publicado desde `main` tras verificación externa. Las Fases 2 y 3 se mergearon en cadena (#5 → #4 → #3) y se publicaron tras 88/88 tests y `npm run check:write-path` en un clon limpio. |
 | Solo lectura | **Fase 2**: la ciudad, el HUD y los paneles leen el save y derivan con `src/derive.js`. **Fase 3**: el Hub escribe únicamente por `applyGameplayMutation` (`src/storage.js`). |
+| Navegación | **Fase 3, implementada**: barra de cuatro destinos (Ciudad · Hoy · Personaje · Menú) definida en `js/tabs.js`. «Hoy» es un acceso directo al Hub, no una pantalla con lógica duplicada; los 9 distritos viven dentro de Ciudad. Sin save no hay barra. Registrada como F3-5 en `RISK_LIST.md`. |
 | Gameplay | **Fase 3, Hub implementado**: ruta del día derivada, completaciones idempotentes, check-in y racha derivada. Empleo y Vida siguen el mismo contrato de escritura. |
 
 ### Fase 3 (Hub implementado y publicado)

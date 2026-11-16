@@ -89,6 +89,54 @@ export function renderEmpty(root, actions) {
 }
 
 export function renderActive(root, bundle, actions, flash) {
+  root.replaceChildren(
+    characterCard(bundle, flash, actions),
+    notice(
+      "Este save vive en localStorage bajo la clave odea2_bundle_v1. Exportá un respaldo antes de probar una reimportación."
+    )
+  );
+}
+
+/**
+ * Pantalla «Personaje»: el mismo contenido que «Mi progreso», sin acciones.
+ * Exportar e importar viven en «Menú» para que cada destino tenga un propósito.
+ */
+export function renderCharacter(root, bundle, flash) {
+  root.replaceChildren(
+    characterCard(bundle, flash, null),
+    notice("Nivel, XP y racha son derivados del historial: no se editan a mano.")
+  );
+}
+
+/** Pantalla «Menú»: respaldo, importación y datos de la aplicación. */
+export function renderMenu(root, { version, actions } = {}) {
+  root.replaceChildren(
+    card(
+      h("h2", {}, "Respaldo y datos"),
+      h(
+        "p",
+        { class: "muted" },
+        "Exportá una copia fuera del teléfono antes de cualquier cambio grande. Restaurar un respaldo reemplaza el save actual y guarda uno previo."
+      ),
+      h(
+        "div",
+        { class: "btn-row" },
+        h("button", { class: "btn primary", onclick: () => actions.exportBackup() }, "Exportar respaldo"),
+        h("button", { class: "btn ghost", onclick: () => actions.pickFile() }, "Restaurar o importar archivo")
+      ),
+      h("h3", {}, "Aplicación"),
+      h(
+        "p",
+        { class: "muted small" },
+        `Versión ${version} · progreso local · sin servidor`
+      )
+    ),
+    notice("Nada se envía a ningún servidor. Las capturas y diagnósticos nunca incluyen tus datos personales.")
+  );
+}
+
+/** Tarjeta compartida por «Personaje» y «Mi progreso». Sin acciones si `actions` es null. */
+function characterCard(bundle, flash, actions) {
   const core = bundle.core || {};
   const identity = core.identity || {};
   const derived = core.derived || {};
@@ -111,8 +159,7 @@ export function renderActive(root, bundle, actions, flash) {
     )
   );
 
-  root.replaceChildren(
-    card(
+  return card(
       h(
         "div",
         { class: "player-head" },
@@ -145,16 +192,14 @@ export function renderActive(root, bundle, actions, flash) {
           `gastadas ${fmt(coins.spent)} · fecha de referencia ${referenceDate}`
       ),
       flash ? notice(flash, "ok") : null,
-      h(
-        "div",
-        { class: "btn-row" },
-        h("button", { class: "btn primary", onclick: () => actions.exportBackup() }, "Exportar respaldo"),
-        h("button", { class: "btn ghost", onclick: () => actions.pickFile() }, "Importar otro archivo")
-      )
-    ),
-    notice(
-      "Este save vive en localStorage bajo la clave odea2_bundle_v1. Exportá un respaldo antes de probar una reimportación."
-    )
+      actions
+        ? h(
+            "div",
+            { class: "btn-row" },
+            h("button", { class: "btn primary", onclick: () => actions.exportBackup() }, "Exportar respaldo"),
+            h("button", { class: "btn ghost", onclick: () => actions.pickFile() }, "Importar otro archivo")
+          )
+        : null
   );
 }
 

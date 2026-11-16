@@ -23,7 +23,15 @@ import { createCityView } from "./city/engine.js";
 import { createViewSession } from "./city/view-session.js";
 import { buildHud } from "./hud.js";
 import { buildDistrictPanel } from "./district-figures.js";
-import { renderHud, renderChips, renderSheet } from "./hud-ui.js";
+import { renderHud, renderChips, renderSheet, renderTabs } from "./hud-ui.js";
+import {
+  TAB_CHARACTER,
+  TAB_CITY,
+  TAB_MENU,
+  TAB_TODAY,
+  shouldShowTabbar,
+  resolveTab
+} from "./tabs.js";
 import { createToasts } from "./toast.js";
 import { createUpdateWatcher } from "./update-watcher.js";
 import { createStorageWatcher } from "./storage-watch.js";
@@ -52,6 +60,7 @@ const els = {
   floatingImport: document.getElementById("floating-import"),
   backdrop: document.getElementById("sheet-backdrop"),
   sheet: document.getElementById("sheet"),
+  tabbar: document.getElementById("tabbar"),
   overlay: document.getElementById("overlay"),
   overlayTitle: document.getElementById("overlay-title"),
   overlayContent: document.getElementById("overlay-content"),
@@ -66,6 +75,9 @@ let toasts = null;
 let updateWatcher = null;
 let storageWatcher = null;
 let overlayOpen = false;
+let overlayMode = null; /* "character" | "menu" | "flow" */
+let activeTab = TAB_CITY;
+let lastFocus = null;
 let autoOpened = false;
 let sheetOpen = false;
 let sheetDistrictId = null;
@@ -84,7 +96,7 @@ if (els.version) {
 const actions = {
   pickFile,
   exportBackup,
-  openProgress: () => openOverlay(),
+  openProgress: () => openCharacter(),
   acceptQuarantine: handleAcceptQuarantine,
   rejectQuarantine: handleRejectQuarantine,
   resetReimport: handleResetReimport,
@@ -124,7 +136,8 @@ function openDistrict(id) {
 
   /* Snapshot en memoria de sesión: se conserva el de la PRIMERA apertura. */
   if (viewSession) viewSession.capture();
-  hideSheet();
+  if (!sheetOpen) lastFocus = document.activeElement;
+  hideSheetRaw();
 
   renderSheet(els.sheet, panel, {
     close: closeSheet,
@@ -149,7 +162,8 @@ function openDistrict(id) {
   if (close) close.focus({ preventScroll: true });
 }
 
-function hideSheet() {
+/** Oculta la hoja sin tocar la pestaña activa ni el foco. */
+function hideSheetRaw() {
   els.sheet.hidden = true;
   els.backdrop.hidden = true;
   document.body.classList.remove("sheet-open");
@@ -160,9 +174,11 @@ function hideSheet() {
 
 function closeSheet() {
   if (!sheetOpen) return;
-  hideSheet();
+  hideSheetRaw();
   /* Restauración exacta de la cámara previa a la primera apertura (§5). */
   if (viewSession) viewSession.restore();
+  setTab(TAB_CITY);
+  restoreFocus();
 }
 
 /* ------------------------------ gameplay Hub ------------------------------ */
@@ -208,20 +224,133 @@ function afterGameplay(result, okMessage, duplicateMessage) {
   if (sheetOpen && sheetDistrictId) openDistrict(sheetDistrictId);
 }
 
+/* ------------------------------- navegación ------------------------------- */
+
+const FOCUSABLE =
+  'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+
+function focusablesIn(container) {
+  return Array.from(container.querySelectorAll(FOCUSABLE)).filter(
+    (node) => node.offsetParent !== null || node === document.activeElement
+  );
+}
+
+/** Mantiene el foco dentro de la capa superior mientras está abierta. */
+function trapTab(event, container) {
+  if (event.key !== "Tab" || !container) return;
+  const items = focusablesIn(container);
+  if (!items.length) {
+    event.preventDefault();
+    return;
+  }
+  const first = items[0];
+  const last = items[items.length - 1];
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+}
+
+/** Devuelve el foco al control que abrió la capa (guía, pág. 7). */
+function restoreFocus() {
+  const target = lastFocus;
+  lastFocus = null;
+  if (target && typeof target.focus === "function" && document.contains(target)) {
+    target.focus({ preventScroll: true });
+  }
+}
+
+function setTab(tab) {
+  activeTab = resolveTab(tab);
+  renderTabbar();
+}
+
+function renderTabbar() {
+  if (!els.tabbar) return;
+  els.tabbar.hidden = !shouldShowTabbar({ hasSave: Boolean(bundle) });
+  if (els.tabbar.hidden) return;
+  renderTabs(els.tabbar, { active: activeTab, onSelect: selectTab });
+}
+
+/** Destino seleccionado en la barra: abre la capa que le corresponde. */
+function selectTab(id) {
+  const tab = resolveTab(id);
+
+  if (tab === TAB_CITY) {
+    hideOverlayRaw();
+    hideSheetRaw();
+    if (viewSession) viewSession.restore();
+    setTab(TAB_CITY);
+    return;
+  }
+  if (!bundle) return;
+
+  if (tab === TAB_TODAY) {
+    /* «Hoy» es un acceso directo al Hub: no duplica la lógica diaria. */
+    hideOverlayRaw();
+    setTab(TAB_TODAY);
+    openDistrict("hub");
+    return;
+  }
+
+  hideSheetRaw();
+  /* Salir de la hoja por la barra también termina el recorrido del distrito. */
+  if (viewSession) viewSession.restore();
+  setTab(tab);
+  if (tab === TAB_CHARACTER) openCharacter();
+  else openMenu();
+}
+
 /* -------------------------------- overlay -------------------------------- */
 
-function openOverlay(title = null) {
+function showOverlay() {
+  if (!overlayOpen) lastFocus = document.activeElement;
   overlayOpen = true;
   els.overlay.hidden = false;
-  if (title) els.overlayTitle.textContent = title;
-  else if (bundle) els.overlayTitle.textContent = "Mi progreso";
   document.body.classList.add("overlay-open");
+  const first = focusablesIn(els.overlay)[0];
+  if (first) first.focus({ preventScroll: true });
+}
+
+/** Oculta el overlay sin tocar la pestaña activa ni el foco. */
+function hideOverlayRaw() {
+  overlayOpen = false;
+  overlayMode = null;
+  els.overlay.hidden = true;
+  document.body.classList.remove("overlay-open");
+}
+
+/** Pantalla «Personaje»: solo lectura del progreso. */
+function openCharacter() {
+  overlayMode = "character";
+  els.overlayTitle.textContent = "Personaje";
+  if (bundle) ui.renderCharacter(els.overlayContent, bundle);
+  showOverlay();
+}
+
+/** Pantalla «Menú»: respaldo, importación y versión. */
+function openMenu() {
+  overlayMode = "menu";
+  els.overlayTitle.textContent = "Menú";
+  ui.renderMenu(els.overlayContent, { version: APP_VERSION, actions });
+  showOverlay();
+}
+
+/** Pantallas de flujo (importar, cuarentena, restaurar, errores). */
+function openOverlay(title = null) {
+  overlayMode = "flow";
+  if (title) els.overlayTitle.textContent = title;
+  showOverlay();
 }
 
 function closeOverlay() {
-  overlayOpen = false;
-  els.overlay.hidden = true;
-  document.body.classList.remove("overlay-open");
+  if (!overlayOpen) return;
+  hideOverlayRaw();
+  setTab(TAB_CITY);
+  restoreFocus();
 }
 
 /* --------------------------------- estado --------------------------------- */
@@ -238,7 +367,7 @@ function refresh() {
       setCityActive(false);
       els.hud.hidden = true;
       els.chips.hidden = true;
-      openOverlay("Mi progreso");
+      openOverlay("Problema al cargar");
       ui.renderFatal(
         els.overlayContent,
         `El save guardado no pudo cargarse: ${error.message}`
@@ -255,18 +384,24 @@ function refresh() {
     renderHud(els.hud, hud, actions);
     els.hud.hidden = false;
     els.chips.hidden = false;
-    els.floatingImport.hidden = false;
-    els.floatingImport.textContent = "Mi progreso";
+    /* Con save, la barra de destinos reemplaza al botón flotante. */
+    els.floatingImport.hidden = true;
+    renderTabbar();
 
     if (city) {
       city.setPlayerVisible(true);
       city.setCredit(hud.xpBreakdown.evento + hud.xpBreakdown.farm);
     }
 
-    els.overlayTitle.textContent = "Mi progreso";
-    const message = flash;
-    flash = null;
-    ui.renderActive(els.overlayContent, bundle, actions, message);
+    /* El overlay solo se repinta si la pestaña abierta lo usa; las pantallas
+       de flujo (importar, cuarentena, errores) se gobiernan a sí mismas. */
+    if (overlayMode === "character") {
+      const message = flash;
+      flash = null;
+      ui.renderCharacter(els.overlayContent, bundle, message);
+    } else if (overlayMode === "menu") {
+      ui.renderMenu(els.overlayContent, { version: APP_VERSION, actions });
+    }
     return;
   }
 
@@ -280,6 +415,7 @@ function refresh() {
   els.chips.hidden = true;
   els.floatingImport.hidden = false;
   els.floatingImport.textContent = "Importar mi progreso";
+  renderTabbar();
   flash = null;
   closeSheet();
 
@@ -386,7 +522,7 @@ function handleImport(legacy) {
 
 function handleImportError(error, legacy) {
   if (error && error.code === "DUPLICATE_SOURCE") {
-    openOverlay("Mi progreso");
+    openOverlay("Ese bundle ya fue importado");
     ui.renderDuplicate(els.overlayContent, actions);
     return;
   }
@@ -567,14 +703,17 @@ async function boot() {
     els.backdrop.addEventListener("click", closeSheet);
   }
   if (els.floatingImport) {
-    els.floatingImport.addEventListener("click", () => {
-      openOverlay(bundle ? "Mi progreso" : "Importá tu progreso");
-    });
+    els.floatingImport.addEventListener("click", () => openOverlay("Importá tu progreso"));
   }
   window.addEventListener("keydown", (event) => {
-    if (event.key !== "Escape") return;
-    if (sheetOpen) closeSheet();
-    else if (overlayOpen) closeOverlay();
+    if (event.key === "Escape") {
+      if (sheetOpen) closeSheet();
+      else if (overlayOpen) closeOverlay();
+      return;
+    }
+    /* El foco no se escapa de la capa superior mientras esté abierta. */
+    if (sheetOpen) trapTab(event, els.sheet);
+    else if (overlayOpen) trapTab(event, els.overlay);
   });
 
   try {
