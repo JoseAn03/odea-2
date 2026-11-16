@@ -9,7 +9,7 @@
 import { deriveBundle } from "./hud.js";
 import { fmt, XP_LABELS } from "./format.js";
 import { getDistrict, KEY_HOME } from "./districts.js";
-import { deriveStreak } from "../src/derive.js";
+import { academiaProgress, deriveStreak } from "../src/derive.js";
 import { routeForDay, systemMissions } from "../src/gameplay.js";
 
 export const PANEL_FOOTNOTE =
@@ -133,6 +133,8 @@ function iaPanel(b) {
   const hechas = ac.hechas || {};
   const entries = Object.entries(hechas);
   const rutas = Array.isArray(ac.rutasAvisadas) ? ac.rutasAvisadas : [];
+  /* Misma regla que ODEA 1: 29 es su denominador real, no una invención. */
+  const progress = academiaProgress(ac);
 
   return {
     id: "ia",
@@ -143,9 +145,10 @@ function iaPanel(b) {
     systems: ["Academia"],
     xp: [],
     rows: rowsOf([
-      row("academia_done", "Actividades completadas", fmt(entries.length), {
-        raw: entries.length,
-        group: "Academia"
+      row("academia_done", "Actividades completadas", `${fmt(progress.effective)} de ${fmt(progress.total)}`, {
+        raw: progress.effective,
+        group: "Academia",
+        hint: `Avance ${progress.pct}% · misma regla que ODEA 1`
       }),
       row("academia_rutas", "Rutas avisadas", fmt(rutas.length), { raw: rutas.length })
     ]),

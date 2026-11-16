@@ -45,7 +45,7 @@ Sin save, la ciudad se muestra atenuada y la pantalla de importación de la
 Fase 1 queda al frente. No hay datos de ejemplo: el progreso siempre es el real.
 
 La app funciona sin conexión después de la primera carga (service worker
-`odea2-v0.8.0-fase3`). El catálogo de juego se sirve con estrategia
+`odea2-v0.9.0-fase3`). El catálogo de juego se sirve con estrategia
 *network-first* y cae a la caché si no hay red.
 
 ## Correr los tests
@@ -54,7 +54,7 @@ La app funciona sin conexión después de la primera carga (service worker
 npm test
 ```
 
-**128 tests** (Node ≥ 20):
+**135 tests** (Node ≥ 20):
 
 - **33 de Fase 0**: no-pérdida, paridad de los 10 componentes de XP, monedas,
   `eventRL`/`farm`/`canje`, cuarentena, aborto, reimportación, huella, ida y
@@ -92,6 +92,9 @@ npm test
   marca completado y no se ofrece, completar una migrada es `duplicate` sin
   escribir, el XP migrado nunca se cuenta dos veces y —para Empleo, Hub y
   Vida— las misiones que ODEA 1 ya tenía hechas tampoco se ofrecen.
+- **7 de Academia**: el denominador real de ODEA 1 es 29, llegar a 28 marca el
+  100%, por encima no desborda, los datos inválidos no rompen la vista y el
+  fixture produce el avance esperado.
 
 ## La ciudad: distritos y mapeo cerrado
 
@@ -211,7 +214,7 @@ Todo ocurre en el dispositivo. Nada se envía a ningún servidor.
 ```
 index.html              cascarón: canvas, HUD, barra de destinos, chips, hoja, overlay y toasts
 manifest.webmanifest    PWA (ODEA 2 — Costa Neón)
-sw.js                   service worker versionado (odea2-v0.8.0-fase3)
+sw.js                   service worker versionado (odea2-v0.9.0-fase3)
 css/app.css             tema neón + capa de ciudad (HUD, hoja, overlay, toasts)
 js/app.js               orquestador: ciudad, HUD, importación, watchers
 js/city/                layout, world, cámara, renderer, entrada y motor rAF
