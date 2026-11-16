@@ -35,6 +35,7 @@ import {
 import { createToasts } from "./toast.js";
 import { createUpdateWatcher } from "./update-watcher.js";
 import { createStorageWatcher } from "./storage-watch.js";
+import { ambienceFor } from "./ambience.js";
 import {
   FORMATS,
   parseFileText,
@@ -353,6 +354,20 @@ function closeOverlay() {
   restoreFocus();
 }
 
+/* -------------------------------- ambiente -------------------------------- */
+
+/**
+ * Aplica el perfil visual (hora, clima del día, niveles por distrito).
+ * Es SOLO LECTURA: deriva del bundle y nunca lo toca.
+ */
+function applyAmbience() {
+  if (!city) return;
+  const reduced =
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  city.setAmbience(ambienceFor(bundle, { reducedMotion: reduced }));
+}
+
 /* --------------------------------- estado --------------------------------- */
 
 function refresh() {
@@ -392,6 +407,7 @@ function refresh() {
       city.setPlayerVisible(true);
       city.setCredit(hud.xpBreakdown.evento + hud.xpBreakdown.farm);
     }
+    applyAmbience();
 
     /* El overlay solo se repinta si la pestaña abierta lo usa; las pantallas
        de flujo (importar, cuarentena, errores) se gobiernan a sí mismas. */
@@ -411,6 +427,7 @@ function refresh() {
     city.setCredit(null);
     city.clearSelection();
   }
+  applyAmbience();
   els.hud.hidden = true;
   els.chips.hidden = true;
   els.floatingImport.hidden = false;
@@ -730,6 +747,13 @@ async function boot() {
   renderChips(els.chips, { onDistrict: openDistrict });
   refresh();
   setupServiceWorker();
+
+  /* La luz depende de la hora: se revisa cada 5 minutos y al volver a la app,
+     porque un teléfono puede quedar en segundo plano toda la tarde. */
+  setInterval(applyAmbience, 5 * 60 * 1000);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) applyAmbience();
+  });
 }
 
 boot();
