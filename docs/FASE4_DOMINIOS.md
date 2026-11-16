@@ -1,7 +1,7 @@
-> **Estado (2026-11-16):** las preguntas abiertas de estas fichas quedaron **resueltas**
-> por las decisiones C1–C4 del orquestador, incorporadas en
-> [`docs/FASE3_SPEC.md`](FASE3_SPEC.md) §8.3 y §9. Este documento queda como
-> inventario técnico; ante cualquier discrepancia, manda la spec.
+> **Estado (2026-11-16):** las preguntas abiertas de estas fichas quedaron **resueltas** por las
+decisiones C1-C4 del orquestador, incorporadas en [docs/FASE3_SPEC.md](FASE3_SPEC.md) Â§8.3 y Â§9.
+Este documento queda como inventario tecnico; ante cualquier discrepancia, manda la spec.
+
 # FASE 4 â€” Fichas de dominio (Entrega F)
 
 Documento de trabajo para activar los seis distritos que siguen en solo lectura.
