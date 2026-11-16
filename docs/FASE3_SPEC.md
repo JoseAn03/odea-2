@@ -50,7 +50,7 @@ Se añade una sección **raíz** opcional:
 
 No se usa `core` ni `worlds` porque esas dos secciones son propiedad de la
 migración y el validador exige que sus valores sigan siendo idénticos al bundle
-de ODEA 1 (`FIELD_VALUES_IDENTICAL` en `src/validate.js:97-115`;
+de ODEA 1 (`FIELD_VALUES_IDENTICAL` en `src/validate.js:107-115`;
 `KEY_VALUES_IDENTICAL` en `src/validate.js:151-165`). Escribir gameplay ahí
 rompería la paridad o mezclaría procedencia. Una sección raíz nueva no altera la
 forma migrada (36 campos + 11 claves) y `validateMigration` la ignora: solo
