@@ -1,0 +1,42 @@
+name: CI
+
+# El contrato de escritura de ODEA 2 se sostiene en dos barreras: la suite de
+# tests y check:write-path. Hasta ahora solo se ejecutaban a mano, así que un
+# PR podía romper la ruta única de mutación sin que nadie lo notara hasta la
+# revisión. Este workflow las hace obligatorias en cada push y cada PR.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Tests y ruta de escritura
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # engines declara >=20; se prueba el mínimo soportado y el LTS actual.
+        node: [20, 22]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar Node ${{ matrix.node }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      # El repo no tiene dependencias ni lockfile: `npm test` corre directo
+      # sobre Node, sin `npm ci` (que fallaría sin package-lock.json).
+      - name: Tests
+        run: npm test
+
+      - name: Ruta única de escritura
+        run: npm run check:write-path
