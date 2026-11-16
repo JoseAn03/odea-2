@@ -139,8 +139,17 @@ Preparadas como **plan reproducible**, no como pruebas aprobadas.
 
 - Criterio: fixture sintético con varios años de actividad; sin recorte, sin fallo de
   parseo, sin degradación inaceptable.
-- Qué falta: generar el fixture y medir tiempos. No existe todavía.
-- Estado: **no ejecutada**.
+- **Ejecutada la parte que se puede ejecutar en Node**: `tests/t24-historial-grande.test.js`
+  genera **14.700 ocurrencias** (49 misiones diarias de Vida × 300 días) con semilla fija,
+  sin commitear un archivo enorme. Comprueba:
+  1. ninguna ocurrencia se pierde y la ida y vuelta por JSON conserva todas;
+  2. el bundle valida sin `DERIVE_DRIFT`;
+  3. todos los componentes de XP son finitos y no negativos;
+  4. la derivación promedia por debajo de **2.000 ms** (red de seguridad, no una medición
+     del teléfono).
+- **Lo que sigue pendiente**: la sesión sostenida de 15 minutos en el teléfono real, con
+  la ciudad animada y el guardado. Eso es del checklist manual.
+- Estado: **cobertura parcial ejecutada**; la parte de dispositivo, pendiente.
 
 ### Checklist de teléfono real (para José)
 

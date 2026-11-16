@@ -54,7 +54,7 @@ La app funciona sin conexión después de la primera carga (service worker
 npm test
 ```
 
-**143 tests** (Node ≥ 20):
+**170 tests** (Node ≥ 20):
 
 - **33 de Fase 0**: no-pérdida, paridad de los 10 componentes de XP, monedas,
   `eventRL`/`farm`/`canje`, cuarentena, aborto, reimportación, huella, ida y
@@ -63,12 +63,22 @@ npm test
   (36 + 11), rechazo sin críticos, restauración de `odea2_bundle_v1`,
   rechazo del segundo import de ODEA 1, respaldo previo, detección de formato
   y rotación de backups a los últimos 3.
-- **14 de Fase 2**: mapeo completo y sin duplicados de los 10 componentes de XP
+- **15 de Fase 2**: mapeo completo y sin duplicados de los 10 componentes de XP
   y las 11 claves; celdas de distrito únicas y sin solapes; paridad del HUD con
   `src/derive.js`; crédito permanente = evento + farm; paneles con cifras del
   save; watchers de versión nueva y multi-pestaña con eventos simulados; la capa
   visual no escribe el bundle (byte a byte); versión de app/SW/paquete
   sincronizada, aislamiento de caché por release y cobertura del `SHELL` del SW.
+- **15 de R1 (recompensas inmutables)**: la completación nueva fija recompensa y
+  versión de reglas; cambiar el catálogo no reescribe el historial; lo no
+  congelado conserva la ruta de compatibilidad; doble toque, diaria por fecha,
+  migrada que no repaga, crédito permanente intacto, id y recompensa inválidos,
+  fallo de backup byte a byte, fallo de relectura sin éxito falso,
+  export/restauración, versión futura y Vida con XP congelado.
+- **7 del catálogo vivo**: invariantes del artefacto extraído de ODEA 1 v6.00
+  (Academia 28/29, las dos tiendas de Tesoro, Garaje, jefes y cartas sin id).
+- **3 de T24 (historial grande)**: 14.700 ocurrencias sintéticas sin recorte, sin
+  fallo de parseo y con derivación por debajo del umbral.
 - **25 de Fase 3**: `play` perezoso, forma migrada intacta, idempotencia por
   ocurrencia (`one`/`daily`/`weekly`), fail-closed de schema y de derivación,
   backup exacto byte a byte, cuota, concurrencia (CAS), ruta del día
@@ -98,6 +108,12 @@ npm test
 - **8 de Sagas**: 12 capítulos y 16 jefes, lo migrado no se ofrece, completar un
   capítulo reparte el XP entre sus dos categorías, completar un jefe suma el
   componente de jefes, nada se duplica y la mecánica semanal queda intacta.
+- **2 de Sagas con R1**: cambiar el XP de un capítulo o de un jefe en el
+  catálogo no reescribe el historial ya reconocido.
+- **7 del catálogo vivo**: invariantes del artefacto extraído de ODEA 1 v6.00
+  (Academia 28/29, las dos tiendas de Tesoro, Garaje, jefes y cartas sin id).
+- **2 de ruta de escritura**: `js/` y `src/` no tocan la clave del save fuera de
+  `src/storage.js`, y un módulo que la escriba es detectado.
 
 ## La ciudad: distritos y mapeo cerrado
 
