@@ -151,6 +151,11 @@ export function createCityView({ canvas, world, onSelectDistrict }) {
       renderer.setPlayerVisible(value);
       drawNow();
     },
+    /** Perfil visual derivado (js/ambience.js). Solo lectura. */
+    setAmbience(value) {
+      renderer.setAmbience(value);
+      drawNow();
+    },
     recenter() {
       const zoom = Math.max(window.innerWidth, window.innerHeight) / world.size;
       camera.jumpTo(MONUMENT.x, MONUMENT.y + 90, Math.max(camera.clampZoom(zoom), 0.22));

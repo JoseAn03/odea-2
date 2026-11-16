@@ -45,7 +45,7 @@ Sin save, la ciudad se muestra atenuada y la pantalla de importación de la
 Fase 1 queda al frente. No hay datos de ejemplo: el progreso siempre es el real.
 
 La app funciona sin conexión después de la primera carga (service worker
-`odea2-v0.6.0-fase3`). El catálogo de juego se sirve con estrategia
+`odea2-v0.7.0-fase3`). El catálogo de juego se sirve con estrategia
 *network-first* y cae a la caché si no hay red.
 
 ## Correr los tests
@@ -54,7 +54,7 @@ La app funciona sin conexión después de la primera carga (service worker
 npm test
 ```
 
-**111 tests** (Node ≥ 20):
+**119 tests** (Node ≥ 20):
 
 - **33 de Fase 0**: no-pérdida, paridad de los 10 componentes de XP, monedas,
   `eventRL`/`farm`/`canje`, cuarentena, aborto, reimportación, huella, ida y
@@ -85,6 +85,9 @@ npm test
   diaria vuelve a estar pendiente mañana, una semanal cambia de periodo, una
   única queda hecha para siempre, escritura por la ruta única y sin colisiones
   entre sistemas.
+- **8 de ambiente**: las 24 horas tienen fase, el clima del día es determinista
+  y estable, los niveles de distrito respetan sus umbrales, derivar el perfil no
+  muta el bundle y el movimiento reducido baja el tráfico sin apagar la luz.
 
 ## La ciudad: distritos y mapeo cerrado
 
@@ -129,6 +132,22 @@ destino sin cerrar lo que está abierto.
 Sin save la barra no existe: la pantalla de importación de la Fase 1 sigue siendo
 la única entrada. Cerrar cualquier capa vuelve a Ciudad, y el foco regresa al
 control que la abrió.
+
+## La ciudad responde
+
+`js/ambience.js` produce un **perfil visual de solo lectura** a partir de la hora,
+la fecha y el progreso. El renderizador lo consume; nada de eso toca el save
+(guía, pág. 13: *«ningún vehículo, reflejo o cambio de luz puede llamar a la
+función de mutación»*).
+
+| Señal | Efecto | Límite |
+|---|---|---|
+| Hora local | Día, atardecer o noche: tinte y luces | No cambia elegibilidad ni recompensas |
+| Fecha (semilla) | Clima ficticio estable del día | No se presenta como clima real |
+| Progreso del distrito | Más ventanas encendidas | Umbrales fijos: 0 sin actividad, 1 con XP migrado, 2 con completaciones nuevas |
+| Movimiento reducido | Mitad de vehículos | Antes de tocar cualquier interacción |
+
+Es determinista: la misma fecha y hora dan el mismo perfil, también tras recargar.
 
 ## HUD e interacción
 
@@ -188,7 +207,7 @@ Todo ocurre en el dispositivo. Nada se envía a ningún servidor.
 ```
 index.html              cascarón: canvas, HUD, barra de destinos, chips, hoja, overlay y toasts
 manifest.webmanifest    PWA (ODEA 2 — Costa Neón)
-sw.js                   service worker versionado (odea2-v0.6.0-fase3)
+sw.js                   service worker versionado (odea2-v0.7.0-fase3)
 css/app.css             tema neón + capa de ciudad (HUD, hoja, overlay, toasts)
 js/app.js               orquestador: ciudad, HUD, importación, watchers
 js/city/                layout, world, cámara, renderer, entrada y motor rAF

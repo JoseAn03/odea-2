@@ -57,6 +57,18 @@ export function createRenderer(canvas) {
   let selectedAccent = PALETTE.pink;
   let reduced = false;
   let glow = null;
+  let ambience = null;
+
+  /** Nivel visual del distrito (0–2) según el progreso real. */
+  function districtLevelOf(id) {
+    if (!ambience || !ambience.districts || !id) return 0;
+    const entry = ambience.districts[id];
+    return entry ? entry.level : 0;
+  }
+
+  function windowBoost() {
+    return ambience && Number.isFinite(ambience.windowBoost) ? ambience.windowBoost : 1;
+  }
 
   /* ------------------------------ sprites de texto ------------------------- */
 
@@ -371,6 +383,12 @@ export function createRenderer(canvas) {
   function drawBuilding(b, view, time) {
     const off = 9 + b.depth * 22;
     const accent = b.accent;
+    /* Un distrito con progreso real enciende más ventanas; de noche, además,
+       todas brillan un poco más. Nunca se apaga lo que ya estaba encendido. */
+    const level = districtLevelOf(b.districtId);
+    const lit = Math.min(1, b.lit + level * 0.12);
+    const boost = windowBoost();
+    const litAlpha = (value) => Math.min(1, value * boost);
 
     /* Sombra proyectada. */
     ctx.fillStyle = "rgba(2,1,6,0.5)";
@@ -420,17 +438,17 @@ export function createRenderer(canvas) {
       const warm = b.kind === "residential" || b.kind === "stall";
       const litColor = warm ? "#FFC46B" : mix(PALETTE.cyan, "#FFFFFF", 0.25);
       for (let i = 0; i < Math.max(2, b.h / 22); i++) {
-        if (hash(b.seed, i, 3) > b.lit) continue;
+        if (hash(b.seed, i, 3) > lit) continue;
         const yy = b.y + off + 8 + i * 18;
         if (yy > b.y + off + b.h - 10) break;
-        ctx.fillStyle = alpha(litColor, 0.55 + 0.35 * hash(b.seed, i, 11));
+        ctx.fillStyle = alpha(litColor, litAlpha(0.55 + 0.35 * hash(b.seed, i, 11)));
         ctx.fillRect(b.x + off + b.w - 4, yy, 3, 6);
       }
       for (let i = 0; i < Math.max(2, b.w / 24); i++) {
-        if (hash(b.seed, i, 5) > b.lit) continue;
+        if (hash(b.seed, i, 5) > lit) continue;
         const xx = b.x + off + 8 + i * 22;
         if (xx > b.x + off + b.w - 12) break;
-        ctx.fillStyle = alpha(litColor, 0.5 + 0.35 * hash(b.seed, i, 13));
+        ctx.fillStyle = alpha(litColor, litAlpha(0.5 + 0.35 * hash(b.seed, i, 13)));
         ctx.fillRect(xx, b.y + off + b.h - 4, 6, 3);
       }
     }
@@ -444,8 +462,8 @@ export function createRenderer(canvas) {
       const litColor = mix(PALETTE.cyan, "#FFFFFF", 0.35);
       for (let i = 0; i < cols; i++) {
         for (let j = 0; j < rows; j++) {
-          if (hash(b.seed, i, j) > b.lit * 0.72) continue;
-          ctx.fillStyle = alpha(litColor, 0.3 + 0.4 * hash(b.seed, i, j + 9));
+          if (hash(b.seed, i, j) > lit * 0.72) continue;
+          ctx.fillStyle = alpha(litColor, litAlpha(0.3 + 0.4 * hash(b.seed, i, j + 9)));
           const dot = view.zoom > 0.8 ? 5 : 4;
           ctx.fillRect(b.x + cw * (i + 0.42), b.y + ch * (j + 0.42), dot, dot);
         }
@@ -577,7 +595,12 @@ export function createRenderer(canvas) {
 
   function drawTraffic(view, world, time) {
     const size = world.size;
-    for (const car of world.cars) {
+    /* Tráfico limitado: con nivel 1 se dibuja la mitad de los vehículos. La
+       reducción se aplica antes de tocar cualquier interacción (pág. 13). */
+    const step = ambience && ambience.traffic === 1 ? 2 : 1;
+    for (let index = 0; index < world.cars.length; index++) {
+      if (step > 1 && index % step === 1) continue;
+      const car = world.cars[index];
       let t = reduced ? car.t : (car.t + (time * car.speed * car.dir) / size) % 1;
       if (t < 0) t += 1;
       const pos = t * size;
@@ -733,6 +756,13 @@ export function createRenderer(canvas) {
 
     ctx.restore();
 
+    /* Tinte de ambiente: sobre el mundo y DEBAJO de los rótulos, para que los
+       nombres sigan legibles de noche. */
+    if (ambience && ambience.tint && ambience.tint.alpha > 0) {
+      ctx.fillStyle = alpha(ambience.tint.color, ambience.tint.alpha);
+      ctx.fillRect(0, 0, vw, vh);
+    }
+
     /* ---------------------------- capa de pantalla -------------------------- */
     if (glow) {
       ctx.fillStyle = glow.vignette;
@@ -840,6 +870,10 @@ export function createRenderer(canvas) {
     },
     setReducedMotion(value) {
       reduced = !!value;
+    },
+    /** Perfil de `js/ambience.js`: solo lectura, nunca escribe progreso. */
+    setAmbience(value) {
+      ambience = value || null;
     },
     get reducedMotion() {
       return reduced;
