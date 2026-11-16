@@ -398,8 +398,16 @@ export function validatePlaySection(bundle2, catalog) {
   checks.push(check("PLAY_SHAPE", plain, plain ? "play es un objeto plano" : "play no es un objeto plano"));
   if (!plain) return checks;
 
+  /* Se aceptan bundles aditivos v1 (anteriores a R1, sin recompensa congelada)
+     y v2. Una versión MAYOR se rechaza en la ruta de mutación: un cliente viejo
+     no debe sobrescribir datos que no entiende. */
+  const versionOk = play.version === 1 || play.version === PLAY_VERSION;
   checks.push(
-    check("PLAY_VERSION", play.version === PLAY_VERSION, `version=${play.version} esperada=${PLAY_VERSION}`)
+    check(
+      "PLAY_VERSION",
+      versionOk,
+      `version=${play.version} aceptadas=1,${PLAY_VERSION}`
+    )
   );
 
   const completions = play.completions;
@@ -442,6 +450,23 @@ export function validatePlaySection(bundle2, catalog) {
     const occurrence = `${record.missionId}|${record.period || ""}`;
     if (seen.has(occurrence)) problems.push(`${key}: ocurrencia duplicada`);
     seen.add(occurrence);
+
+    /* R1: la recompensa congelada debe ser coherente y legible. */
+    if (record.reward != null) {
+      if (play.version === 1) {
+        problems.push(`${key}: reward no permitido en play v1`);
+      } else if (!record.reward || typeof record.reward !== "object" || Array.isArray(record.reward)) {
+        problems.push(`${key}: reward inválido`);
+      } else {
+        const r = record.reward;
+        if (!Number.isFinite(Number(r.xp)) || Number(r.xp) < 0) problems.push(`${key}: reward.xp`);
+        if (!Number.isInteger(Number(r.coins)) || Number(r.coins) < 0) problems.push(`${key}: reward.coins`);
+        if (r.cat != null && typeof r.cat !== "string") problems.push(`${key}: reward.cat`);
+        if (!Number.isInteger(record.rulesVersion) || record.rulesVersion < 1) {
+          problems.push(`${key}: rulesVersion`);
+        }
+      }
+    }
   }
 
   for (const [date, record] of Object.entries(checkins || {})) {

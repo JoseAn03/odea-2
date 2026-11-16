@@ -523,3 +523,50 @@ Reglas:
   "legacy": { "keys": { "quiz": { "legacyKey": "odea_quiz_v1", "schemaVersion": 1, "lifecycle": "archived-legacy", "reason": "…", "data": {} } } }
 }
 ```
+
+---
+
+## 11. Sección aditiva `play` (v2 — R1)
+
+`play` **no** forma parte de `BUNDLE_SECTIONS`: es aditiva, se crea perezosamente en la
+primera escritura y un bundle migrado sin ella sigue siendo válido.
+
+```json
+"play": {
+  "version": 2,
+  "completions": {
+    "<occurrenceKey>": {
+      "missionId": "n4",
+      "system": "empleo",
+      "date": "2026-11-16",
+      "at": "2026-11-16T15:04:05.000Z",
+      "period": "2026-11-16",
+      "reward": { "xp": 120, "coins": 1, "cat": "eq" },
+      "rulesVersion": 1
+    }
+  },
+  "checkins": { "2026-11-16": { "at": "2026-11-16T15:04:05.000Z" } }
+}
+```
+
+| Campo | Obligatorio | Regla |
+|---|---|---|
+| `version` | sí | `1` (pre-R1) o `2` (R1). Mayor que 2 → solo lectura/exportación |
+| `missionId` | sí | Debe resolver contra el catálogo del `system` |
+| `system` | sí | Debe estar en `PHASE3_SYSTEMS` |
+| `date` | sí | Fecha civil válida `YYYY-MM-DD` |
+| `at` | sí | ISO parseable |
+| `period` | según clase | Ausente en `one`; fecha en `daily`; semana ISO en `weekly` |
+| `reward.xp` | si hay `reward` | Finito ≥ 0. Es el XP **base del catálogo** congelado |
+| `reward.coins` | si hay `reward` | Entero ≥ 0 |
+| `reward.cat` | opcional | Solo Vida; categoría del pilar |
+| `rulesVersion` | si hay `reward` | Entero ≥ 1 |
+
+### Invariantes
+
+1. La **clave** es `occurrenceKey(missionId, cls, date)`: `id`, `id@YYYY-MM-DD` o
+   `id@YYYY-Www`. No hay prefijos de sistema en la clave.
+2. `reward` es **inmutable** una vez escrito. `derive` lo usa en lugar del catálogo.
+3. Un registro sin `reward` es legado: se deriva por la ruta de compatibilidad.
+4. `reward` presente en `play.version === 1` es incoherente y se rechaza.
+5. Ningún flujo puede escribir `play` fuera de `applyGameplayMutation`.

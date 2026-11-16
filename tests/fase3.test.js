@@ -105,7 +105,8 @@ test("1. play perezoso: un save migrado sin play es válido y la primera escritu
 
   const result = apply(storage, catalog, completeMutation("48A"));
   assert.equal(result.status, "applied");
-  assert.equal(result.bundle.play.version, 1);
+  /* R1: la sección aditiva pasa a v2 (registros con recompensa congelada). */
+  assert.equal(result.bundle.play.version, 2);
   assert.deepEqual(Object.keys(result.bundle.play.completions), ["48A"]);
   assert.deepEqual(result.bundle.play.checkins, {});
   assert.equal(result.bundle.schemaVersion, 1);

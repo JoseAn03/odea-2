@@ -222,7 +222,16 @@ export function sourcesFromMigrated(bundle2, catalog = null) {
       completedPuente: union(s.progress && s.progress.completedPuente, extra.puente),
       unlockedAch: clone(s.progress && s.progress.unlockedAch || [])
     },
-    vida: { ...clone(s.vida || {}), log: union(s.vida && s.vida.log, extra.vida) },
+    vida: {
+      ...clone(s.vida || {}),
+      log: union(s.vida && s.vida.log, extra.vida),
+      /* R1: XP congelado por entrada (`id|period`) y por id, para no releer
+         el catálogo en ninguna de las dos rutas de Vida. */
+      frozen: { ...extra.frozenVida },
+      frozenById: { ...extra.frozenVidaById }
+    },
+    /* R1: XP congelado por missionId (hub, empleo, capital). */
+    frozen: { ...extra.frozenXP },
     /* Capital: lo migrado y lo nuevo se unen con deduplicación, así que
        completar algo que ODEA 1 ya tenía nunca suma XP dos veces. */
     capital: {
@@ -264,7 +273,12 @@ function mergePlaySources(bundle2, catalog) {
     b2b: [],
     puente: [],
     vida: [],
-    capital: { done: [], eng: [], ai: [] }
+    capital: { done: [], eng: [], ai: [] },
+    /* R1: valores congelados al escribir. Se usan EN LUGAR del catálogo para
+       esas ocurrencias; el resto sigue leyendo el catálogo (compatibilidad). */
+    frozenXP: {},
+    frozenVida: {},
+    frozenVidaById: {}
   };
   const play = bundle2 && bundle2.play;
   if (!play || !play.completions) return out;
@@ -272,30 +286,54 @@ function mergePlaySources(bundle2, catalog) {
   for (const record of Object.values(play.completions)) {
     if (!record || typeof record.missionId !== "string") continue;
     const id = record.missionId;
+    const reward = record.reward && typeof record.reward === "object" ? record.reward : null;
+    const frozenXP = reward && Number.isFinite(Number(reward.xp)) ? Number(reward.xp) : null;
 
     if (record.system === "hub") {
       if (catalog && catalog.weekly && hasId(catalog.weekly, id)) out.weekly.push(id);
       else out.daily.push(id);
+      if (frozenXP != null) out.frozenXP[id] = frozenXP;
       continue;
     }
     if (record.system === "empleo") {
       if (catalog && catalog.b2b && hasId(catalog.b2b, id)) out.b2b.push(id);
       else if (catalog && catalog.puente && hasId(catalog.puente, id)) out.puente.push(id);
       else out.jobs.push(id);
+      if (frozenXP != null) out.frozenXP[id] = frozenXP;
       continue;
     }
     if (record.system === "vida") {
-      out.vida.push(`${id}|${record.period || "once"}`);
+      const entry = `${id}|${record.period || "once"}`;
+      out.vida.push(entry);
+      if (frozenXP != null) {
+        out.frozenVida[entry] = { xp: frozenXP, cat: reward.cat ? String(reward.cat) : null };
+        /* Vida también se lee por id en los arrays `growth`/`kid`/...: el mismo
+           valor congelado tiene que mandar en las dos rutas. */
+        out.frozenVidaById[id] = { xp: frozenXP, cat: reward.cat ? String(reward.cat) : null };
+      }
       continue;
     }
     if (record.system === "capital" && catalog && catalog.capital) {
-      /* El id decide el submódulo; nunca se asume cuál es. */
       if (hasId(catalog.capital.done, id)) out.capital.done.push(id);
       else if (hasId(catalog.capital.eng, id)) out.capital.eng.push(id);
       else if (hasId(catalog.capital.ai, id)) out.capital.ai.push(id);
+      if (frozenXP != null) out.frozenXP[id] = frozenXP;
     }
   }
   return out;
+}
+
+/**
+ * Suma el XP de una lista de ids usando el valor CONGELADO cuando existe.
+ * Es la pieza que hace que un cambio de catálogo no reescriba el pasado.
+ */
+function sumXpWithFrozen(map, ids, frozen) {
+  return (ids || []).reduce((acc, rawId) => {
+    const id = String(rawId);
+    const frozenXP = frozen && Object.prototype.hasOwnProperty.call(frozen, id) ? frozen[id] : null;
+    if (frozenXP != null) return acc + frozenXP;
+    return acc + (Number(map && map[id]) || 0);
+  }, 0);
 }
 
 function hasId(map, id) {
@@ -342,6 +380,16 @@ export function vidaCompute(sources) {
     if (i <= 0) continue;
     const id = entry.slice(0, i);
     const key = entry.slice(i + 1);
+    /* R1: si la entrada trae XP congelado, ese manda; el catálogo solo se usa
+       para las entradas heredadas o anteriores a la congelación. */
+    const frozen = (gv.frozen && gv.frozen[entry]) || null;
+    if (frozen) {
+      xp[frozen.cat || "eq"] = (xp[frozen.cat || "eq"] || 0) + frozen.xp;
+      if (id.indexOf("hab-") === 0) {
+        (habitDates[id] = habitDates[id] || new Set()).add(key);
+      }
+      continue;
+    }
     const o = catalog.vida[id];
     if (!o) continue;
     xp[o.cat] += o.xp;
@@ -359,6 +407,11 @@ export function vidaCompute(sources) {
 
   for (const list of ["growth", "kid", "couple", "pow", "men", "plan", "orden"]) {
     for (const id of (Array.isArray(gv[list]) ? gv[list] : [])) {
+      const fz = gv.frozenById && gv.frozenById[id];
+      if (fz) {
+        xp[fz.cat || "eq"] = (xp[fz.cat || "eq"] || 0) + fz.xp;
+        continue;
+      }
       const o = catalog.vida[id];
       if (o) xp[o.cat] += o.xp;
     }
@@ -442,23 +495,27 @@ export function derive(sources, catalog, referenceDate) {
   CATALOG_SAGAS_HOLDER.catalog = catalog;
 
   const p = sources.progress;
+  const frozen = sources.frozen || {};
   const campaign = sumXpForIds(catalog.campaign, p.completedMissions);
-  const dailyRaw = sumXpForIds(
+  const dailyRaw = sumXpWithFrozen(
     Object.fromEntries(Object.entries(catalog.daily).map(([id, m]) => [id, m.xp])),
-    p.completedDaily
+    p.completedDaily,
+    frozen
   );
   const daily = Math.round(dailyRaw * streakMult(sources.identity.streak));
-  const weekly = sumXpForIds(catalog.weekly, (p.completedWeekly || []).map(String));
-  const jobs = sumXpForIds(catalog.jobs, p.completedJobs);
-  const b2b = sumXpForIds(catalog.b2b, p.completedB2b) + sumXpForIds(catalog.puente, p.completedPuente);
+  const weekly = sumXpWithFrozen(catalog.weekly, (p.completedWeekly || []).map(String), frozen);
+  const jobs = sumXpWithFrozen(catalog.jobs, p.completedJobs, frozen);
+  const b2b =
+    sumXpWithFrozen(catalog.b2b, p.completedB2b, frozen) +
+    sumXpWithFrozen(catalog.puente, p.completedPuente, frozen);
   const career = campaign + daily + weekly + jobs + b2b;
 
   const ach = sumXpForIds(catalog.achievements, p.unlockedAch);
   const vida = vidaCompute(sources).total;
   const capital =
-    sumXpForIds(catalog.capital.done, sources.capital.done) +
-    sumXpForIds(catalog.capital.eng, sources.capital.eng) +
-    sumXpForIds(catalog.capital.ai, sources.capital.ai);
+    sumXpWithFrozen(catalog.capital.done, sources.capital.done, frozen) +
+    sumXpWithFrozen(catalog.capital.eng, sources.capital.eng, frozen) +
+    sumXpWithFrozen(catalog.capital.ai, sources.capital.ai, frozen);
   const focus = ((sources.focus && sources.focus.log) || []).reduce((a, e) => a + (Number(e && e.xp) || 0), 0);
   const diary = ((sources.diary && sources.diary.log) || []).reduce((a, e) => a + (Number(e && e.xp) || 0), 0);
   const bosses = Object.keys(sources.gods || {}).reduce((a, id) => a + (Number(catalog.bosses[id]) || 0), 0);

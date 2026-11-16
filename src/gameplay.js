@@ -15,13 +15,41 @@
  */
 import { addDays, deriveStreak, epochDayOf, isoWeekKey, localDateKey } from "./derive.js";
 import { missionOf, missionsOf, PHASE3_SYSTEMS } from "./catalog.js";
-import { PLAY_VERSION } from "./shape.js";
+import { PLAY_VERSION, RULES_VERSION } from "./shape.js";
 
 export const ROUTE_SIZE = 3;
 export const DAILY_TOTAL_DAYS = 56;
 
+/**
+ * Monedas que otorga una completación bajo las reglas actuales.
+ *
+ * ODEA 1 cuenta una moneda por cosa completada (no hay campo de monedas en el
+ * catálogo). Queda como constante explícita para que R1 la congele en el
+ * registro: si mañana cambia, `RULES_VERSION` sube y lo viejo no se reinterpreta.
+ */
+export const COINS_PER_COMPLETION = 1;
+
 export function emptyPlay() {
   return { version: PLAY_VERSION, completions: {}, checkins: {} };
+}
+
+/**
+ * Recompensa que el DOMINIO calcula desde el catálogo al escribir (R1).
+ *
+ * La UI nunca manda cantidades: solo `{ type, system, missionId }`. Esto se
+ * congela en el registro para que un cambio futuro del catálogo no reescriba
+ * el historial.
+ */
+export function rewardOf(mission) {
+  const xp = Number(mission && mission.xp) || 0;
+  const cat = mission && mission.entry && mission.entry.cat ? String(mission.entry.cat) : null;
+  return {
+    xp,
+    coins: COINS_PER_COMPLETION,
+    /* Vida necesita la categoría para su cálculo por pilares; se guarda con la
+       recompensa para no depender del catálogo vigente. */
+    ...(cat ? { cat } : {})
+  };
 }
 
 export function playStateOf(bundle2) {
@@ -208,7 +236,10 @@ export function applyMutation(draft, mutation, catalog, { at, date } = {}) {
     system,
     date: dateKey,
     at: atIso,
-    ...(mission.cls === "one" ? {} : { period: mission.cls === "weekly" ? isoWeekKey(dateKey) : dateKey })
+    ...(mission.cls === "one" ? {} : { period: mission.cls === "weekly" ? isoWeekKey(dateKey) : dateKey }),
+    /* R1: recompensa congelada + versión de reglas con la que se calculó. */
+    reward: rewardOf(mission),
+    rulesVersion: RULES_VERSION
   };
 
   return { changed: true, duplicate: false, reason: null, paths: [`play.completions.${key}`] };
