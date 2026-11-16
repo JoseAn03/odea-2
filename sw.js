@@ -1,4 +1,4 @@
-/* sw.js — Service worker de ODEA 2 (Fase 2 · Costa Neón)
+/* sw.js — Service worker de ODEA 2 (Fase 3 · Costa Neón)
  * Precachea SOLO el cascarón de la app (HTML, CSS, JS, manifest, ícono).
  * El catálogo de juego se cachea en runtime; el progreso del usuario nunca
  * pasa por la caché (vive en localStorage).
@@ -6,8 +6,13 @@
  * Actualización a pedido del usuario (decisión F1-1): el install NO llama a
  * skipWaiting(). El SW espera el mensaje SKIP_WAITING que envía la app cuando
  * el usuario toca «Recargar» en el aviso de versión nueva.
+ *
+ * CACHE_VERSION debe subir en CADA release que cambie el SHELL. Usar un
+ * nombre de caché distinto aísla el release nuevo del viejo: mientras el SW
+ * anterior sigue controlando la pestaña, su caché queda intacto y no se
+ * mezclan assets de dos versiones. `activate` borra los cachés viejos.
  */
-const CACHE_VERSION = "odea2-v0.3.0-fase2";
+const CACHE_VERSION = "odea2-v0.4.0-fase3";
 
 const SHELL = [
   "./",

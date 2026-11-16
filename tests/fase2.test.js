@@ -474,12 +474,34 @@ test("fase 2: versión visible, bundle y caché del SW están sincronizados", ()
   const pkg = JSON.parse(fs.readFileSync(join(root, "package.json"), "utf8"));
   const sw = fs.readFileSync(join(root, "sw.js"), "utf8");
 
-  assert.equal(APP_VERSION, "0.3.0-fase2");
+  /* Tripwire deliberado: subir la versión obliga a tocar esta línea, para que
+     el bump del SHELL y del CACHE_VERSION del SW nunca pase inadvertido. */
+  assert.equal(APP_VERSION, "0.4.0-fase3");
   assert.equal(pkg.version, APP_VERSION);
   assert.equal(ODEA2_APP_VERSION, APP_VERSION);
   assert.ok(sw.includes(`"odea2-v${APP_VERSION}"`), "la caché del SW debe usar la versión de la app");
+  assert.ok(/fase\d+$/.test(APP_VERSION), "la versión debe declarar su fase");
 
   const install = sw.slice(sw.indexOf('"install"'), sw.indexOf('"activate"'));
   assert.ok(!install.includes("skipWaiting"), "install no debe aplicar skipWaiting solo");
   assert.ok(sw.includes('"message"') && sw.includes("SKIP_WAITING"));
+});
+
+test("fase 2: el SW aísla cada release en su propio caché", () => {
+  const sw = fs.readFileSync(join(root, "sw.js"), "utf8");
+
+  /* Una sola declaración: si alguien duplica el literal, los releases pueden
+     volver a compartir caché sin que el test de versión lo note. */
+  const declarations = sw.match(/const CACHE_VERSION = "[^"]+"/g) || [];
+  assert.equal(declarations.length, 1, "CACHE_VERSION se declara una sola vez");
+
+  /* Todas las aperturas de caché usan la constante, nunca un literal: un
+     literal ahí mezclaría assets de dos releases en el mismo caché. */
+  assert.ok(
+    !/caches\.open\(\s*["']/.test(sw),
+    "caches.open debe recibir CACHE_VERSION, no una cadena literal"
+  );
+
+  /* `activate` debe borrar los cachés de otros releases. */
+  assert.ok(/k !== CACHE_VERSION/.test(sw), "activate debe borrar los cachés de versiones viejas");
 });

@@ -44,7 +44,7 @@ Sin save, la ciudad se muestra atenuada y la pantalla de importación de la
 Fase 1 queda al frente. No hay datos de ejemplo: el progreso siempre es el real.
 
 La app funciona sin conexión después de la primera carga (service worker
-`odea2-v0.3.0-fase2`). El catálogo de juego se sirve con estrategia
+`odea2-v0.4.0-fase3`). El catálogo de juego se sirve con estrategia
 *network-first* y cae a la caché si no hay red.
 
 ## Correr los tests
@@ -53,7 +53,7 @@ La app funciona sin conexión después de la primera carga (service worker
 npm test
 ```
 
-**61 tests** (Node ≥ 20):
+**89 tests** (Node ≥ 20):
 
 - **33 de Fase 0**: no-pérdida, paridad de los 10 componentes de XP, monedas,
   `eventRL`/`farm`/`canje`, cuarentena, aborto, reimportación, huella, ida y
@@ -62,12 +62,16 @@ npm test
   (36 + 11), rechazo sin críticos, restauración de `odea2_bundle_v1`,
   rechazo del segundo import de ODEA 1, respaldo previo, detección de formato
   y rotación de backups a los últimos 3.
-- **13 de Fase 2**: mapeo completo y sin duplicados de los 10 componentes de XP
+- **14 de Fase 2**: mapeo completo y sin duplicados de los 10 componentes de XP
   y las 11 claves; celdas de distrito únicas y sin solapes; paridad del HUD con
   `src/derive.js`; crédito permanente = evento + farm; paneles con cifras del
   save; watchers de versión nueva y multi-pestaña con eventos simulados; la capa
   visual no escribe el bundle (byte a byte); versión de app/SW/paquete
-  sincronizada.
+  sincronizada y aislamiento de caché por release.
+- **25 de Fase 3**: `play` perezoso, forma migrada intacta, idempotencia por
+  ocurrencia (`one`/`daily`/`weekly`), fail-closed de schema y de derivación,
+  backup exacto byte a byte, cuota, concurrencia (CAS), ruta del día
+  determinista, cámara que no sobrevive a recargar y racha derivada.
 
 ## La ciudad: distritos y mapeo cerrado
 
@@ -147,7 +151,7 @@ Todo ocurre en el dispositivo. Nada se envía a ningún servidor.
 ```
 index.html              cascarón: canvas, HUD, chips, hoja, overlay y toasts
 manifest.webmanifest    PWA (ODEA 2 — Costa Neón)
-sw.js                   service worker versionado (odea2-v0.3.0-fase2)
+sw.js                   service worker versionado (odea2-v0.4.0-fase3)
 css/app.css             tema neón + capa de ciudad (HUD, hoja, overlay, toasts)
 js/app.js               orquestador: ciudad, HUD, importación, watchers
 js/city/                layout, world, cámara, renderer, entrada y motor rAF
