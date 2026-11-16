@@ -160,7 +160,14 @@ ORDEN_HITS.forEach((o) => { VIDA_OBJ[o.id] = { xp: o.xp, cat: "orden", kind: "on
 const catalog = {
   meta: {
     source: "ODEA 1",
-    appVersion: "5.99",
+    /* Se LEE de la fuente. Antes estaba hardcodeado en "5.99" y por eso un
+       catálogo extraído de v6.00 seguía declarándose 5.99: el meta mentía
+       sobre su procedencia. */
+    appVersion: (() => {
+      const m = /\bconst\s+APP_VERSION\s*=\s*"([^"]+)"/.exec(html);
+      if (!m) throw new Error("No se pudo leer APP_VERSION de odea.html");
+      return m[1];
+    })(),
     generatedAt: new Date().toISOString(),
     sourceFiles: {
       "odea.html": { sha256: sha256(html) },

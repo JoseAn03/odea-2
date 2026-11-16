@@ -1,0 +1,759 @@
+{
+  "meta": {
+    "source": "ODEA 1 (plan-analista-datos @ ebb0fce, v6.00)",
+    "generatedAt": "2026-11-16T04:24:23.982Z",
+    "note": "Catálogos extraídos de los módulos de assets/ y de odea.html. No son progreso. El quiz (odea-quiz.js / odea-quiz-bank.js) queda excluido por D5 y no se lee."
+  },
+  "academia": {
+    "source": "assets/odea-academia.js",
+    "sha256": "ad2928795a1a0569a14344befe1ebac00329e8784b4e517f0b136a14da44f47e",
+    "percentageTotal": 29,
+    "count": 28,
+    "routes": [
+      {
+        "id": "arranque",
+        "nombre": "Ruta 0 · Arranque",
+        "misiones": 5
+      },
+      {
+        "id": "google",
+        "nombre": "Ruta 1 · Google",
+        "misiones": 7
+      },
+      {
+        "id": "microsoft",
+        "nombre": "Ruta 2 · Microsoft",
+        "misiones": 6
+      },
+      {
+        "id": "ia",
+        "nombre": "Ruta 3 · IA aplicada",
+        "misiones": 4
+      },
+      {
+        "id": "demanda",
+        "nombre": "Ruta 4 · Demanda inmediata",
+        "misiones": 3
+      },
+      {
+        "id": "vitrina",
+        "nombre": "Ruta 5 · Vitrina 2026",
+        "misiones": 4
+      }
+    ],
+    "missions": [
+      {
+        "id": "efset-examen",
+        "nombre": "Examen de inglés EF SET",
+        "detalle": "50 min en línea, gratis: el inglés certificado no caduca nunca; es tu activo más durable.",
+        "ruta": "arranque",
+        "paso": 1
+      },
+      {
+        "id": "efset-linkedin",
+        "nombre": "Publicar el certificado EF SET",
+        "detalle": "Guardá el resultado y agregalo a tu perfil de LinkedIn.",
+        "ruta": "arranque",
+        "paso": 2
+      },
+      {
+        "id": "ina-ia",
+        "nombre": "Cerrar el curso INA de IA Moderna",
+        "detalle": "Termina el 22 de noviembre: actividades NetAcad, encuesta y examen final con 70 o más.",
+        "ruta": "arranque",
+        "paso": 3
+      },
+      {
+        "id": "ssms-instalar",
+        "nombre": "Instalar SQL Server Express + SSMS",
+        "detalle": "SQL es EL fundamento que no muere: cambia el motor, no el lenguaje.",
+        "ruta": "arranque",
+        "paso": 4
+      },
+      {
+        "id": "ssms-puente",
+        "nombre": "Puente T-SQL: 10 consultas de práctica",
+        "detalle": "Diferencias clave contra MySQL: TOP, IDENTITY, funciones de fecha, CTE.",
+        "ruta": "arranque",
+        "paso": 5
+      },
+      {
+        "id": "g-curso2",
+        "nombre": "Curso 2: Ask Questions to Make Data-Driven Decisions",
+        "detalle": "Coursera · Financial Aid si no tenés suscripción. Con tu experiencia, varios cursos son repaso rápido.",
+        "ruta": "google",
+        "paso": 6
+      },
+      {
+        "id": "g-curso3",
+        "nombre": "Curso 3: Prepare Data for Exploration",
+        "detalle": "Coursera · bases y limpieza.",
+        "ruta": "google",
+        "paso": 7
+      },
+      {
+        "id": "g-curso5",
+        "nombre": "Curso 5: Analyze Data to Answer Questions",
+        "detalle": "Coursera · SQL y hojas de cálculo en serio.",
+        "ruta": "google",
+        "paso": 8
+      },
+      {
+        "id": "g-curso6",
+        "nombre": "Curso 6: Share Data Through the Art of Visualization",
+        "detalle": "Coursera · Tableau y presentaciones.",
+        "ruta": "google",
+        "paso": 9
+      },
+      {
+        "id": "g-curso7",
+        "nombre": "Curso 7: Data Analysis with R Programming",
+        "detalle": "Se completa para cerrar el certificado; el futuro es Python (Ruta 3), pero el título completo es la señal que vale.",
+        "ruta": "google",
+        "paso": 10
+      },
+      {
+        "id": "g-capstone",
+        "nombre": "Curso 8: Capstone y certificado completo 🏅",
+        "detalle": "Reclamás el Google Data Analytics Professional Certificate.",
+        "ruta": "google",
+        "paso": 11
+      },
+      {
+        "id": "g-advanced",
+        "nombre": "Siguiente nivel: Google Advanced Data Analytics",
+        "detalle": "Inscribirse en Coursera: Python, estadística y machine learning. Ahí está el futuro de la ruta Google.",
+        "ruta": "google",
+        "paso": 12
+      },
+      {
+        "id": "ms-mod1",
+        "nombre": "Power BI (Coursera): preparar y cargar datos",
+        "detalle": "Certificado Microsoft Power BI Data Analyst, parte 1.",
+        "ruta": "microsoft",
+        "paso": 13
+      },
+      {
+        "id": "ms-mod2",
+        "nombre": "Power BI (Coursera): modelado y DAX",
+        "detalle": "Parte 2: tu fuerte, formalizado.",
+        "ruta": "microsoft",
+        "paso": 14
+      },
+      {
+        "id": "ms-mod3",
+        "nombre": "Power BI (Coursera): visualización y certificado",
+        "detalle": "Parte 3: quedás listo para el examen PL-300 cuando haya voucher.",
+        "ruta": "microsoft",
+        "paso": 15
+      },
+      {
+        "id": "ms-fabric",
+        "nombre": "Microsoft Fabric: ruta gratuita en MS Learn",
+        "detalle": "Fabric es la evolución del ecosistema Power BI: lagos de datos y análisis en un solo lugar.",
+        "ruta": "microsoft",
+        "paso": 16
+      },
+      {
+        "id": "ms-training",
+        "nombre": "Virtual Training Day: Fundamentals",
+        "detalle": "Evento gratuito de Microsoft; al asistir te dan el voucher del examen de fundamentos.",
+        "ruta": "microsoft",
+        "paso": 17
+      },
+      {
+        "id": "ms-examen",
+        "nombre": "Aprobar el examen con voucher: AI-900 (recomendado) o DP-900 🏅",
+        "detalle": "AI-900 (Azure AI Fundamentals) mira al futuro y combina con tu curso del INA; DP-900 es la ruta de datos clásica. Uno de los dos, oficial Microsoft.",
+        "ruta": "microsoft",
+        "paso": 18
+      },
+      {
+        "id": "ia-essentials",
+        "nombre": "Google AI Essentials (Coursera)",
+        "detalle": "Fundamentos prácticos de IA generativa para trabajar: prompting y criterio, en horas no semanas.",
+        "ruta": "ia",
+        "paso": 19
+      },
+      {
+        "id": "ia-flujo",
+        "nombre": "Tu flujo de análisis con IA, documentado",
+        "detalle": "Guía personal: cómo usás IA para explorar datos, generar SQL y revisar resultados SIN confiar a ciegas. Verificar es la habilidad.",
+        "ruta": "ia",
+        "paso": 20
+      },
+      {
+        "id": "ia-n8n",
+        "nombre": "Proyecto: automatización n8n + IA (datos demo)",
+        "detalle": "Un flujo que lee datos, los analiza con IA y genera un reporte solo. Publicado en GitHub: tu diferenciador 2026.",
+        "ruta": "ia",
+        "paso": 21
+      },
+      {
+        "id": "ia-ml",
+        "nombre": "Kaggle Learn: Intro to Machine Learning",
+        "detalle": "Gratis y corto: tu primer modelo predictivo en Python, como el de No-Show pero formal.",
+        "ruta": "ia",
+        "paso": 22
+      },
+      {
+        "id": "sf-trailmix",
+        "nombre": "Trailhead: ruta de reportes y dashboards (parte 1)",
+        "detalle": "Salesforce sigue siendo la brecha #1 en las vacantes de Costa Rica.",
+        "ruta": "demanda",
+        "paso": 23
+      },
+      {
+        "id": "sf-proyecto",
+        "nombre": "Trailhead: proyecto práctico de reportes (parte 2)",
+        "detalle": "Un playground con reportes reales para mostrar en entrevista.",
+        "ruta": "demanda",
+        "paso": 24
+      },
+      {
+        "id": "sap-intro",
+        "nombre": "SAP Learning: ruta introductoria",
+        "detalle": "Navegación y conceptos: “SAP a nivel usuario”, honesto y suficiente por ahora.",
+        "ruta": "demanda",
+        "paso": 25
+      },
+      {
+        "id": "gh-insignia",
+        "nombre": "GitHub: proyecto insignia con IA",
+        "detalle": "Un pipeline completo y público: datos → SQL → Python → Power BI → automatización. Con README que cuente la historia.",
+        "ruta": "vitrina",
+        "paso": 26
+      },
+      {
+        "id": "li-vitrina",
+        "nombre": "LinkedIn: headline y sección destacada",
+        "detalle": "Titular con las palabras de 2026: datos, automatización e IA aplicada.",
+        "ruta": "vitrina",
+        "paso": 27
+      },
+      {
+        "id": "cv-final",
+        "nombre": "Regenerar el CV “perfecto”",
+        "detalle": "CV ES/EN con todo lo nuevo, y subirlo a Indeed, elempleo y LinkedIn.",
+        "ruta": "vitrina",
+        "paso": 28
+      }
+    ]
+  },
+  "tesoro": {
+    "source": "odea.html · const SHOP_ITEMS",
+    "sha256": "3c9463b25896f3ad2bf5fd194988fd7f4ad30a8250fc38a2be228ab6c0072258",
+    "count": 25,
+    "purchasable": 20,
+    "grantedOnly": 5,
+    "items": [
+      {
+        "id": "sw_wood",
+        "nombre": "Espada de Madera",
+        "tier": "madera",
+        "price": 20,
+        "slot": "mano",
+        "power": 50,
+        "grantOnly": false
+      },
+      {
+        "id": "sw_stone",
+        "nombre": "Espada de Piedra",
+        "tier": "piedra",
+        "price": 70,
+        "slot": "mano",
+        "power": 150,
+        "grantOnly": false
+      },
+      {
+        "id": "sw_iron",
+        "nombre": "Espada de Hierro",
+        "tier": "hierro",
+        "price": 150,
+        "slot": "mano",
+        "power": 400,
+        "grantOnly": false
+      },
+      {
+        "id": "sw_gold",
+        "nombre": "Espada de Oro",
+        "tier": "oro",
+        "price": 320,
+        "slot": "mano",
+        "power": 800,
+        "grantOnly": false
+      },
+      {
+        "id": "sw_diamond",
+        "nombre": "Espada de Diamante",
+        "tier": "diamante",
+        "price": 650,
+        "slot": "mano",
+        "power": 1500,
+        "grantOnly": false
+      },
+      {
+        "id": "ax_wood",
+        "nombre": "Hacha de Madera",
+        "tier": "madera",
+        "price": 25,
+        "slot": "mano",
+        "power": 60,
+        "grantOnly": false
+      },
+      {
+        "id": "ax_iron",
+        "nombre": "Hacha de Hierro",
+        "tier": "hierro",
+        "price": 160,
+        "slot": "mano",
+        "power": 420,
+        "grantOnly": false
+      },
+      {
+        "id": "ax_diamond",
+        "nombre": "Hacha de Diamante",
+        "tier": "diamante",
+        "price": 680,
+        "slot": "mano",
+        "power": 1600,
+        "grantOnly": false
+      },
+      {
+        "id": "pk_wood",
+        "nombre": "Pico de Madera",
+        "tier": "madera",
+        "price": 18,
+        "slot": "mano",
+        "power": 40,
+        "grantOnly": false
+      },
+      {
+        "id": "pk_iron",
+        "nombre": "Pico de Hierro",
+        "tier": "hierro",
+        "price": 140,
+        "slot": "mano",
+        "power": 380,
+        "grantOnly": false
+      },
+      {
+        "id": "pk_diamond",
+        "nombre": "Pico de Diamante",
+        "tier": "diamante",
+        "price": 600,
+        "slot": "mano",
+        "power": 1400,
+        "grantOnly": false
+      },
+      {
+        "id": "sh_wood",
+        "nombre": "Escudo de Madera",
+        "tier": "madera",
+        "price": 30,
+        "slot": "escudo",
+        "power": 70,
+        "grantOnly": false
+      },
+      {
+        "id": "sh_iron",
+        "nombre": "Escudo de Hierro",
+        "tier": "hierro",
+        "price": 180,
+        "slot": "escudo",
+        "power": 450,
+        "grantOnly": false
+      },
+      {
+        "id": "sh_diamond",
+        "nombre": "Escudo de Diamante",
+        "tier": "diamante",
+        "price": 700,
+        "slot": "escudo",
+        "power": 1700,
+        "grantOnly": false
+      },
+      {
+        "id": "hl_iron",
+        "nombre": "Casco de Hierro",
+        "tier": "hierro",
+        "price": 130,
+        "slot": "cabeza",
+        "power": 300,
+        "grantOnly": false
+      },
+      {
+        "id": "hl_diamond",
+        "nombre": "Casco de Diamante",
+        "tier": "diamante",
+        "price": 550,
+        "slot": "cabeza",
+        "power": 1200,
+        "grantOnly": false
+      },
+      {
+        "id": "ch_iron",
+        "nombre": "Pechera de Hierro",
+        "tier": "hierro",
+        "price": 200,
+        "slot": "torso",
+        "power": 500,
+        "grantOnly": false
+      },
+      {
+        "id": "ch_diamond",
+        "nombre": "Pechera de Diamante",
+        "tier": "diamante",
+        "price": 750,
+        "slot": "torso",
+        "power": 1800,
+        "grantOnly": false
+      },
+      {
+        "id": "bt_iron",
+        "nombre": "Botas de Hierro",
+        "tier": "hierro",
+        "price": 120,
+        "slot": "pies",
+        "power": 280,
+        "grantOnly": false
+      },
+      {
+        "id": "bt_diamond",
+        "nombre": "Botas de Diamante",
+        "tier": "diamante",
+        "price": 500,
+        "slot": "pies",
+        "power": 1100,
+        "grantOnly": false
+      },
+      {
+        "id": "xo_costillar",
+        "nombre": "Exo-armazón «COSTILLAR NEÓN»",
+        "tier": "oraculo",
+        "price": 0,
+        "slot": "torso",
+        "power": 1900,
+        "grantOnly": true
+      },
+      {
+        "id": "xo_visor",
+        "nombre": "Visor «ORÁCULO»",
+        "tier": "oraculo",
+        "price": 0,
+        "slot": "cabeza",
+        "power": 1300,
+        "grantOnly": true
+      },
+      {
+        "id": "xo_brazo",
+        "nombre": "Servobrazo «PRECISIÓN»",
+        "tier": "oraculo",
+        "price": 0,
+        "slot": "mano",
+        "power": 1700,
+        "grantOnly": true
+      },
+      {
+        "id": "xo_pistones",
+        "nombre": "Pistones «SOBRECARGA»",
+        "tier": "oraculo",
+        "price": 0,
+        "slot": "pies",
+        "power": 1200,
+        "grantOnly": true
+      },
+      {
+        "id": "xo_nucleo",
+        "nombre": "Núcleo «DECISIÓN»",
+        "tier": "oraculo",
+        "price": 0,
+        "slot": "escudo",
+        "power": 1800,
+        "grantOnly": true
+      }
+    ]
+  },
+  "tesoroModulo": {
+    "source": "assets/odea-tesoro.js",
+    "sha256": "f4d23783165f96f854874ffb81c31c55e5f51b73e9db39243dcd9095c1377939",
+    "count": 4,
+    "cosmetics": [
+      {
+        "id": "titulo",
+        "nombre": "Título: «el Imparable»",
+        "precio": 15,
+        "desc": "Un título junto a tu nombre en el panel lateral."
+      },
+      {
+        "id": "marco",
+        "nombre": "Marco dorado",
+        "precio": 25,
+        "desc": "Borde y brillo dorados para tu logo y tu personaje."
+      },
+      {
+        "id": "tema-aurora",
+        "nombre": "Tema Aurora boreal",
+        "precio": 40,
+        "desc": "El panel lateral se tiñe de verdes y violetas polares."
+      },
+      {
+        "id": "tema-synthwave",
+        "nombre": "Tema Atardecer synthwave",
+        "precio": 40,
+        "desc": "El panel lateral se tiñe de rosa y naranja retro."
+      }
+    ],
+    "rules": {
+      "precioEscudo": 20,
+      "maxEscudos": 2,
+      "xpPorMoneda": 10
+    }
+  },
+  "garaje": {
+    "source": "assets/odea-garaje.js",
+    "sha256": "b6a75725ab7528d46b4e0b93e26e7fbec3cfd402895d23b44dc0948591569a7f",
+    "vehicles": [
+      {
+        "id": "carro",
+        "nombre": "Hyundai Accent 2017",
+        "detalle": "Carro · manual"
+      },
+      {
+        "id": "moto",
+        "nombre": "Formula X2",
+        "detalle": "Moto"
+      }
+    ],
+    "count": 13,
+    "missions": [
+      {
+        "id": "c-lavar",
+        "nombre": "Lavar el carro",
+        "vehiculo": "carro",
+        "dias": 7
+      },
+      {
+        "id": "c-llantas",
+        "nombre": "Revisar presión de llantas",
+        "vehiculo": "carro",
+        "dias": 14
+      },
+      {
+        "id": "c-interior",
+        "nombre": "Limpiar el interior",
+        "vehiculo": "carro",
+        "dias": 14
+      },
+      {
+        "id": "c-aceite-nivel",
+        "nombre": "Revisar nivel de aceite",
+        "vehiculo": "carro",
+        "dias": 15
+      },
+      {
+        "id": "c-fluidos",
+        "nombre": "Revisar refrigerante y líquido de frenos",
+        "vehiculo": "carro",
+        "dias": 30
+      },
+      {
+        "id": "c-luces",
+        "nombre": "Revisar luces y escobillas",
+        "vehiculo": "carro",
+        "dias": 30
+      },
+      {
+        "id": "c-aceite-cambio",
+        "nombre": "Cambio de aceite y filtro (control por fecha/km)",
+        "vehiculo": "carro",
+        "dias": 90
+      },
+      {
+        "id": "m-lavar",
+        "nombre": "Lavar la moto",
+        "vehiculo": "moto",
+        "dias": 7
+      },
+      {
+        "id": "m-llantas",
+        "nombre": "Revisar presión de llantas",
+        "vehiculo": "moto",
+        "dias": 7
+      },
+      {
+        "id": "m-cadena",
+        "nombre": "Limpiar y lubricar la cadena",
+        "vehiculo": "moto",
+        "dias": 14
+      },
+      {
+        "id": "m-aceite",
+        "nombre": "Revisar nivel de aceite",
+        "vehiculo": "moto",
+        "dias": 15
+      },
+      {
+        "id": "m-frenos",
+        "nombre": "Revisar frenos",
+        "vehiculo": "moto",
+        "dias": 30
+      },
+      {
+        "id": "m-luces",
+        "nombre": "Revisar luces",
+        "vehiculo": "moto",
+        "dias": 30
+      }
+    ]
+  },
+  "jefe": {
+    "source": "assets/odea-jefe.js",
+    "sha256": "d1be764e784b80962c03dc70390b58f6e4ebbd1b76b9f15362a202634710a453",
+    "count": 4,
+    "idNote": "sin id en la fuente; identificados por índice y nombre",
+    "bosses": [
+      {
+        "index": 0,
+        "nombre": "Vorthak, el Devorador de Dashboards",
+        "titulo": "Terror de los reportes de los lunes"
+      },
+      {
+        "index": 1,
+        "nombre": "La Reina Nula",
+        "titulo": "Soberana de las celdas vacías"
+      },
+      {
+        "index": 2,
+        "nombre": "El Archivista Ciego",
+        "titulo": "Guardián de los archivos que nadie encuentra"
+      },
+      {
+        "index": 3,
+        "nombre": "Madame Duplicada",
+        "titulo": "Multiplicadora de filas infinitas"
+      }
+    ]
+  },
+  "anomalias": {
+    "source": "assets/odea-anomalias.js",
+    "sha256": "7752283e353db858074472293315a5adbc904658d5774e1f8dfad67497324f31",
+    "count": 8,
+    "idNote": "sin id en la fuente; identificadas por índice",
+    "trivia": [
+      {
+        "index": 0,
+        "q": "¿Qué significa SQL?",
+        "opciones": [
+          "Structured Query Language",
+          "Simple Question List",
+          "System Quality Level",
+          "Server Query Logic"
+        ],
+        "correcta": 0,
+        "explicacion": "SQL es el lenguaje estándar para consultar bases de datos relacionales."
+      },
+      {
+        "index": 1,
+        "q": "En una tabla de datos, ¿qué es cada fila?",
+        "opciones": [
+          "Una columna",
+          "Un registro",
+          "Una clave",
+          "Un índice"
+        ],
+        "correcta": 1,
+        "explicacion": "Cada fila es un registro; cada columna, un campo."
+      },
+      {
+        "index": 2,
+        "q": "¿Qué lenguaje de fórmulas usa Power BI?",
+        "opciones": [
+          "VBA",
+          "DAX",
+          "M",
+          "SQL"
+        ],
+        "correcta": 1,
+        "explicacion": "DAX es el lenguaje de cálculos de Power BI (M se usa en Power Query)."
+      },
+      {
+        "index": 3,
+        "q": "¿De qué lenguaje es la librería pandas?",
+        "opciones": [
+          "Java",
+          "R",
+          "Python",
+          "JavaScript"
+        ],
+        "correcta": 2,
+        "explicacion": "pandas es la librería de análisis de datos de Python."
+      },
+      {
+        "index": 4,
+        "q": "¿Para qué sirve un gráfico de barras?",
+        "opciones": [
+          "Comparar categorías",
+          "Mostrar partes de un todo en el tiempo",
+          "Medir correlación",
+          "Predecir el futuro"
+        ],
+        "correcta": 0,
+        "explicacion": "Las barras comparan valores entre categorías."
+      },
+      {
+        "index": 5,
+        "q": "¿Cuál es la media de 2, 4 y 6?",
+        "opciones": [
+          "3",
+          "4",
+          "5",
+          "6"
+        ],
+        "correcta": 1,
+        "explicacion": "(2+4+6)/3 = 4."
+      },
+      {
+        "index": 6,
+        "q": "En Excel, ¿qué hace la función SUMA?",
+        "opciones": [
+          "Cuenta celdas con texto",
+          "Suma los valores de un rango",
+          "Busca un valor",
+          "Ordena datos"
+        ],
+        "correcta": 1,
+        "explicacion": "SUMA agrega todos los números del rango indicado."
+      },
+      {
+        "index": 7,
+        "q": "¿Qué es un valor nulo en un conjunto de datos?",
+        "opciones": [
+          "Un cero",
+          "Un error de fórmula",
+          "Un dato faltante",
+          "Un texto vacío siempre"
+        ],
+        "correcta": 2,
+        "explicacion": "Nulo = ausencia de dato; no es lo mismo que cero."
+      }
+    ],
+    "milestones": [
+      {
+        "n": 3,
+        "ico": "🔰",
+        "label": "3 de por vida"
+      },
+      {
+        "n": 7,
+        "ico": "🛰️",
+        "label": "7 de por vida"
+      },
+      {
+        "n": 15,
+        "ico": "🌌",
+        "label": "15 de por vida"
+      }
+    ]
+  }
+}

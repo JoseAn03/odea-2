@@ -8,6 +8,7 @@
     "test": "node --test",
     "check:write-path": "node tools/check-write-path.mjs",
     "extract-catalog": "node tools/extract-catalog.mjs",
+    "extract-assets": "node tools/extract-assets.mjs",
     "make-fixture": "node tools/make-fixture.mjs"
   },
   "engines": {
