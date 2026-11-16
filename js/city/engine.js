@@ -11,6 +11,7 @@ import { createRenderer } from "./render.js";
 import { createInput } from "./input.js";
 import { getDistrict } from "../districts.js";
 import { MONUMENT } from "./world.js";
+import { applyView, viewOf } from "./view-session.js";
 
 export function createCityView({ canvas, world, onSelectDistrict }) {
   const renderer = createRenderer(canvas);
@@ -128,6 +129,14 @@ export function createCityView({ canvas, world, onSelectDistrict }) {
     selectDistrict(id) {
       const d = getDistrict(id);
       renderer.setSelected(d ? d.rect : null, d ? d.accent : "#FF2E93");
+      drawNow();
+    },
+    /* Snapshot de cámara en memoria de sesión (Fase 3, §5): nunca se persiste. */
+    getView() {
+      return viewOf(camera);
+    },
+    setView(view, { instant = true } = {}) {
+      applyView(camera, view, { instant });
       drawNow();
     },
     clearSelection() {

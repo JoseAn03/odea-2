@@ -9,6 +9,8 @@
 import { deriveBundle } from "./hud.js";
 import { fmt, XP_LABELS } from "./format.js";
 import { getDistrict, KEY_HOME } from "./districts.js";
+import { deriveStreak } from "../src/derive.js";
+import { routeForDay } from "../src/gameplay.js";
 
 export const PANEL_FOOTNOTE =
   "Las misiones de este distrito se juegan aquí a partir de la Fase 3.";
@@ -68,6 +70,9 @@ function hubPanel(b, catalog, d) {
   const pending = Array.isArray(hub.pendientes) ? hub.pendientes : [];
   const pendingCoins = pending.reduce((a, r) => a + (Number(r && r.monedas) || 0), 0);
   const credit = derived.xpBreakdown.evento + derived.xpBreakdown.farm;
+  const streak = deriveStreak(b);
+  const route = routeForDay(b, catalog);
+  const checkinDone = !!(b.play && b.play.checkins && b.play.checkins[route.date]);
 
   return {
     id: "hub",
@@ -88,7 +93,10 @@ function hubPanel(b, catalog, d) {
         hint: `Nivel ODEA ${fmt(derived.odeLevel)}`
       }),
       row("totalxp", "XP total", fmt(derived.totalXP), { raw: derived.totalXP }),
-      row("streak", "Racha", `${fmt(id.streak || 0)} días`, { raw: Number(id.streak) || 0 }),
+      row("streak", "Racha derivada", `${fmt(streak.streak)} días`, {
+        raw: streak.streak,
+        hint: streak.streakDate ? `Último día: ${streak.streakDate}` : null
+      }),
       row("refdate", "Fecha de referencia", (b.migration && b.migration.referenceDate) || "—"),
 
       row("credit", "Crédito permanente", `${fmt(credit)} XP`, {
@@ -110,7 +118,13 @@ function hubPanel(b, catalog, d) {
         hint: "Log de auditoría: no es progreso activo"
       }),
       row("sound", "Sonido", juice.muted ? "Silenciado" : "Activo")
-    ])
+    ]),
+    play: {
+      date: route.date,
+      catalogDay: route.catalogDay,
+      missions: route.missions,
+      checkin: { done: checkinDone, streak: streak.streak, streakDate: streak.streakDate }
+    }
   };
 }
 
@@ -176,9 +190,9 @@ function vidaPanel(b, catalog, d) {
   const v = vida(b);
   const dia = diary(b);
   const foc = focus(b);
-  const id = identity(b);
   const entries = Array.isArray(dia.log) ? dia.log : [];
   const focusEntries = Array.isArray(foc.log) ? foc.log : [];
+  const streak = deriveStreak(b);
 
   return {
     id: "vida",
@@ -197,7 +211,7 @@ function vidaPanel(b, catalog, d) {
       row("vida_log", "Registros de vida", fmt(Array.isArray(v.log) ? v.log.length : 0), {
         raw: Array.isArray(v.log) ? v.log.length : 0
       }),
-      row("streak", "Racha", `${fmt(id.streak || 0)} días`),
+      row("streak", "Racha derivada", `${fmt(streak.streak)} días`),
 
       row("diary", "Diario", `${fmt(entries.length)} entradas`, { group: "Diario y enfoque" }),
       row("diary_xp", "XP de diario", fmt(d.xpBreakdown.diary), { raw: d.xpBreakdown.diary }),
