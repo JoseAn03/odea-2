@@ -160,6 +160,67 @@ function sheetRows(rows) {
   return out;
 }
 
+/* ----------------------------- misiones de hoy ---------------------------- */
+
+function playSection(play, actions) {
+  if (!play) return [];
+
+  const missions = (play.missions || []).map((mission) =>
+    h(
+      "div",
+      { class: `sheet-mission${mission.completed ? " is-done" : ""}` },
+      h(
+        "div",
+        { class: "sheet-mission-info" },
+        h("span", { class: "sheet-mission-id" }, mission.id),
+        h("span", { class: "sheet-hint" }, `${fmt(mission.xp)} XP${mission.slot ? ` · slot ${mission.slot}` : ""}`)
+      ),
+      mission.completed
+        ? h("span", { class: "sheet-mission-done" }, "Hecha")
+        : h(
+            "button",
+            {
+              class: "btn ghost sheet-mission-btn",
+              type: "button",
+              onclick: () => actions.completeMission && actions.completeMission(mission.id)
+            },
+            "Completar"
+          )
+    )
+  );
+
+  return [
+    h("h4", { class: "sheet-group" }, `Misiones de hoy · día ${play.catalogDay}`),
+    h(
+      "div",
+      { class: "sheet-play" },
+      missions.length
+        ? h("div", { class: "sheet-missions" }, ...missions)
+        : h("p", { class: "sheet-hint" }, "No quedan misiones pendientes para hoy."),
+      h(
+        "div",
+        { class: "sheet-checkin" },
+        h(
+          "span",
+          { class: "sheet-hint" },
+          `Racha derivada: ${fmt(play.checkin.streak)} días${play.checkin.streakDate ? ` · último ${play.checkin.streakDate}` : ""}`
+        ),
+        play.checkin.done
+          ? h("span", { class: "sheet-mission-done" }, "Día registrado")
+          : h(
+              "button",
+              {
+                class: "btn primary sheet-checkin-btn",
+                type: "button",
+                onclick: () => actions.checkin && actions.checkin()
+              },
+              "Registrar día"
+            )
+      )
+    )
+  ];
+}
+
 export function renderSheet(root, panel, actions = {}) {
   const accent = panel.accent || "#FF2E93";
   root.style.setProperty("--accent", accent);
@@ -227,6 +288,7 @@ export function renderSheet(root, panel, actions = {}) {
     panel.archivedNotice ? h("p", { class: "notice warn" }, panel.archivedNotice) : null,
     ...xpChips,
     ...sheetRows(panel.rows || []),
+    ...playSection(panel.play, actions),
     ...list,
     h("p", { class: "sheet-footnote" }, panel.footnote),
     h(

@@ -35,8 +35,11 @@ const SHELL = [
   "./js/city/render.js",
   "./js/city/input.js",
   "./js/city/engine.js",
+  "./js/city/view-session.js",
   "./src/shape.js",
   "./src/derive.js",
+  "./src/catalog.js",
+  "./src/gameplay.js",
   "./src/migrate.js",
   "./src/validate.js",
   "./src/storage.js"
