@@ -154,3 +154,38 @@ test("sagas: la saga semanal y el jefe semanal siguen fuera del alcance", () => 
   const weeklyAfter = after.worlds.sagas.data.weekly;
   assert.equal(JSON.stringify(weeklyAfter), weeklyBefore, "la mecánica semanal no se toca");
 });
+
+/* ========================================================================== */
+/* R1 + Sagas: el XP congelado manda sobre el catálogo                        */
+/* ========================================================================== */
+
+test("sagas + R1: cambiar el capítulo en el catálogo no reescribe el historial", () => {
+  const { storage, catalog, bundle } = freshSave();
+  const fresh = systemMissions(bundle, catalog, "sagas", DAY).pending.find((m) => m.map === "sagas.video");
+
+  assert.equal(complete(storage, catalog, fresh.id).status, "applied");
+  const saved = currentBundle(storage);
+  const before = derived(saved, catalog);
+
+  const futuro = JSON.parse(JSON.stringify(catalog));
+  const saga = futuro.sagas.find((s) => s.id === "video");
+  saga.chapters.find((ch) => ch.id === fresh.id).xp = 9999;
+
+  const after = derived(saved, futuro);
+  assert.equal(after.totalXP, before.totalXP, "el capítulo congelado no se revaloriza");
+  assert.equal(after.xpBreakdown.vida, before.xpBreakdown.vida);
+});
+
+test("sagas + R1: cambiar el jefe en el catálogo no reescribe el historial", () => {
+  const { storage, catalog, bundle } = freshSave();
+  const boss = systemMissions(bundle, catalog, "sagas", DAY).pending.find((m) => m.map === "bosses");
+
+  assert.equal(complete(storage, catalog, boss.id).status, "applied");
+  const saved = currentBundle(storage);
+  const before = derived(saved, catalog).xpBreakdown.bosses;
+
+  const futuro = JSON.parse(JSON.stringify(catalog));
+  futuro.bosses[boss.id] = 9999;
+
+  assert.equal(derived(saved, futuro).xpBreakdown.bosses, before);
+});
