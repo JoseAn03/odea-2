@@ -145,8 +145,9 @@ test("dominios: una de una sola vez queda hecha para siempre", () => {
 });
 
 test("dominios: completar en Empleo escribe por la ruta única", () => {
-  const { storage, catalog } = freshSave();
-  const mission = missionsOf(catalog, "empleo").find((m) => m.map === "jobs");
+  const { storage, catalog, bundle } = freshSave();
+  /* Una que NO viniera ya completa de ODEA 1: las migradas se rechazan. */
+  const mission = systemMissions(bundle, catalog, "empleo", DAY).pending.find((m) => m.map === "jobs");
 
   const result = complete(storage, catalog, "empleo", mission.id);
   assert.equal(result.status, "applied");

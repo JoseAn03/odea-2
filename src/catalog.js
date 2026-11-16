@@ -11,13 +11,14 @@
  */
 
 /** Sistemas jugables en Fase 3 (el resto sigue de solo lectura). */
-export const PHASE3_SYSTEMS = ["hub", "empleo", "vida"];
+export const PHASE3_SYSTEMS = ["hub", "empleo", "vida", "capital"];
 
 /** Mapas del catálogo por sistema. */
 export const SYSTEM_MAPS = {
   hub: ["daily", "weekly"],
   empleo: ["jobs", "b2b", "puente"],
-  vida: ["vida"]
+  vida: ["vida"],
+  capital: ["capital.done", "capital.eng", "capital.ai"]
 };
 
 /** Todos los mapas con ids de misión (incluye sistemas aún no jugables). */

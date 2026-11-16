@@ -188,6 +188,13 @@ const VIDA_GROUPS = [
   { label: "Una vez", match: { cls: "one" } }
 ];
 
+/* La Torre son tres submódulos del catálogo, todos de una sola vez. */
+const CAPITAL_GROUPS = [
+  { label: "Ahorro", match: { map: "capital.done" } },
+  { label: "Inglés", match: { map: "capital.eng" } },
+  { label: "IA", match: { map: "capital.ai" } }
+];
+
 function empleoPanel(b, catalog, d) {
   const h = hunt(b);
   const p = progress(b);
@@ -280,7 +287,8 @@ function torrePanel(b, catalog, d) {
       }),
       row("capital_eng", "Inglés", `${fmt(eng.length)} de ${fmt(catalogSize(catalog, "capital", "eng"))}`, { raw: eng.length }),
       row("capital_ai", "IA", `${fmt(ai.length)} de ${fmt(catalogSize(catalog, "capital", "ai"))}`, { raw: ai.length })
-    ])
+    ]),
+    play: playOf(b, catalog, "capital", CAPITAL_GROUPS)
   };
 }
 
