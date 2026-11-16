@@ -34,6 +34,34 @@ export function isoWeekKey(dateStr) {
   return t.getFullYear() + "-W" + String(wk).padStart(2, "0");
 }
 
+/* --- Fechas locales de juego (Fase 3) -------------------------------------
+ * La fecha de juego es la del DISPOSITIVO, en componentes locales. Nunca se
+ * usa toISOString().slice(0,10), que puede cruzar de día por UTC.
+ */
+
+export function localDateKey(date = new Date()) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+export function epochDayOf(dateKey) {
+  const [y, m, d] = String(dateKey).split("-").map(Number);
+  return Math.floor(Date.UTC(y, m - 1, d) / 86400000);
+}
+
+export function addDays(dateKey, days) {
+  const date = new Date(epochDayOf(dateKey) * 86400000 + days * 86400000);
+  return localDateKeyUTC(date);
+}
+
+function localDateKeyUTC(date) {
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(
+    date.getUTCDate()
+  ).padStart(2, "0")}`;
+}
+
 export function streakMult(streak) {
   const s = Number(streak) || 0;
   if (s >= 30) return 2;
@@ -41,6 +69,81 @@ export function streakMult(streak) {
   if (s >= 7) return 1.25;
   if (s >= 3) return 1.1;
   return 1;
+}
+
+/* --- Racha derivada de fechas (Fase 3, decisión 2026-11-15) ---------------
+ * La racha NUNCA se guarda como contador. Se calcula de las fechas activas:
+ *   - `core.activity` migrada (días con `by.daily >= 1`),
+ *   - completaciones de Hub,
+ *   - check-ins.
+ * La racha migrada (`core.identity.streak`, anclada a `lastDailyDate` por D3)
+ * es la línea base: el primer día en ODEA 2 no la reinicia salvo hueco real.
+ *
+ * Sin actividad de Hub ni check-ins devuelve la base tal cual: así la
+ * migración y los bundles de Fase 2 derivan exactamente igual.
+ */
+export function deriveStreak(bundle2) {
+  const core = (bundle2 && bundle2.core) || {};
+  const identity = core.identity || {};
+  const baseline = Number(identity.streak) || 0;
+  const baselineDate = identity.lastDailyDate || null;
+  const play = (bundle2 && bundle2.play) || {};
+  const completions = play.completions || {};
+  const checkins = play.checkins || {};
+
+  const active = new Set();
+  for (const record of Object.values(completions)) {
+    if (record && record.system === "hub" && isDateKey(record.date)) active.add(record.date);
+  }
+  for (const date of Object.keys(checkins)) {
+    if (isDateKey(date)) active.add(date);
+  }
+
+  if (!active.size) {
+    return { streak: baseline, streakDate: baselineDate, baseline, baselineDate, days: [] };
+  }
+
+  const activity = core.activity || {};
+  for (const [date, value] of Object.entries(activity)) {
+    const dailyCount = value && value.by ? Number(value.by.daily) || 0 : 0;
+    if (dailyCount >= 1 && isDateKey(date)) active.add(date);
+  }
+
+  const days = Array.from(active).sort();
+
+  if (!baselineDate) {
+    return { streak: days.length, streakDate: days[days.length - 1] || null, baseline, baselineDate, days };
+  }
+
+  const posterior = days.filter((date) => date > baselineDate);
+  if (!posterior.length) {
+    return { streak: baseline, streakDate: baselineDate, baseline, baselineDate, days };
+  }
+
+  /* Última cadena consecutiva: la que termina en streakDate. */
+  let chainStart = posterior[posterior.length - 1];
+  let chainLength = 1;
+  for (let i = posterior.length - 2; i >= 0; i--) {
+    if (addDays(posterior[i], 1) === chainStart) {
+      chainStart = posterior[i];
+      chainLength += 1;
+    } else {
+      break;
+    }
+  }
+
+  const encadenada = chainStart === addDays(baselineDate, 1);
+  return {
+    streak: encadenada ? baseline + chainLength : chainLength,
+    streakDate: posterior[posterior.length - 1],
+    baseline,
+    baselineDate,
+    days
+  };
+}
+
+function isDateKey(value) {
+  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value);
 }
 
 /* --- Normalización de fuentes (legacy ODEA 1) --- */
@@ -73,20 +176,22 @@ export function sourcesFromLegacy(bundle) {
 }
 
 /* --- Normalización de fuentes (ODE A2 v1) --- */
-export function sourcesFromMigrated(bundle2) {
+export function sourcesFromMigrated(bundle2, catalog = null) {
   const s = bundle2.core || {};
+  const extra = mergePlaySources(bundle2, catalog);
+  const streakInfo = deriveStreak(bundle2);
   return {
-    identity: { streak: s.identity && s.identity.streak || 0 },
+    identity: { streak: streakInfo.streak },
     progress: {
       completedMissions: clone(s.progress && s.progress.completedMissions || []),
-      completedDaily: clone(s.progress && s.progress.completedDaily || []),
-      completedWeekly: clone(s.progress && s.progress.completedWeekly || []),
-      completedJobs: clone(s.progress && s.progress.completedJobs || []),
-      completedB2b: clone(s.progress && s.progress.completedB2b || []),
-      completedPuente: clone(s.progress && s.progress.completedPuente || []),
+      completedDaily: union(s.progress && s.progress.completedDaily, extra.daily),
+      completedWeekly: union(s.progress && s.progress.completedWeekly, extra.weekly),
+      completedJobs: union(s.progress && s.progress.completedJobs, extra.jobs),
+      completedB2b: union(s.progress && s.progress.completedB2b, extra.b2b),
+      completedPuente: union(s.progress && s.progress.completedPuente, extra.puente),
       unlockedAch: clone(s.progress && s.progress.unlockedAch || [])
     },
-    vida: clone(s.vida || {}),
+    vida: { ...clone(s.vida || {}), log: union(s.vida && s.vida.log, extra.vida) },
     capital: clone(s.capital || {}),
     gods: clone(s.gods || {}),
     focus: clone(s.focus || { log: [] }),
@@ -99,6 +204,49 @@ export function sourcesFromMigrated(bundle2) {
     shop: clone(s.shop || { spent: 0 }),
     sagas: clone((bundle2.worlds && bundle2.worlds.sagas && bundle2.worlds.sagas.data) || { chapters: {}, weekly: { done: false } })
   };
+}
+
+function union(base, extra) {
+  const out = clone(Array.isArray(base) ? base : []);
+  for (const value of extra || []) {
+    if (!out.includes(value)) out.push(value);
+  }
+  return out;
+}
+
+/**
+ * Traduce `play.completions` a las fuentes que `derive()` ya entiende.
+ * No muta el bundle: devuelve listas para unir en memoria.
+ */
+function mergePlaySources(bundle2, catalog) {
+  const out = { daily: [], weekly: [], jobs: [], b2b: [], puente: [], vida: [] };
+  const play = bundle2 && bundle2.play;
+  if (!play || !play.completions) return out;
+
+  for (const record of Object.values(play.completions)) {
+    if (!record || typeof record.missionId !== "string") continue;
+    const id = record.missionId;
+
+    if (record.system === "hub") {
+      if (catalog && catalog.weekly && hasId(catalog.weekly, id)) out.weekly.push(id);
+      else out.daily.push(id);
+      continue;
+    }
+    if (record.system === "empleo") {
+      if (catalog && catalog.b2b && hasId(catalog.b2b, id)) out.b2b.push(id);
+      else if (catalog && catalog.puente && hasId(catalog.puente, id)) out.puente.push(id);
+      else out.jobs.push(id);
+      continue;
+    }
+    if (record.system === "vida") {
+      out.vida.push(`${id}|${record.period || "once"}`);
+    }
+  }
+  return out;
+}
+
+function hasId(map, id) {
+  return !!map && Object.prototype.hasOwnProperty.call(map, id);
 }
 
 /* --- Componentes de XP --- */
