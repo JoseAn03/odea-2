@@ -818,3 +818,131 @@ También quedan aprobados:
 
 La implementación del Hub **no arranca** hasta que el orquestador apruebe este
 documento completo. Este PR queda en borrador para esa revisión.
+
+### 8.3 Decisiones del orquestador (2026-11-16) — catálogos de dominios
+
+Cierran las últimas preguntas de catálogo. **No reabren ninguna decisión anterior.**
+
+| # | Tema | Decisión |
+|---|---|---|
+| C1 | Academia y XP | **Sin XP.** El catálogo fuente no define XP por misión y así queda en ODEA 2: `xp: 0`. No se inventan valores. |
+| C2 | Garaje: recompensa y periodicidad | Recompensa = sinergia del Tesoro. Periodicidad = el **intervalo propio de cada misión**, no diaria ni semanal fija. |
+| C3 | El Mercado | Es la tienda del núcleo (`SHOP_ITEMS`). La tienda cosmética del Tesoro queda como **segunda sección** del mismo distrito. Los dos catálogos se extraen por separado: no se fusionan ni se re-precian. |
+| C4 | Jefes y cartas | **Solo lectura** en Fase 3. **No** se asignan ids posicionales. Se documentan por nombre. |
+| C5 | Prueba en teléfono | Tarea del usuario, no del implementador. **No bloquea** este documento: la verificación se hace contra la build resultante. |
+
+---
+
+## 9. Catálogos de los dominios restantes
+
+Todo lo de esta sección sale de las fuentes de ODEA 1 (`ebb0fce`, v6.00) y fue
+verificado contra el código antes de escribirse. Nada se infiere.
+
+> **Nota de estado (2026-11-16).** Estas decisiones aplican a los dominios que
+> faltan. El Hub, Empleo, Vida, La Torre y Sagas ya están implementados y
+> publicados (`0.12.0-fase3`), con R1 —recompensa congelada— activo. La
+> condición de arranque del §8.2 es histórica para el Hub.
+
+### 9.1 Academia — Distrito IA
+
+**Catálogo.** `assets/odea-academia.js` · `RUTAS`: **6 rutas, 29 pasos**.
+De esos 29, **28 son misiones reales** y **1 es un paso narrativo** con
+`meta: true`, que la propia fuente excluye de `REAL_MISIONES`. El denominador del
+porcentaje sigue siendo 29 (`n = min(28, count)`, y 28 ⇒ 29).
+
+**Recompensa.**
+
+| Concepto | Valor | Fuente |
+|---|---|---|
+| XP por misión | **0** | El catálogo no tiene campo de XP |
+| Sinergia del Tesoro | **+3 monedas**, máximo **3 al día** | `odea-tesoro.js` · `onAcademiaMision()` |
+| Clave del contador | `academia:YYYY-MM-DD` | `sinergias` del Tesoro |
+| Registro de ruta | `academia.ruta` por el bus del núcleo | `odea-academia.js` |
+
+Verificado en la fuente: `if (n >= 3) return;` y `state.monedas += 3`.
+
+**En ODEA 2.** La completación se registra en la sección aditiva con `xp: 0`.
+La ruta avisada se guarda en `worlds.academia.data.rutasAvisadas`.
+
+### 9.2 Garaje — El Garaje
+
+**Catálogo.** `assets/odea-garaje.js` · `MISIONES_BASE`: **13 misiones** sobre
+2 vehículos (`carro` 7, `moto` 6), cada una con su intervalo en días:
+
+`lavar` 7 · `llantas` 14 · `interior` 14 · `aceite-nivel` 15 · `fluidos` 30 ·
+`luces` 30 · `aceite-cambio` 90 (carro) · `lavar` 7 · `llantas` 7 · `cadena` 14 ·
+`aceite` 15 · `frenos` 30 · `luces` 30 (moto).
+
+**Recompensa.**
+
+| Concepto | Valor | Fuente |
+|---|---|---|
+| XP por misión | **0** | El catálogo no tiene campo de XP |
+| Monedas propias | **0** | El Garaje no paga por sí mismo |
+| Sinergia del Tesoro | **+2 monedas**, máximo **2 al día** | `odea-tesoro.js` · `onGarajeMision()` |
+| Clave del contador | `garaje:YYYY-MM-DD` | `sinergias` del Tesoro |
+
+Verificado en la fuente: `if (n >= 2) return;` y `st.monedas += 2`.
+
+**Periodicidad.** Recurrente **por intervalo propio**: la misión vuelve a estar
+debida al cumplirse sus `dias`. No es `daily` ni `weekly`.
+La completación se registra **por ciclo**: `missionId` + fecha del ciclo.
+
+> **Consecuencia técnica, no una pregunta abierta:** las tres clases actuales de
+> idempotencia (`one` / `daily` / `weekly`) no cubren «cada N días». Habilitar
+> Garaje exige una cuarta clase (`every:Nd`) o una decisión explícita que lo
+> reduzca. Queda anotado como requisito de implementación de Fase 4.
+
+### 9.3 El Mercado — dos catálogos, dos monedas
+
+Existen **dos tiendas** en el original y **no se mezclan**.
+
+| | Tienda principal (El Mercado) | Segunda sección (Tesoro) |
+|---|---|---|
+| Fuente | `odea.html` · `SHOP_ITEMS` | `assets/odea-tesoro.js` · `SHOP` |
+| Contenido | Equipo del núcleo | Cosméticos del panel |
+| Entradas | **25** = 20 comprables + 5 `grantOnly` (set EXO//ORÁCULO) | **4** |
+| Precios | 18–750 monedas del núcleo | 15 / 25 / 40 / 40 |
+| Efecto | `power` por slot, potencia del personaje | Cosmético: título, marco, temas |
+| Estado | `gameState.shop` (`owned`, `equipped`, `spent`) | `odea_tesoro_v1` (`propios`, `tema`, `marco`, `titulo`) |
+
+Los cinco `grantOnly` **no se venden**: se otorgan por evento (precio 0).
+
+**Sin fusionar ni re-preciar.** Cada catálogo conserva sus precios exactos.
+
+**Moneda.** La sinergia de Academia y Garaje acredita **monedas del Tesoro**
+(`worlds.tesoro.data.monedas`), un libro distinto del saldo del núcleo
+(`core.derived.coins`, que se deriva de completaciones menos `shop.spent`).
+No se convierten ni se suman entre sí.
+
+### 9.4 Jefes y cartas — solo lectura
+
+| | Fuente | Entradas | Id |
+|---|---|---|---|
+| Jefes | `assets/odea-jefe.js` · `BOSSES` | 4 | **Ninguno**; rotan por semana |
+| Cartas | `assets/odea-anomalias.js` · `TRIVIA` | 8 (+3 hitos) | **Ninguno** |
+
+**Decisión.** En Fase 3 ambos siguen en **solo lectura** y se documentan **por
+nombre**. **No se asignan ids posicionales**: si el arreglo fuente cambia de
+orden, un id por posición apuntaría en silencio a otro jefe, y eso viola la
+decisión cerrada de unicidad y estabilidad de ids (§2.3.1).
+
+Cuando Fase 4 active estos dominios, los ids se asignarán como **slugs estables
+derivados del nombre**, sobre una revisión congelada del catálogo.
+
+El quiz (`odea-quiz*.js`) sigue **cerrado por D5**: se exhibe como archivado en
+el Rincón Anomalía, nunca como contenido jugable ni extraíble.
+
+### 9.5 Inventario extraído
+
+`data/xp-catalog-live.json` (herramienta: `tools/extract-assets.mjs`) contiene
+los catálogos con hash SHA-256 de cada fuente:
+
+| Sección | Contenido |
+|---|---|
+| `academia` | 28 misiones reales, 6 rutas, denominador 29 |
+| `tesoro` | 25 objetos (`SHOP_ITEMS`) |
+| `tesoroModulo` | 4 cosméticos (`SHOP`) + reglas del módulo |
+| `garaje` | 2 vehículos, 13 misiones con `dias` |
+| `jefe` | 4 jefes, sin id |
+| `anomalias` | 8 cartas + 3 hitos, sin id |
