@@ -10,7 +10,8 @@
  *
  * La capa visual es SOLO LECTURA: el único módulo que escribe el save es
  * src/storage.js, a través de js/importer.js. Las misiones del Hub usan la
- * ruta ÚNICA `applyGameplayMutation`; acá nunca se llama a saveOdea2.
+ * ruta ÚNICA `applyGameplayMutation`, dentro del lock de origen que aplica
+ * `applyGameplayMutationLocked`; acá nunca se llama a saveOdea2.
  */
 import { APP_VERSION } from "./version.js";
 import { loadCatalog } from "./catalog.js";
@@ -37,7 +38,7 @@ import {
   rejectQuarantine,
   resetAndReimport,
   restoreBundle,
-  applyGameplayMutation
+  applyGameplayMutationLocked
 } from "./importer.js";
 
 const MAX_FILE_BYTES = 25 * 1024 * 1024;
@@ -173,19 +174,21 @@ function gameplayDate() {
 
 function completeMission(missionId) {
   if (!storage || !catalog) return;
-  const result = applyGameplayMutation(
+  return applyGameplayMutationLocked(
     storage,
     catalog,
     { type: "mission.complete", system: "hub", missionId },
     gameplayDate()
+  ).then((result) =>
+    afterGameplay(result, `Misión ${missionId} completada.`, "Esa misión ya estaba completada.")
   );
-  afterGameplay(result, `Misión ${missionId} completada.`, "Esa misión ya estaba completada.");
 }
 
 function checkin() {
   if (!storage || !catalog) return;
-  const result = applyGameplayMutation(storage, catalog, { type: "hub.checkin" }, gameplayDate());
-  afterGameplay(result, "Día registrado. Racha actualizada.", "El día ya estaba registrado.");
+  return applyGameplayMutationLocked(storage, catalog, { type: "hub.checkin" }, gameplayDate()).then(
+    (result) => afterGameplay(result, "Día registrado. Racha actualizada.", "El día ya estaba registrado.")
+  );
 }
 
 function afterGameplay(result, okMessage, duplicateMessage) {
