@@ -172,61 +172,144 @@ function sheetRows(rows) {
 
 /* ----------------------------- misiones de hoy ---------------------------- */
 
+function missionState(mission, actions, system) {
+  if (mission.completed) return h("span", { class: "sheet-mission-done" }, "Hecha");
+  return h(
+    "button",
+    {
+      class: "btn ghost sheet-mission-btn",
+      type: "button",
+      onclick: () => actions.completeMission && actions.completeMission(mission.id, system)
+    },
+    "Completar"
+  );
+}
+
+function missionRow(mission, actions, system) {
+  const freq =
+    mission.cls === "daily" ? "diaria" : mission.cls === "weekly" ? "semanal" : null;
+  const hint = [
+    `${fmt(mission.xp)} XP`,
+    mission.slot ? `slot ${mission.slot}` : null,
+    freq
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  return h(
+    "div",
+    { class: `sheet-mission${mission.completed ? " is-done" : ""}` },
+    h(
+      "div",
+      { class: "sheet-mission-info" },
+      h("span", { class: "sheet-mission-id" }, mission.id),
+      h("span", { class: "sheet-hint" }, hint)
+    ),
+    missionState(mission, actions, system)
+  );
+}
+
+/**
+ * Bloques agrupados de un sistema (Empleo por mapa, Vida por frecuencia).
+ *
+ * Cada grupo es un `<details>` nativo: Vida tiene 192 misiones y volcarlas
+ * todas abiertas convierte la hoja en una pared de botones donde es fácil
+ * completar por error algo que no hiciste. El primero abre; el resto queda a
+ * un toque. Sin estado propio: lo resuelve el navegador, con teclado incluido.
+ */
+function playGroups(play, actions) {
+  const nodes = [];
+  let opened = false;
+  for (const group of play.groups || []) {
+    const missions = group.missions || [];
+    if (!missions.length) continue;
+    const open = !opened;
+    opened = true;
+    const details = h(
+      "details",
+      { class: "sheet-group-details", ...(open ? { open: "" } : {}) },
+      h("summary", { class: "sheet-group-summary" }, `${group.label} · ${fmt(missions.length)}`),
+      h(
+        "div",
+        { class: "sheet-missions" },
+        ...missions.map((mission) => missionRow(mission, actions, play.system))
+      )
+    );
+    nodes.push(details);
+  }
+  return nodes;
+}
+
 function playSection(play, actions) {
   if (!play) return [];
 
-  const missions = (play.missions || []).map((mission) =>
-    h(
-      "div",
-      { class: `sheet-mission${mission.completed ? " is-done" : ""}` },
+  /* Hub: la ruta del día con su check-in. Es el único con lógica diaria. */
+  if (play.catalogDay != null) {
+    const missions = (play.missions || []).map((mission) =>
       h(
         "div",
-        { class: "sheet-mission-info" },
-        h("span", { class: "sheet-mission-id" }, mission.id),
-        h("span", { class: "sheet-hint" }, `${fmt(mission.xp)} XP${mission.slot ? ` · slot ${mission.slot}` : ""}`)
-      ),
-      mission.completed
-        ? h("span", { class: "sheet-mission-done" }, "Hecha")
-        : h(
-            "button",
-            {
-              class: "btn ghost sheet-mission-btn",
-              type: "button",
-              onclick: () => actions.completeMission && actions.completeMission(mission.id)
-            },
-            "Completar"
+        { class: `sheet-mission${mission.completed ? " is-done" : ""}` },
+        h(
+          "div",
+          { class: "sheet-mission-info" },
+          h("span", { class: "sheet-mission-id" }, mission.id),
+          h(
+            "span",
+            { class: "sheet-hint" },
+            `${fmt(mission.xp)} XP${mission.slot ? ` · slot ${mission.slot}` : ""}`
           )
-    )
-  );
+        ),
+        missionState(mission, actions, "hub")
+      )
+    );
 
+    return [
+      h("h4", { class: "sheet-group" }, `Misiones de hoy · día ${play.catalogDay}`),
+      h(
+        "div",
+        { class: "sheet-play" },
+        missions.length
+          ? h("div", { class: "sheet-missions" }, ...missions)
+          : h("p", { class: "sheet-hint" }, "No quedan misiones pendientes para hoy."),
+        h(
+          "div",
+          { class: "sheet-checkin" },
+          h(
+            "span",
+            { class: "sheet-hint" },
+            `Racha derivada: ${fmt(play.checkin.streak)} días${play.checkin.streakDate ? ` · último ${play.checkin.streakDate}` : ""}`
+          ),
+          play.checkin.done
+            ? h("span", { class: "sheet-mission-done" }, "Día registrado")
+            : h(
+                "button",
+                {
+                  class: "btn primary sheet-checkin-btn",
+                  type: "button",
+                  onclick: () => actions.checkin && actions.checkin()
+                },
+                "Registrar día"
+              )
+        )
+      )
+    ];
+  }
+
+  /* Resto de sistemas: pendientes agrupadas. Las completadas no se listan
+     porque no requieren acción; el conteo queda a la vista. */
+  const empty = !play.groups || play.groups.every((group) => !(group.missions || []).length);
   return [
-    h("h4", { class: "sheet-group" }, `Misiones de hoy · día ${play.catalogDay}`),
     h(
       "div",
       { class: "sheet-play" },
-      missions.length
-        ? h("div", { class: "sheet-missions" }, ...missions)
-        : h("p", { class: "sheet-hint" }, "No quedan misiones pendientes para hoy."),
       h(
-        "div",
-        { class: "sheet-checkin" },
-        h(
-          "span",
-          { class: "sheet-hint" },
-          `Racha derivada: ${fmt(play.checkin.streak)} días${play.checkin.streakDate ? ` · último ${play.checkin.streakDate}` : ""}`
-        ),
-        play.checkin.done
-          ? h("span", { class: "sheet-mission-done" }, "Día registrado")
-          : h(
-              "button",
-              {
-                class: "btn primary sheet-checkin-btn",
-                type: "button",
-                onclick: () => actions.checkin && actions.checkin()
-              },
-              "Registrar día"
-            )
-      )
+        "p",
+        { class: "sheet-hint" },
+        `${fmt(play.pendingCount)} pendientes · ${fmt(play.completedCount)} completadas`
+      ),
+      empty
+        ? h("p", { class: "sheet-hint" }, "No queda nada pendiente en este distrito.")
+        : h("div", {}, ...playGroups(play, actions))
     )
   ];
 }

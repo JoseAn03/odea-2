@@ -14,7 +14,7 @@
  *   - XP, monedas y racha se derivan; acá solo se registran completaciones.
  */
 import { addDays, deriveStreak, epochDayOf, isoWeekKey, localDateKey } from "./derive.js";
-import { missionOf, PHASE3_SYSTEMS } from "./catalog.js";
+import { missionOf, missionsOf, PHASE3_SYSTEMS } from "./catalog.js";
 import { PLAY_VERSION } from "./shape.js";
 
 export const ROUTE_SIZE = 3;
@@ -156,8 +156,34 @@ export function applyMutation(draft, mutation, catalog, { at, date } = {}) {
   return { changed: true, duplicate: false, reason: null, paths: [`play.completions.${key}`] };
 }
 
-/** Vecindario de días para la UI de la racha (no persiste nada). */
-export function recentStreakDays(bundle2, dateKey = localDateKey(), span = 7) {
+/**
+ * Misiones de un sistema con su estado de completación para `dateKey`.
+ *
+ * La clave de ocurrencia sale de la clase REAL de cada misión: en Vida
+ * conviven diarias, semanales y únicas en el mismo mapa, así que una diaria
+ * vuelve a estar pendiente mañana mientras una única queda hecha para siempre.
+ *
+ * Devuelve `{ system, date, missions, pending, completed }`, con las
+ * pendientes primero para que la lista abra en lo accionable.
+ */
+export function systemMissions(bundle2, catalog, system, dateKey = localDateKey()) {
+  const play = playStateOf(bundle2);
+  const missions = missionsOf(catalog, system).map((mission) => {
+    const key = occurrenceKey(mission.id, mission.cls, dateKey);
+    return {
+      ...mission,
+      key,
+      period: mission.cls === "one" ? null : mission.cls === "weekly" ? isoWeekKey(dateKey) : dateKey,
+      completed: Boolean(play.completions[key])
+    };
+  });
+
+  const pending = missions.filter((mission) => !mission.completed);
+  const completed = missions.filter((mission) => mission.completed);
+  return { system, date: dateKey, missions: [...pending, ...completed], pending, completed };
+}
+
+/** Vecindario de días para la UI de la racha (no persiste nada). */export function recentStreakDays(bundle2, dateKey = localDateKey(), span = 7) {
   const play = playStateOf(bundle2);
   const days = [];
   for (let i = span - 1; i >= 0; i--) {

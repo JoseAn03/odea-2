@@ -10,7 +10,7 @@ import { deriveBundle } from "./hud.js";
 import { fmt, XP_LABELS } from "./format.js";
 import { getDistrict, KEY_HOME } from "./districts.js";
 import { deriveStreak } from "../src/derive.js";
-import { routeForDay } from "../src/gameplay.js";
+import { routeForDay, systemMissions } from "../src/gameplay.js";
 
 export const PANEL_FOOTNOTE =
   "Las misiones de este distrito se juegan aquí a partir de la Fase 3.";
@@ -153,6 +153,41 @@ function iaPanel(b) {
   };
 }
 
+/**
+ * Payload de gameplay de un sistema no-Hub.
+ *
+ * Solo viajan las PENDIENTES: una misión completada no requiere acción, así que
+ * listarla sería ruido. El conteo total va aparte para no falsear el progreso.
+ */
+function playOf(b, catalog, system, defs) {
+  const state = systemMissions(b, catalog, system);
+  return {
+    system,
+    date: state.date,
+    pendingCount: state.pending.length,
+    completedCount: state.completed.length,
+    groups: defs.map((def) => ({
+      label: def.label,
+      missions: state.pending.filter((mission) =>
+        Object.entries(def.match).every(([field, value]) => mission[field] === value)
+      )
+    }))
+  };
+}
+
+const EMPLEO_GROUPS = [
+  { label: "Trabajos", match: { map: "jobs" } },
+  { label: "B2B", match: { map: "b2b" } },
+  { label: "Puente", match: { map: "puente" } }
+];
+
+/* Vida mezcla tres frecuencias en el mismo mapa: se agrupan por clase real. */
+const VIDA_GROUPS = [
+  { label: "Diarias", match: { cls: "daily" } },
+  { label: "Semanales", match: { cls: "weekly" } },
+  { label: "Una vez", match: { cls: "one" } }
+];
+
 function empleoPanel(b, catalog, d) {
   const h = hunt(b);
   const p = progress(b);
@@ -182,7 +217,8 @@ function empleoPanel(b, catalog, d) {
       row("jobs", "Trabajos completados", `${fmt(p.completedJobs ? p.completedJobs.length : 0)} de ${fmt(catalogSize(catalog, "jobs"))}`, { group: "Empleo" }),
       row("b2b", "B2B", `${fmt(p.completedB2b ? p.completedB2b.length : 0)} de ${fmt(catalogSize(catalog, "b2b"))}`),
       row("puente", "Puente", `${fmt(p.completedPuente ? p.completedPuente.length : 0)} de ${fmt(catalogSize(catalog, "puente"))}`)
-    ])
+    ]),
+    play: playOf(b, catalog, "empleo", EMPLEO_GROUPS)
   };
 }
 
@@ -218,7 +254,8 @@ function vidaPanel(b, catalog, d) {
       row("focus", "Sesiones de enfoque", fmt(focusEntries.length), { raw: focusEntries.length }),
       row("focus_xp", "XP de enfoque", fmt(d.xpBreakdown.focus), { raw: d.xpBreakdown.focus })
     ]),
-    list: entries.slice(0, 3).map((e) => ({ label: String(e.date || "—"), value: `${fmt(e.xp || 0)} XP` }))
+    list: entries.slice(0, 3).map((e) => ({ label: String(e.date || "—"), value: `${fmt(e.xp || 0)} XP` })),
+    play: playOf(b, catalog, "vida", VIDA_GROUPS)
   };
 }
 
