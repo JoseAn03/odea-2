@@ -12,15 +12,18 @@
  *   4. Reimportación: rechazada por defecto; solo "reset + reimportar" con
  *      backup previo del save actual.
  */
-import { derive, sourcesFromMigrated } from "./derive.js";
+import { derive, deriveStreak, localDateKey, sourcesFromMigrated } from "./derive.js";
 import {
   MIGRATION_SCHEMA_VERSION,
   ODEA2_BUNDLE_FORMAT,
+  deepEqual,
   fingerprintOf,
   sameSource
 } from "./shape.js";
 import { migrateBundle, MigrationError } from "./migrate.js";
-import { validateMigration } from "./validate.js";
+import { validateMigration, validatePlayState, playFailureCode } from "./validate.js";
+import { validateCatalog } from "./catalog.js";
+import { applyMutation } from "./gameplay.js";
 
 export const STORAGE_KEYS = {
   bundle: "odea2_bundle_v1",
@@ -227,7 +230,8 @@ export function loadOdea2(bundle2, catalog, opts = {}) {
   }
   const clone = JSON.parse(JSON.stringify(bundle2));
   const ref = (clone.migration && clone.migration.referenceDate) || opts.referenceDate;
-  const d = derive(sourcesFromMigrated(clone), catalog, ref);
+  const d = derive(sourcesFromMigrated(clone, catalog), catalog, ref);
+  const streak = deriveStreak(clone);
 
   const snapshot = (clone.core.derived && clone.core.derived.xpBreakdown) || null;
   const tolerance = Number(opts.toleranceXP || 0);
@@ -253,7 +257,9 @@ export function loadOdea2(bundle2, catalog, opts = {}) {
     campaignLevel: d.campaignLevel,
     level: d.level,
     odeLevel: d.odeLevel,
-    coins: d.coins
+    coins: d.coins,
+    streak: streak.streak,
+    streakDate: streak.streakDate
   };
   return clone;
 }
@@ -284,6 +290,188 @@ export function readOdea2(storage) {
   const raw = storage.getItem(STORAGE_KEYS.bundle);
   if (!raw) return null;
   return JSON.parse(raw);
+}
+
+/* ========================================================================== */
+/* Fase 3 — ruta ÚNICA de escritura de gameplay                              */
+/* ========================================================================== */
+
+function rejected(code, message, { bundle = null, detail = null, backup = null } = {}) {
+  return {
+    status: "rejected",
+    bundle,
+    backup,
+    changed: [],
+    error: { code, message, ...(detail ? { detail } : {}) }
+  };
+}
+
+/** Refresca el snapshot derivado con la MISMA forma que `loadOdea2`. */
+function refreshDerived(bundle2, catalog) {
+  const ref = bundle2.migration && bundle2.migration.referenceDate;
+  const d = derive(sourcesFromMigrated(bundle2, catalog), catalog, ref);
+  const streak = deriveStreak(bundle2);
+  bundle2.core.derived = {
+    xpBreakdown: d.xpBreakdown,
+    totalXP: d.totalXP,
+    campaignLevel: d.campaignLevel,
+    level: d.level,
+    odeLevel: d.odeLevel,
+    coins: d.coins,
+    streak: streak.streak,
+    streakDate: streak.streakDate
+  };
+  return { derived: d, streak };
+}
+
+function validateFailureCode(report) {
+  return playFailureCode(report);
+}
+
+/**
+ * Única puerta de escritura de gameplay (Fase 3, spec §3.2).
+ *
+ * Flujo: catálogo → lectura → duplicado sin backup → copia → mutar →
+ * refrescar snapshot → `validatePlayState` → backup exacto (verificado byte a
+ * byte) → CAS → escritura → relectura → rollback si no coincide.
+ *
+ * No lanza por errores de datos: devuelve `{ status, bundle, backup, changed,
+ * error }`. Solo `TypeError` si faltan `storage` o `catalog` (error de
+ * programador).
+ */
+export function applyGameplayMutation(storage, catalog, mutation, opts = {}) {
+  if (!storage || typeof storage.getItem !== "function" || typeof storage.setItem !== "function") {
+    throw new TypeError("applyGameplayMutation: falta el storage.");
+  }
+  if (!catalog || typeof catalog !== "object") {
+    throw new TypeError("applyGameplayMutation: falta el catálogo.");
+  }
+
+  /* 0. Catálogo fail-fast: ids duplicados abortan sin leer ni escribir. */
+  const catalogCheck = validateCatalog(catalog);
+  if (!catalogCheck.ok) {
+    return rejected("BAD_CATALOG", "El catálogo tiene ids de misión duplicados.", {
+      detail: { duplicates: catalogCheck.duplicates }
+    });
+  }
+
+  const at = opts.at || nowIso();
+  const date = opts.date || localDateKey(new Date());
+
+  /* 1-2. Lectura y save activo. */
+  const rawBefore = storage.getItem(STORAGE_KEYS.bundle);
+  if (!rawBefore) return rejected("NO_SAVE", "No hay un save ODEA 2 para mutar.");
+
+  let bundle;
+  try {
+    bundle = JSON.parse(rawBefore);
+  } catch {
+    return rejected("BAD_BUNDLE", "El save persistido no es JSON válido.");
+  }
+  if (!bundle || bundle._format !== ODEA2_BUNDLE_FORMAT) {
+    return rejected("BAD_BUNDLE", `Bundle ODEA 2 inválido: ${bundle && bundle._format}`, { bundle });
+  }
+  const state = bundle.import && bundle.import.state;
+  if (state !== "active") {
+    return rejected(
+      "SAVE_NOT_ACTIVE",
+      `La importación está en estado "${state}"; no es un save activo.`,
+      { bundle }
+    );
+  }
+
+  /* 3-6. Copia y mutación. Duplicado/errores salen sin backup. */
+  const draft = JSON.parse(JSON.stringify(bundle));
+  const result = applyMutation(draft, mutation, catalog, { at, date });
+
+  if (result.duplicate) {
+    return { status: "duplicate", bundle, backup: null, changed: [], error: null };
+  }
+  if (!result.changed) {
+    return rejected(result.reason || "UNKNOWN_MUTATION", `Mutación rechazada: ${result.reason || "sin cambios"}.`, {
+      bundle
+    });
+  }
+
+  /* 7. Snapshot derivado (nunca se edita un total a mano). */
+  refreshDerived(draft, catalog);
+
+  /* 8. Validación fail-closed de la copia ANTES de tocar el save. */
+  const report = validatePlayState(draft, catalog, { previous: bundle });
+  if (!report.ok) {
+    const code = validateFailureCode(report);
+    return rejected(code, `La mutación no es válida (${code}).`, {
+      bundle,
+      detail: { errors: report.errors }
+    });
+  }
+
+  /* 9. Backup exacto del save persistido actual, verificado byte a byte. */
+  let backup;
+  try {
+    backup = backupBundle(bundle, storage, { at, kind: "save" });
+  } catch (error) {
+    return rejected("BACKUP_FAILED", `No se pudo crear el backup: ${error.message}`, { bundle });
+  }
+  const backupRaw = storage.getItem(backup.key);
+  if (backupRaw == null) {
+    return rejected("BACKUP_FAILED", "El backup no quedó legible.", { bundle, backup });
+  }
+  if (backupRaw !== rawBefore) {
+    return rejected("BACKUP_MISMATCH", "El backup no coincide byte a byte con el save previo.", {
+      bundle,
+      backup
+    });
+  }
+
+  /* 10. CAS: otra pestaña no puede haber escrito entre la lectura y acá. */
+  const rawNow = storage.getItem(STORAGE_KEYS.bundle);
+  if (rawNow !== rawBefore) {
+    return rejected("CONCURRENT_CHANGE", "Otra pestaña escribió el save durante la mutación.", {
+      bundle,
+      backup
+    });
+  }
+
+  /* 11. Escritura. */
+  const serialized = JSON.stringify(draft);
+  try {
+    storage.setItem(STORAGE_KEYS.bundle, serialized);
+  } catch (error) {
+    /* Cuota: se verifica que el save no haya cambiado. */
+    try {
+      if (storage.getItem(STORAGE_KEYS.bundle) !== rawBefore) {
+        storage.setItem(STORAGE_KEYS.bundle, rawBefore);
+      }
+    } catch {
+      /* sin margen: la relectura ya falla cerrado */
+    }
+    return rejected("QUOTA_EXCEEDED", `No se pudo escribir el save: ${error.message}`, { bundle, backup });
+  }
+
+  /* 12. Relectura y verificación (string exacto o, en su defecto, deepEqual). */
+  const rawAfter = storage.getItem(STORAGE_KEYS.bundle);
+  let verified = rawAfter === serialized;
+  if (!verified && rawAfter != null) {
+    try {
+      verified = deepEqual(JSON.parse(rawAfter), draft);
+    } catch {
+      verified = false;
+    }
+  }
+  if (!verified) {
+    try {
+      storage.setItem(STORAGE_KEYS.bundle, rawBefore);
+    } catch {
+      /* rollback best-effort; el error se reporta igual */
+    }
+    return rejected("WRITE_VERIFY_FAILED", "La relectura no coincide con lo escrito; se revirtió el save.", {
+      bundle,
+      backup
+    });
+  }
+
+  return { status: "applied", bundle: draft, backup, changed: result.paths, error: null };
 }
 
 /**
