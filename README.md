@@ -89,7 +89,7 @@ npm run check:ui           # interfaz completa: HUD, Hoy, Mochila, Menú y 9 dis
   migrada que no repaga, crédito permanente intacto, id y recompensa inválidos,
   fallo de backup byte a byte, fallo de relectura sin éxito falso,
   export/restauración, versión futura y Vida con XP congelado.
-- **7 del catálogo vivo**: invariantes del artefacto extraído de ODEA 1 v6.00
+- **9 de Academia jugable**: 28 misiones reales (el paso meta no se completa), xp 0 y monedas 0 por completación, sin efecto en el saldo del núcleo, sinergia +3 con tope de 3 al día, +15 por ruta una sola vez, el saldo del Tesoro se deriva de un delta y worlds queda intacto.\n- **7 del catálogo vivo**: invariantes del artefacto extraído de ODEA 1 v6.00
   (Academia 28/29, las dos tiendas de Tesoro, Garaje, jefes y cartas sin id).
 - **3 de T24 (historial grande)**: 14.700 ocurrencias sintéticas sin recorte, sin
   fallo de parseo y con derivación por debajo del umbral.
@@ -335,4 +335,5 @@ Registrada en `RISK_LIST.md` §3.2 y especificada en `docs/FASE3_SPEC.md`.
 El bundle real del usuario **nunca** se publica ni se sube a ningún servidor.
 `.gitignore` bloquea `odea-progreso-*.json` y `*progreso-real*`, con excepción
 del fixture sintético (`fixtures/odea-progreso-sintetico.json`).
+
 

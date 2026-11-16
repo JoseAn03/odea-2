@@ -2696,5 +2696,210 @@
       "price": 40,
       "desc": "El panel lateral se tiñe de rosa y naranja retro."
     }
+  },
+  "academia": {
+    "efset-examen": {
+      "xp": 0,
+      "ruta": "arranque",
+      "nombre": "Examen de inglés EF SET",
+      "detalle": "50 min en línea, gratis: el inglés certificado no caduca nunca; es tu activo más durable.",
+      "rutaNombre": "Ruta 0 · Arranque"
+    },
+    "efset-linkedin": {
+      "xp": 0,
+      "ruta": "arranque",
+      "nombre": "Publicar el certificado EF SET",
+      "detalle": "Guardá el resultado y agregalo a tu perfil de LinkedIn.",
+      "rutaNombre": "Ruta 0 · Arranque"
+    },
+    "ina-ia": {
+      "xp": 0,
+      "ruta": "arranque",
+      "nombre": "Cerrar el curso INA de IA Moderna",
+      "detalle": "Termina el 22 de noviembre: actividades NetAcad, encuesta y examen final con 70 o más.",
+      "rutaNombre": "Ruta 0 · Arranque"
+    },
+    "ssms-instalar": {
+      "xp": 0,
+      "ruta": "arranque",
+      "nombre": "Instalar SQL Server Express + SSMS",
+      "detalle": "SQL es EL fundamento que no muere: cambia el motor, no el lenguaje.",
+      "rutaNombre": "Ruta 0 · Arranque"
+    },
+    "ssms-puente": {
+      "xp": 0,
+      "ruta": "arranque",
+      "nombre": "Puente T-SQL: 10 consultas de práctica",
+      "detalle": "Diferencias clave contra MySQL: TOP, IDENTITY, funciones de fecha, CTE.",
+      "rutaNombre": "Ruta 0 · Arranque"
+    },
+    "g-curso2": {
+      "xp": 0,
+      "ruta": "google",
+      "nombre": "Curso 2: Ask Questions to Make Data-Driven Decisions",
+      "detalle": "Coursera · Financial Aid si no tenés suscripción. Con tu experiencia, varios cursos son repaso rápido.",
+      "rutaNombre": "Ruta 1 · Google"
+    },
+    "g-curso3": {
+      "xp": 0,
+      "ruta": "google",
+      "nombre": "Curso 3: Prepare Data for Exploration",
+      "detalle": "Coursera · bases y limpieza.",
+      "rutaNombre": "Ruta 1 · Google"
+    },
+    "g-curso5": {
+      "xp": 0,
+      "ruta": "google",
+      "nombre": "Curso 5: Analyze Data to Answer Questions",
+      "detalle": "Coursera · SQL y hojas de cálculo en serio.",
+      "rutaNombre": "Ruta 1 · Google"
+    },
+    "g-curso6": {
+      "xp": 0,
+      "ruta": "google",
+      "nombre": "Curso 6: Share Data Through the Art of Visualization",
+      "detalle": "Coursera · Tableau y presentaciones.",
+      "rutaNombre": "Ruta 1 · Google"
+    },
+    "g-curso7": {
+      "xp": 0,
+      "ruta": "google",
+      "nombre": "Curso 7: Data Analysis with R Programming",
+      "detalle": "Se completa para cerrar el certificado; el futuro es Python (Ruta 3), pero el título completo es la señal que vale.",
+      "rutaNombre": "Ruta 1 · Google"
+    },
+    "g-capstone": {
+      "xp": 0,
+      "ruta": "google",
+      "nombre": "Curso 8: Capstone y certificado completo 🏅",
+      "detalle": "Reclamás el Google Data Analytics Professional Certificate.",
+      "rutaNombre": "Ruta 1 · Google"
+    },
+    "g-advanced": {
+      "xp": 0,
+      "ruta": "google",
+      "nombre": "Siguiente nivel: Google Advanced Data Analytics",
+      "detalle": "Inscribirse en Coursera: Python, estadística y machine learning. Ahí está el futuro de la ruta Google.",
+      "rutaNombre": "Ruta 1 · Google"
+    },
+    "ms-mod1": {
+      "xp": 0,
+      "ruta": "microsoft",
+      "nombre": "Power BI (Coursera): preparar y cargar datos",
+      "detalle": "Certificado Microsoft Power BI Data Analyst, parte 1.",
+      "rutaNombre": "Ruta 2 · Microsoft"
+    },
+    "ms-mod2": {
+      "xp": 0,
+      "ruta": "microsoft",
+      "nombre": "Power BI (Coursera): modelado y DAX",
+      "detalle": "Parte 2: tu fuerte, formalizado.",
+      "rutaNombre": "Ruta 2 · Microsoft"
+    },
+    "ms-mod3": {
+      "xp": 0,
+      "ruta": "microsoft",
+      "nombre": "Power BI (Coursera): visualización y certificado",
+      "detalle": "Parte 3: quedás listo para el examen PL-300 cuando haya voucher.",
+      "rutaNombre": "Ruta 2 · Microsoft"
+    },
+    "ms-fabric": {
+      "xp": 0,
+      "ruta": "microsoft",
+      "nombre": "Microsoft Fabric: ruta gratuita en MS Learn",
+      "detalle": "Fabric es la evolución del ecosistema Power BI: lagos de datos y análisis en un solo lugar.",
+      "rutaNombre": "Ruta 2 · Microsoft"
+    },
+    "ms-training": {
+      "xp": 0,
+      "ruta": "microsoft",
+      "nombre": "Virtual Training Day: Fundamentals",
+      "detalle": "Evento gratuito de Microsoft; al asistir te dan el voucher del examen de fundamentos.",
+      "rutaNombre": "Ruta 2 · Microsoft"
+    },
+    "ms-examen": {
+      "xp": 0,
+      "ruta": "microsoft",
+      "nombre": "Aprobar el examen con voucher: AI-900 (recomendado) o DP-900 🏅",
+      "detalle": "AI-900 (Azure AI Fundamentals) mira al futuro y combina con tu curso del INA; DP-900 es la ruta de datos clásica. Uno de los dos, oficial Microsoft.",
+      "rutaNombre": "Ruta 2 · Microsoft"
+    },
+    "ia-essentials": {
+      "xp": 0,
+      "ruta": "ia",
+      "nombre": "Google AI Essentials (Coursera)",
+      "detalle": "Fundamentos prácticos de IA generativa para trabajar: prompting y criterio, en horas no semanas.",
+      "rutaNombre": "Ruta 3 · IA aplicada"
+    },
+    "ia-flujo": {
+      "xp": 0,
+      "ruta": "ia",
+      "nombre": "Tu flujo de análisis con IA, documentado",
+      "detalle": "Guía personal: cómo usás IA para explorar datos, generar SQL y revisar resultados SIN confiar a ciegas. Verificar es la habilidad.",
+      "rutaNombre": "Ruta 3 · IA aplicada"
+    },
+    "ia-n8n": {
+      "xp": 0,
+      "ruta": "ia",
+      "nombre": "Proyecto: automatización n8n + IA (datos demo)",
+      "detalle": "Un flujo que lee datos, los analiza con IA y genera un reporte solo. Publicado en GitHub: tu diferenciador 2026.",
+      "rutaNombre": "Ruta 3 · IA aplicada"
+    },
+    "ia-ml": {
+      "xp": 0,
+      "ruta": "ia",
+      "nombre": "Kaggle Learn: Intro to Machine Learning",
+      "detalle": "Gratis y corto: tu primer modelo predictivo en Python, como el de No-Show pero formal.",
+      "rutaNombre": "Ruta 3 · IA aplicada"
+    },
+    "sf-trailmix": {
+      "xp": 0,
+      "ruta": "demanda",
+      "nombre": "Trailhead: ruta de reportes y dashboards (parte 1)",
+      "detalle": "Salesforce sigue siendo la brecha #1 en las vacantes de Costa Rica.",
+      "rutaNombre": "Ruta 4 · Demanda inmediata"
+    },
+    "sf-proyecto": {
+      "xp": 0,
+      "ruta": "demanda",
+      "nombre": "Trailhead: proyecto práctico de reportes (parte 2)",
+      "detalle": "Un playground con reportes reales para mostrar en entrevista.",
+      "rutaNombre": "Ruta 4 · Demanda inmediata"
+    },
+    "sap-intro": {
+      "xp": 0,
+      "ruta": "demanda",
+      "nombre": "SAP Learning: ruta introductoria",
+      "detalle": "Navegación y conceptos: “SAP a nivel usuario”, honesto y suficiente por ahora.",
+      "rutaNombre": "Ruta 4 · Demanda inmediata"
+    },
+    "gh-insignia": {
+      "xp": 0,
+      "ruta": "vitrina",
+      "nombre": "GitHub: proyecto insignia con IA",
+      "detalle": "Un pipeline completo y público: datos → SQL → Python → Power BI → automatización. Con README que cuente la historia.",
+      "rutaNombre": "Ruta 5 · Vitrina 2026"
+    },
+    "li-vitrina": {
+      "xp": 0,
+      "ruta": "vitrina",
+      "nombre": "LinkedIn: headline y sección destacada",
+      "detalle": "Titular con las palabras de 2026: datos, automatización e IA aplicada.",
+      "rutaNombre": "Ruta 5 · Vitrina 2026"
+    },
+    "cv-final": {
+      "xp": 0,
+      "ruta": "vitrina",
+      "nombre": "Regenerar el CV “perfecto”",
+      "detalle": "CV ES/EN con todo lo nuevo, y subirlo a Indeed, elempleo y LinkedIn.",
+      "rutaNombre": "Ruta 5 · Vitrina 2026"
+    },
+    "meta-final": {
+      "xp": 0,
+      "ruta": "vitrina",
+      "meta": true,
+      "nombre": "Analista de la era IA",
+      "rutaNombre": "Ruta 5 · Vitrina 2026"
+    }
   }
 }

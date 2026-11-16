@@ -476,6 +476,36 @@ export function validatePlaySection(bundle2, catalog) {
     }
   }
 
+  /* Academia: estado aditivo opcional (sinergias, delta de monedas y rutas). */
+  if (play.academia != null) {
+    const ac = play.academia;
+    if (!ac || typeof ac !== "object" || Array.isArray(ac)) {
+      problems.push("academia: debe ser un objeto");
+    } else {
+      if (ac.sinergias != null) {
+        if (typeof ac.sinergias !== "object" || Array.isArray(ac.sinergias)) {
+          problems.push("academia.sinergias: debe ser un mapa");
+        } else {
+          for (const [key, value] of Object.entries(ac.sinergias)) {
+            if (!Number.isInteger(Number(value)) || Number(value) < 0) {
+              problems.push(`academia.sinergias.${key}: entero >= 0`);
+            }
+          }
+        }
+      }
+      if (ac.monedasGanadas != null) {
+        if (!Number.isInteger(Number(ac.monedasGanadas)) || Number(ac.monedasGanadas) < 0) {
+          problems.push("academia.monedasGanadas: entero >= 0");
+        }
+      }
+      if (ac.rutas != null) {
+        if (!Array.isArray(ac.rutas) || ac.rutas.some((r) => typeof r !== "string")) {
+          problems.push("academia.rutas: lista de ids");
+        }
+      }
+    }
+  }
+
   checks.push(
     check(
       "PLAY_RECORDS",

@@ -9,8 +9,8 @@
 import { deriveBundle } from "./hud.js";
 import { fmt, XP_LABELS } from "./format.js";
 import { getDistrict, KEY_HOME } from "./districts.js";
-import { academiaProgress, deriveStreak } from "../src/derive.js";
-import { routeForDay, systemMissions } from "../src/gameplay.js";
+import { academiaProgress, deriveStreak, localDateKey } from "../src/derive.js";
+import { academiaRoutes, academiaStateOf, routeForDay, systemMissions } from "../src/gameplay.js";
 
 export const PANEL_FOOTNOTE =
   "Las misiones de este distrito se juegan aquí a partir de la Fase 3.";
@@ -128,13 +128,21 @@ function hubPanel(b, catalog, d) {
   };
 }
 
-function iaPanel(b) {
+function iaPanel(b, catalog) {
   const ac = world(b, "academia") || {};
   const hechas = ac.hechas || {};
   const entries = Object.entries(hechas);
-  const rutas = Array.isArray(ac.rutasAvisadas) ? ac.rutasAvisadas : [];
-  /* Misma regla que ODEA 1: 29 es su denominador real, no una invención. */
-  const progress = academiaProgress(ac);
+  const state = systemMissions(b, catalog, "academia", localDateKey());
+  const academic = academiaStateOf(b);
+
+  /* Avance combinado: lo migrado (`hechas`) + lo nuevo (`play`). */
+  const doneIds = new Set([...Object.keys(hechas), ...state.completed.map((m) => m.id)]);
+  const progress = academiaProgress({
+    hechas: Object.fromEntries(Array.from(doneIds, (id) => [id, true]))
+  });
+
+  const routes = academiaRoutes(catalog);
+  const routeIds = Object.keys(routes);
 
   return {
     id: "ia",
@@ -150,9 +158,30 @@ function iaPanel(b) {
         group: "Academia",
         hint: `Avance ${progress.pct}% · misma regla que ODEA 1`
       }),
-      row("academia_rutas", "Rutas avisadas", fmt(rutas.length), { raw: rutas.length })
+      row("academia_rutas", "Rutas avisadas", `${fmt(academic.rutas.length)} de ${fmt(routeIds.length)}`, {
+        raw: academic.rutas.length
+      }),
+      row("academia_xp", "XP que otorga", "0", {
+        raw: 0,
+        hint: "La Academia no paga XP: su recompensa es la sinergia del Tesoro"
+      }),
+      row("academia_coins", "Monedas del Tesoro", fmt(academic.monedas), {
+        raw: academic.monedas,
+        group: "Sinergia",
+        hint: `${fmt(academic.tesoroMigrado)} migradas + ${fmt(academic.monedasGanadas)} ganadas (+3/misión, tope 3 al día · +15 por ruta)`
+      })
     ]),
-    list: entries.slice(0, 5).map(([name, date]) => ({ label: name, value: String(date) }))
+    list: entries.slice(0, 5).map(([name, date]) => ({ label: name, value: String(date) })),
+    play: {
+      system: "academia",
+      date: state.date,
+      pendingCount: state.pending.length,
+      completedCount: state.completed.length,
+      groups: routeIds.map((routeId) => ({
+        label: (routes[routeId] && routes[routeId][0] && routes[routeId][0].label) || routeId,
+        missions: state.pending.filter((mission) => mission.entry && mission.entry.ruta === routeId)
+      }))
+    }
   };
 }
 
