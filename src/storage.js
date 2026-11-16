@@ -475,6 +475,59 @@ export function applyGameplayMutation(storage, catalog, mutation, opts = {}) {
 }
 
 /**
+ * Nombre del lock exclusivo de escritura de gameplay.
+ *
+ * Es de ORIGEN (mismo nombre para todas las pestañas del sitio) y protege el
+ * tramo lectura → validación → backup → CAS → escritura → relectura. Sin él,
+ * dos pestañas pueden leer el mismo estado y escribir una encima de la otra:
+ * el CAS detecta el cruce y rechaza, pero no impide que el trabajo se pierda.
+ */
+export const GAMEPLAY_LOCK_NAME = "odea2:gameplay-write";
+
+/** Web Locks del navegador, si existen y son usables. Inyectable en tests. */
+export function gameplayLocks(opts = {}) {
+  /* Inyección explícita: `locks: false`/`null` fuerza el camino de fallback,
+     `locks: {...}` sustituye la implementación (tests). */
+  if ("locks" in opts) return opts.locks || null;
+  if (
+    typeof navigator !== "undefined" &&
+    navigator.locks &&
+    typeof navigator.locks.request === "function"
+  ) {
+    return navigator.locks;
+  }
+  return null;
+}
+
+/**
+ * Variante con exclusión entre pestañas de `applyGameplayMutation`.
+ *
+ * Toda la operación corre dentro de un lock exclusivo de origen, así que dos
+ * pestañas no pueden intercalar lectura y escritura: la segunda espera a que
+ * la primera termine y recién entonces lee el estado ya persistido. Esto
+ * cubre además la cola dentro de una misma pestaña.
+ *
+ * Fallback: si el navegador no expone Web Locks (Safari < 15.4, Firefox < 96),
+ * se ejecuta la mutación sin lock. El CAS de `applyGameplayMutation` sigue
+ * detectando el cruce y falla cerrado por operación (`CONCURRENT_CHANGE`), pero
+ * no hay garantía de escritor único. El resultado lo informa `locked: false`
+ * para que la UI pueda avisarlo.
+ *
+ * @returns {Promise<object>} el mismo resultado que `applyGameplayMutation`,
+ *   con `locked: true|false` agregado.
+ */
+export async function applyGameplayMutationLocked(storage, catalog, mutation, opts = {}) {
+  const locks = gameplayLocks(opts);
+  if (!locks) {
+    return { ...applyGameplayMutation(storage, catalog, mutation, opts), locked: false };
+  }
+  return locks.request(GAMEPLAY_LOCK_NAME, { mode: "exclusive" }, () => ({
+    ...applyGameplayMutation(storage, catalog, mutation, opts),
+    locked: true
+  }));
+}
+
+/**
  * Detecta el formato de un archivo soltado por el usuario, SIN migrarlo.
  * Permite que la UI mande cada formato por su ruta:
  *   odea_bundle_v2   → migración ODEA 1 (D1–D5, una sola vez)

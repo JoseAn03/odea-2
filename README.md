@@ -53,7 +53,7 @@ La app funciona sin conexión después de la primera carga (service worker
 npm test
 ```
 
-**89 tests** (Node ≥ 20):
+**94 tests** (Node ≥ 20):
 
 - **33 de Fase 0**: no-pérdida, paridad de los 10 componentes de XP, monedas,
   `eventRL`/`farm`/`canje`, cuarentena, aborto, reimportación, huella, ida y
@@ -72,6 +72,10 @@ npm test
   ocurrencia (`one`/`daily`/`weekly`), fail-closed de schema y de derivación,
   backup exacto byte a byte, cuota, concurrencia (CAS), ruta del día
   determinista, cámara que no sobrevive a recargar y racha derivada.
+- **5 de exclusión entre pestañas**: el lock se pide con nombre de origen y modo
+  exclusivo, serializa dos mutaciones concurrentes (una aplica, otra duplica y
+  solo la aplicada respalda), el fallback sin Web Locks informa `locked: false`
+  y conserva la idempotencia, y un error libera el lock.
 
 ## La ciudad: distritos y mapeo cerrado
 
@@ -120,6 +124,11 @@ Notas de mapeo:
 - **Multi-pestaña**: un listener del evento `storage` sobre
   `odea2_bundle_v1` avisa «Tu progreso cambió en otra pestaña» y recarga el
   estado desde `localStorage`.
+- **Exclusión de escritura**: cada mutación corre dentro de un **Web Lock**
+  exclusivo de origen (`odea2:gameplay-write`), así que dos pestañas no
+  intercalan lectura y escritura. Si el navegador no expone Web Locks, el CAS
+  sigue fallando cerrado por operación (`CONCURRENT_CHANGE`) y el resultado
+  informa `locked: false`.
 
 ## Qué hace la app
 
@@ -190,7 +199,7 @@ capa que escribe el save es `src/storage.js`, a través de `js/importer.js`.
 |---|---|
 | Service worker | **Fase 2, implementada**: aviso «Hay una versión nueva» con botón **Recargar**. La actualización se aplica solo cuando el usuario la toca; nunca recarga forzada ni silenciosa a mitad de uso. |
 | Backups | **Fase 1, implementada**: rotación a los últimos 3 respaldos de save; el backup del origen nunca se rota. |
-| Multi-pestaña | **Fase 2, implementada**: listener del evento `storage`; si otra pestaña escribió el save, aviso y recarga del estado desde `localStorage`. Sin bloqueos distribuidos. |
+| Multi-pestaña | **Fase 2 + Fase 3**: listener del evento `storage` para avisar y recargar el estado. **Exclusión de escritura con Web Locks** (`applyGameplayMutationLocked`): la mutación entera corre bajo un lock exclusivo de origen. Fallback a CAS (`CONCURRENT_CHANGE`) en navegadores sin Web Locks, informado como `locked: false`. |
 | GitHub Pages | Publicado desde `main` tras verificación externa. Las Fases 2 y 3 se mergearon en cadena (#5 → #4 → #3) y se publicaron tras 88/88 tests y `npm run check:write-path` en un clon limpio. |
 | Solo lectura | **Fase 2**: la ciudad, el HUD y los paneles leen el save y derivan con `src/derive.js`. **Fase 3**: el Hub escribe únicamente por `applyGameplayMutation` (`src/storage.js`). |
 | Gameplay | **Fase 3, Hub implementado**: ruta del día derivada, completaciones idempotentes, check-in y racha derivada. Empleo y Vida siguen el mismo contrato de escritura. |

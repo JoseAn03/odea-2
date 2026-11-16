@@ -70,18 +70,18 @@ bloqueada · **S3** = deuda/depuración.
 | F1-3 | Multi-pestaña | Se resuelve en **Fase 2** con listener del evento `storage`: si otra pestaña escribió el save, se muestra aviso y se recarga el estado desde `localStorage`. Sin bloqueos distribuidos. |
 | F1-4 | GitHub Pages | Se habilita al **cerrar Fase 1**, en orden: (a) verificación externa, (b) merge de los PRs a `main`, (c) activar Pages desde `main`. **No** se activa durante la fase. |
 
-### 3.2 Decisiones de Fase 3 (cerradas, **no implementadas**)
+### 3.2 Decisiones de Fase 3 (cerradas e implementadas)
 
-Se registran al cerrar la Fase 2. **La Fase 3 no arranca hasta que la Fase 2
-quede verificada.** Ninguna de estas decisiones autoriza todavía código de
-gameplay ni escrituras nuevas. El desarrollo técnico está en
-`docs/FASE3_SPEC.md`.
+Se registran al cerrar la Fase 2. **La Fase 3 no arrancaba hasta que la Fase 2
+quedara verificada.** El Hub ya está mergeado y publicado (`0.4.0-fase3`); el
+desarrollo técnico está en `docs/FASE3_SPEC.md`.
 
 | # | Decisión | Resolución |
 |---|---|---|
 | F3-1 | Navegación de misiones | Las misiones se abren **desde la hoja del distrito**. La hoja se expande a una vista completa del sistema, superpuesta sobre la ciudad, que queda **visible y atenuada detrás**. No hay escenas separadas: es un solo mundo continuo y el mapa es siempre el hogar. Al cerrar la vista, el jugador vuelve al mapa **exactamente donde estaba** (cámara y selección preservadas). |
 | F3-2 | Orden de sistemas jugables | **1.º El Hub** como tutorial y bucle diario (ruta del día, check-in, racha): es el de menor riesgo y prueba la ruta de escritura de punta a punta. **Después, en la misma fase, Empleo y Vida** (mayor peso de XP y uso diario real). **Los demás distritos siguen de solo lectura en la Fase 3** y se vuelven jugables en la Fase 4. |
 | F3-3 | Ruta de escritura del gameplay | **Sí, sin excepción**: toda escritura pasa por `src/storage.js`, la ruta única, con las mismas reglas de la Fase 1 (backup del save antes de cada mutación, rotación de los últimos 3). Reglas adicionales obligatorias: (a) **XP y monedas siempre derivados** — el gameplay registra completaciones y eventos, nunca edita totales almacenados; (b) **validación fail-closed** — una escritura que no valide contra el schema aborta y deja el save anterior intacto; (c) **idempotencia** — completar la misma misión dos veces no duplica crédito (se registra por ID y la derivación cuenta una sola vez); (d) cada tipo de escritura nueva llega con su **test de ida y vuelta y su test negativo**. La cuarentena sigue siendo **exclusiva** de la ruta de importación/restauración. |
+| F3-4 | Exclusión entre pestañas | **Web Locks, con CAS de respaldo.** `applyGameplayMutationLocked` corre lectura → validación → backup → CAS → escritura → relectura dentro de un lock exclusivo de origen (`odea2:gameplay-write`), así que ninguna otra pestaña intercala el tramo. El lock cubre además la cola dentro de la misma pestaña. El core síncrono (`applyGameplayMutation`) no cambia y sigue siendo el único que toca el save. **Fallback:** si el navegador no expone Web Locks (Safari < 15.4, Firefox < 96), se ejecuta sin lock y el resultado informa `locked: false`; el CAS sigue detectando el cruce y falla cerrado por operación (`CONCURRENT_CHANGE`), pero no hay garantía de escritor único. La UI no promete exclusión cuando `locked` es falso. |
 
 ### 3.3 Decisiones todavía abiertas (no bloquean Fase 0)
 
@@ -121,6 +121,10 @@ gameplay ni escrituras nuevas. El desarrollo técnico está en
   del SW.
 - Al publicar una versión, cambiar `CACHE_VERSION`; limpiar cachés viejas con
   `caches.delete()` selectivo (solo prefijo `odea2-`).
+  **Regla incumplida en Fase 3** (commit `b6ef2cc` añadió al `SHELL` sin subir
+  la versión del caché) y ahora **forzada por test**: `tests/fase2.test.js`
+  exige una sola declaración de `CACHE_VERSION`, ningún `caches.open` con
+  literal y el borrado de cachés ajenas en `activate`.
 - El HTML de ODEA 2 debe servirse network-first para que un deploy de
   emergencia no quede atrapado en caché.
 - **Riesgo de convivencia:** ODEA 1 y ODEA 2 pueden compartir origen (GitHub

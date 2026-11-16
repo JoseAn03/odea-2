@@ -12,7 +12,8 @@ import {
   readOdea2,
   readQuarantine,
   loadOdea2,
-  applyGameplayMutation
+  applyGameplayMutation,
+  applyGameplayMutationLocked
 } from "../src/storage.js";
 
 export const FORMATS = {
@@ -53,5 +54,6 @@ export {
   rejectQuarantine,
   resetAndReimport,
   restoreBundle,
-  applyGameplayMutation
+  applyGameplayMutation,
+  applyGameplayMutationLocked
 };
