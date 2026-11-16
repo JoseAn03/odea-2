@@ -1,9 +1,10 @@
 # ODEA 2 — Costa Neón
 
-**Fase 2: la ciudad 2D cenital, dibujada sobre tu progreso real.**
+**Fase 3: la ciudad 2D cenital y el Hub jugable sobre tu progreso real.**
 La ciudad se ve, se recorre y muestra el estado real de cada sistema importado
-desde ODEA 1. **Las misiones todavía no se juegan** dentro de la ciudad: eso es
-la Fase 3. Esta fase es de **solo lectura** sobre el save.
+desde ODEA 1. El **Hub** ya se juega desde la hoja del distrito (ruta del día,
+check-in, completaciones idempotentes y racha derivada); el resto de distritos
+sigue en **solo lectura** hasta las próximas fases.
 
 No hay frameworks ni assets externos: toda la ciudad se dibuja por código con
 Canvas 2D, sobre la paleta oficial (`#12081F`, `#FF2E93`, `#00E5FF`, `#FF8A3D`).
@@ -14,9 +15,9 @@ Canvas 2D, sobre la paleta oficial (`#12081F`, `#FF2E93`, `#00E5FF`, `#FF8A3D`).
 |---|---|---|
 | **Fase 0** | ✅ completa | Especificación de la migración (36 campos + 11 claves), decisiones D1–D5, código de validación y 33 tests. |
 | **Fase 1** | ✅ completa | PWA instalable, importación con validación/cuarentena/aborto, respaldo y restauración. |
-| **Fase 2** | ✅ esta rama (`fase2-ciudad`) | Ciudad 2D cenital con HUD, distritos y paneles de datos reales. Sin misiones. |
-| Fase 3 | 📋 decidida, no iniciada | Hub (tutorial + bucle diario), luego Empleo y Vida jugables. El resto sigue de solo lectura. Arranca solo con la Fase 2 verificada. |
-| Fase 4+ | pendiente | Resto de distritos jugables. |
+| **Fase 2** | ✅ completa | Ciudad 2D cenital con HUD, distritos y paneles de datos reales. Sin misiones. |
+| **Fase 3** | ✅ Hub implementado | Hub (tutorial + bucle diario) jugable sobre la ciudad: sección `play`, escritura única por `applyGameplayMutation`, ruta del día, idempotencia y racha derivada. Empleo y Vida siguen de solo lectura. |
+| Fase 4+ | pendiente | Resto de distritos jugables (Empleo, Vida). |
 
 ## Correr la app en local
 
@@ -177,7 +178,7 @@ capa que escribe el save es `src/storage.js`, a través de `js/importer.js`.
 | `MIGRATION_SPEC.md` | Mapa de los 36 campos + 11 claves, decisiones D1–D5 y contrato de validación. |
 | `SCHEMA_ODEA2_V1.md` | Schema `odea2_bundle_v1` con secciones `core` / `worlds` / `legacy`. |
 | `RISK_LIST.md` | Campos en riesgo, decisiones cerradas/abiertas, versionado y caché PWA. |
-| `docs/FASE3_SPEC.md` | Spec de Fase 3: sección `play`, función única de escritura, ruta del día, racha derivada y cámara. Revisión del orquestador aprobada con precisiones (2026-11-15); **implementación del Hub en curso** en la rama `fase3-hub`. |
+| `docs/FASE3_SPEC.md` | Spec de Fase 3: sección `play`, función única de escritura, ruta del día, racha derivada y cámara. Revisión del orquestador aprobada con precisiones (2026-11-15) e **implementación del Hub mergeada y publicada** (PRs #5 y #4). |
 
 ## Decisiones registradas
 
@@ -186,11 +187,11 @@ capa que escribe el save es `src/storage.js`, a través de `js/importer.js`.
 | Service worker | **Fase 2, implementada**: aviso «Hay una versión nueva» con botón **Recargar**. La actualización se aplica solo cuando el usuario la toca; nunca recarga forzada ni silenciosa a mitad de uso. |
 | Backups | **Fase 1, implementada**: rotación a los últimos 3 respaldos de save; el backup del origen nunca se rota. |
 | Multi-pestaña | **Fase 2, implementada**: listener del evento `storage`; si otra pestaña escribió el save, aviso y recarga del estado desde `localStorage`. Sin bloqueos distribuidos. |
-| GitHub Pages | La Fase 1 se publicó tras verificación externa. La Fase 2 **no** toca Pages ni se mergea hasta la revisión del PR. |
+| GitHub Pages | Publicado desde `main` tras verificación externa. Las Fases 2 y 3 se mergearon en cadena (#5 → #4 → #3) y se publicaron tras 88/88 tests y `npm run check:write-path` en un clon limpio. |
 | Solo lectura | **Fase 2**: la ciudad, el HUD y los paneles leen el save y derivan con `src/derive.js`. **Fase 3**: el Hub escribe únicamente por `applyGameplayMutation` (`src/storage.js`). |
 | Gameplay | **Fase 3, Hub implementado**: ruta del día derivada, completaciones idempotentes, check-in y racha derivada. Empleo y Vida siguen el mismo contrato de escritura. |
 
-### Fase 3 (Hub implementado en `fase3-hub`)
+### Fase 3 (Hub implementado y publicado)
 
 Registrada en `RISK_LIST.md` §3.2 y especificada en `docs/FASE3_SPEC.md`.
 

@@ -1,11 +1,12 @@
 # FASE3_SPEC — Fase 3: misiones jugables sobre la ciudad
 
-**Estado:** revisión del orquestador **aprobada con precisiones** (2026-11-15);
-pendiente su aprobación final del documento completo. **No implementada.**
-**Base:** rama `fase2-ciudad` (`0.3.0-fase2`), PR #3. La Fase 3 no arranca
-hasta que la Fase 2 esté verificada y mergeada.
+**Estado:** revisión del orquestador **aprobada con precisiones** (2026-11-15) e
+**implementación del Hub mergeada y publicada** (PRs #5 y #4 → `fase2-ciudad` →
+`main`, 2026-11-16).
+**Base:** rama `main` (`0.3.0-fase2`), publicada en GitHub Pages.
 **Alcance de este documento:** contrato de datos, API de escritura, ruta del día
-y cámara. No incluye gameplay, UI ni cambios de versión/caché.
+y cámara. El Hub ya implementa este contrato; Empleo y Vida lo reutilizan en la
+Fase 4. Sin cambios de `APP_VERSION`, `schemaVersion` ni caché del SW.
 
 Las decisiones F3-1, F3-2 y F3-3 ya están registradas en `RISK_LIST.md` §3.2.
 Este documento las desarrolla; no las reabre. Las seis decisiones de §8 fueron
