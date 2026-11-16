@@ -770,6 +770,11 @@ revisión del 2026-11-15 y también son obligatorios.
   unicidad del catálogo.
 - Subir `APP_VERSION` (`0.3.0-fase2`), `schemaVersion` (1) o el caché del SW
   (`odea2-v0.3.0-fase2`).
+  > **Superado (2026-11-16).** Esta restricción aplicaba solo a la tarea de
+  > implementación, para no numerar un release antes de aprobarlo. Una vez
+  > mergeada y publicada, el release se numeró como `0.4.0-fase3` en
+  > `js/version.js`, `src/shape.js`, `package.json` y `sw.js` (incluye el bump
+  > obligatorio de `CACHE_VERSION`).
 - Empleo/Vida más allá del contrato de escritura: el contenido de sus misiones
   se define en la tarea de implementación.
 - Pages, merge o PR de Fase 2.

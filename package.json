@@ -1,6 +1,6 @@
 {
   "name": "odea-2",
-  "version": "0.3.0-fase2",
+  "version": "0.4.0-fase3",
   "private": true,
   "type": "module",
   "description": "ODEA 2 (Costa Neón): ciudad 2D cenital dibujada sobre el progreso migrado desde ODEA 1. Las misiones llegan en la Fase 3.",
