@@ -620,17 +620,74 @@ body.no-city #city-canvas { display: none; }
 .hud-btn:hover { border-color: rgba(0, 229, 255, 0.5); }
 .hud-btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
 
-/* --------------------------------- chips --------------------------------- */
+/* -------------------------------- tabbar ---------------------------------
+ * Cuatro destinos permanentes. La barra queda SIEMPRE alcanzable: la hoja y su
+ * fondo se elevan por encima de ella para no taparla, así se puede cambiar de
+ * destino sin cerrar la pantalla actual.
+ */
+
+:root {
+  --tabbar-h: calc(58px + env(safe-area-inset-bottom, 0px));
+}
+
+.tabbar {
+  position: fixed;
+  z-index: 7;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px;
+  padding: 5px 6px calc(env(safe-area-inset-bottom, 0px) + 5px);
+  background: rgba(13, 6, 24, 0.97);
+  border-top: 1px solid var(--line-strong);
+  backdrop-filter: blur(12px);
+}
+
+.tab {
+  appearance: none;
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  min-height: 48px;
+  padding: 6px 4px;
+  font: inherit;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: rgba(243, 236, 255, 0.6);
+  background: none;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.tab-icon {
+  font-size: 1.02rem;
+  line-height: 1;
+}
+.tab:hover { color: var(--text); }
+.tab:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: -2px;
+}
+.tab[aria-current="page"] {
+  color: var(--cyan);
+  background: rgba(0, 229, 255, 0.1);
+}
+
+/* -------------------------------- chips --------------------------------- */
 
 .chips {
   position: fixed;
   z-index: 6;
   left: 0;
   right: 0;
-  bottom: 0;
+  bottom: var(--tabbar-h);
   display: flex;
   gap: 8px;
-  padding: 18px 12px calc(env(safe-area-inset-bottom) + 10px);
+  padding: 18px 12px 10px;
   overflow-x: auto;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
@@ -715,6 +772,7 @@ body.no-city #city-canvas { display: none; }
 .sheet-backdrop {
   position: fixed;
   inset: 0;
+  bottom: var(--tabbar-h);
   z-index: 8;
   background: rgba(5, 2, 10, 0.52);
   backdrop-filter: blur(2px);
@@ -724,13 +782,13 @@ body.no-city #city-canvas { display: none; }
   position: fixed;
   z-index: 9;
   left: 50%;
-  bottom: 0;
+  bottom: var(--tabbar-h);
   transform: translateX(-50%);
   width: min(680px, 100%);
   max-height: min(74vh, 660px);
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 18px 18px calc(env(safe-area-inset-bottom) + 20px);
+  padding: 18px 18px 20px;
   background:
     radial-gradient(
       420px 180px at 0% 0%,
@@ -946,6 +1004,8 @@ body.no-city #city-canvas { display: none; }
 .overlay {
   position: fixed;
   inset: 0;
+  /* Deja libre la barra de destinos para poder cambiar de pestaña sin cerrar. */
+  bottom: var(--tabbar-h);
   z-index: 20;
   display: grid;
   place-items: center;

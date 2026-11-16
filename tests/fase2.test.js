@@ -13,7 +13,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { STORAGE_KEYS, createMemoryStorage, importBundle, readOdea2 } from "../src/storage.js";
@@ -476,7 +476,7 @@ test("fase 2: versión visible, bundle y caché del SW están sincronizados", ()
 
   /* Tripwire deliberado: subir la versión obliga a tocar esta línea, para que
      el bump del SHELL y del CACHE_VERSION del SW nunca pase inadvertido. */
-  assert.equal(APP_VERSION, "0.4.0-fase3");
+  assert.equal(APP_VERSION, "0.5.0-fase3");
   assert.equal(pkg.version, APP_VERSION);
   assert.equal(ODEA2_APP_VERSION, APP_VERSION);
   assert.ok(sw.includes(`"odea2-v${APP_VERSION}"`), "la caché del SW debe usar la versión de la app");
@@ -504,4 +504,27 @@ test("fase 2: el SW aísla cada release en su propio caché", () => {
 
   /* `activate` debe borrar los cachés de otros releases. */
   assert.ok(/k !== CACHE_VERSION/.test(sw), "activate debe borrar los cachés de versiones viejas");
+});
+
+test("fase 2: el SW precachea todos los módulos del cascarón", () => {
+  const sw = fs.readFileSync(join(root, "sw.js"), "utf8");
+
+  /* Causa raíz del bug de Fase 3: se añadió un módulo al código sin meterlo en
+     el SHELL. La app funcionaba online y fallaba offline. Este test lo cierra
+     para js/ y src/ completos. */
+  const files = [];
+  const walk = (abs) => {
+    for (const entry of fs.readdirSync(abs, { withFileTypes: true })) {
+      const full = join(abs, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (entry.name.endsWith(".js")) {
+        files.push("./" + relative(root, full).split("\\").join("/"));
+      }
+    }
+  };
+  for (const dir of ["js", "src"]) walk(join(root, dir));
+
+  assert.ok(files.length > 20, "el cascarón debe tener módulos que revisar");
+  const missing = files.filter((file) => !sw.includes(`"${file}"`));
+  assert.deepEqual(missing, [], "todo módulo de js/ y src/ debe estar en el SHELL del SW");
 });

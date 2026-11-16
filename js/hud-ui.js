@@ -7,6 +7,7 @@
  */
 
 import { DISTRICTS } from "./districts.js";
+import { TABS } from "./tabs.js";
 import { fmt } from "./format.js";
 
 function h(tag, attrs = {}, ...children) {
@@ -82,33 +83,42 @@ export function renderHud(root, hud, actions) {
       "div",
       { class: "hud-xp-row" },
       bar,
-      h("span", { class: "hud-xp-text", title: xpTitle }, xpText),
-      h(
-        "button",
-        {
-          class: "hud-btn",
-          type: "button",
-          title: "Exportar respaldo",
-          "aria-label": "Exportar respaldo",
-          onclick: () => actions.exportBackup()
-        },
-        h("span", { "aria-hidden": "true" }, "⤓"),
-        h("span", { class: "hud-btn-label" }, "Respaldo")
-      ),
-      h(
-        "button",
-        {
-          class: "hud-btn",
-          type: "button",
-          title: "Mi progreso",
-          "aria-label": "Abrir Mi progreso",
-          onclick: () => actions.openProgress()
-        },
-        h("span", { "aria-hidden": "true" }, "☰"),
-        h("span", { class: "hud-btn-label" }, "Mi progreso")
-      )
+      h("span", { class: "hud-xp-text", title: xpTitle }, xpText)
     )
   );
+}
+
+/* ---------------------------------- tabs ---------------------------------- */
+
+/**
+ * Barra de destinos. Se construye una sola vez y luego solo se actualiza
+ * `aria-current`: reemplazar los botones en cada refresh destruiría el que
+ * tiene el foco y lo devolvería al body.
+ */
+export function renderTabs(root, { active, onSelect } = {}) {
+  if (root.dataset.ready !== "true") {
+    root.replaceChildren(
+      ...TABS.map((tab) =>
+        h(
+          "button",
+          {
+            class: "tab",
+            type: "button",
+            "data-tab": tab.id,
+            "aria-label": tab.hint,
+            onclick: () => onSelect && onSelect(tab.id)
+          },
+          h("span", { class: "tab-icon", "aria-hidden": "true" }, tab.icon),
+          h("span", { class: "tab-label" }, tab.label)
+        )
+      )
+    );
+    root.dataset.ready = "true";
+  }
+  for (const button of root.querySelectorAll(".tab")) {
+    if (button.getAttribute("data-tab") === active) button.setAttribute("aria-current", "page");
+    else button.removeAttribute("aria-current");
+  }
 }
 
 /* --------------------------------- chips ---------------------------------- */
