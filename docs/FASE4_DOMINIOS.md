@@ -18,7 +18,7 @@ es activable o no.
 | Dominio | Distrito | Catálogo | Datos heredados | Riesgo | Veredicto |
 |---|---|---|---|---|---|
 | **Capital** | La Torre | ✅ `capital.done` (40) · `capital.eng` (30) · `capital.ai` (31) | `core.capital.done/eng/ai` | **Bajo** | **Activable ya** |
-| Sagas | Mirador | ⚠️ `sagas` (2) · `bosses` (16) | `worlds.sagas`, `worlds.jefe` | Medio | Ficha profunda pendiente: el XP es compartido por capítulo |
+| Sagas | Mirador | ✅ `sagas` (12 capítulos) · `bosses` (16) | `worlds.sagas`, `core.gods` | Medio | **Implementado** (capítulos y jefes) |
 | Tesoro | El Mercado | ❌ | `worlds.tesoro` | **Alto** | No activar sin reglas de precio y tests de no duplicación |
 | Academia | Distrito IA | ❌ (live en `odea-academia.js`) | `worlds.academia.hechas` | — | Avance con paridad (29) · juego bloqueado |
 | Garaje | El Garaje | ❌ | `worlds.garaje` | — | **Bloqueado**: falta catálogo |
@@ -71,27 +71,31 @@ de ocurrencia y hace que la UI y la mutación lo traten como duplicado.
 
 ## 2. Sagas — Mirador de Sagas
 
-**Veredicto: ficha profunda pendiente.** El modelo de XP no encaja en el patrón
-`id → xp` fijo.
+**Veredicto: IMPLEMENTADO** (`0.10.0-fase3`) para capítulos y jefes. La mecánica
+**semanal** (saga de la semana y jefe semanal) sigue de solo lectura.
 
 | Campo | Valor |
 |---|---|
-| **Entradas** | `worlds.sagas.chapters`, `videos`, `weekly`; `worlds.jefe` (semanal), `worlds.jefe.victorias` |
-| **Catálogo** | `sagas` (2 capítulos), `bosses` (16) |
-| **Componente de XP** | `bosses`, y Sagas reparte XP por capítulo |
-| **Frecuencia** | Semanal en jefes, por capítulo en sagas |
+| **Entradas** | `worlds.sagas.chapters` (id → fecha), `worlds.sagas.weekly`; `core.gods` (id → `true`) |
+| **Catálogo** | `sagas` (2 sagas · 12 capítulos) + `bosses` (16) → **28 misiones** |
+| **Componente de XP** | `bosses` para jefes; los capítulos reparten entre `kid` y `pow` |
+| **Frecuencia** | Todas de una sola vez en este alcance |
 | **Moneda propia** | No |
+| **Reversibilidad** | No hace falta |
 
-**El problema:** `src/derive.js` calcula el XP de sagas con una **cuota por
-capítulo** (`saga.split[cat]`), no como una cantidad fija por misión. Una
-completación de saga no vale `mission.xp` sino `Math.round(ch.xp * share)`.
-El `applyMutation` actual registra la completación y deja que `derive` recalcule,
-lo cual **funcionaría**, pero la paridad exige reproducir el reparto exacto y
-probarlo. Es un dominio de riesgo medio, no de mecánica trivial.
+**La particularidad:** una sola misión puede mover **dos** componentes de XP.
+Un capítulo de la saga `video` vale 200 XP y se reparte `kid` 0.6 / `pow` 0.4
+según el `split` de su saga. `derive` ya lo calculaba; lo que faltaba era que
+una completación nueva agregara el capítulo a `sources.sagas.chapters`.
 
-**Antes de activarlo** hay que responder: ¿qué id de misión se registra cuando se
-completa un capítulo? ¿El capítulo, o cada hito interno? La guía prohíbe
-inventar la respuesta.
+**Cómo se resolvió:** Sagas no es un mapa plano, así que `sagasEntries()`
+normaliza capítulos y jefes a la misma forma que el resto (`id`, `map`, `xp`,
+`cls`). `mergePlaySources` enruta por catálogo: si el id está en `bosses` va a
+`gods`, si no, a capítulos. La UI agrupa en Video · Roblox · Jefes.
+
+**Fuera de alcance a propósito:** `worlds.sagas.weekly` y `worlds.jefe` son
+mecánicas semanales con sus propios premios y rachas. Se muestran como están y
+no se escriben; activarlas requiere su propia decisión.
 
 ---
 

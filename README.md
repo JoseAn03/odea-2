@@ -17,7 +17,7 @@ Canvas 2D, sobre la paleta oficial (`#12081F`, `#FF2E93`, `#00E5FF`, `#FF8A3D`).
 | **Fase 0** | ✅ completa | Especificación de la migración (36 campos + 11 claves), decisiones D1–D5, código de validación y 33 tests. |
 | **Fase 1** | ✅ completa | PWA instalable, importación con validación/cuarentena/aborto, respaldo y restauración. |
 | **Fase 2** | ✅ completa | Ciudad 2D cenital con HUD, distritos y paneles de datos reales. Sin misiones. |
-| **Fase 3** | ✅ completa | Hub, Empleo, Vida y La Torre jugables: sección `play`, escritura única por `applyGameplayMutation`, ruta del día, idempotencia por frecuencia real y racha derivada. El resto de distritos sigue de solo lectura. |
+| **Fase 3** | ✅ completa | Hub, Empleo, Vida, La Torre y Mirador de Sagas jugables: sección `play`, escritura única por `applyGameplayMutation`, ruta del día, idempotencia por frecuencia real y racha derivada. El resto de distritos sigue de solo lectura. |
 | Fase 4 | en curso | Resto de distritos. Fichas en `docs/FASE4_DOMINIOS.md`; solo Capital era activable ya. |
 
 ## Correr la app en local
@@ -45,7 +45,7 @@ Sin save, la ciudad se muestra atenuada y la pantalla de importación de la
 Fase 1 queda al frente. No hay datos de ejemplo: el progreso siempre es el real.
 
 La app funciona sin conexión después de la primera carga (service worker
-`odea2-v0.11.0-fase3`). El catálogo de juego se sirve con estrategia
+`odea2-v0.12.0-fase3`). El catálogo de juego se sirve con estrategia
 *network-first* y cae a la caché si no hay red.
 
 ## Correr los tests
@@ -54,7 +54,7 @@ La app funciona sin conexión después de la primera carga (service worker
 npm test
 ```
 
-**135 tests** (Node ≥ 20):
+**143 tests** (Node ≥ 20):
 
 - **33 de Fase 0**: no-pérdida, paridad de los 10 componentes de XP, monedas,
   `eventRL`/`farm`/`canje`, cuarentena, aborto, reimportación, huella, ida y
@@ -95,6 +95,9 @@ npm test
 - **7 de Academia**: el denominador real de ODEA 1 es 29, llegar a 28 marca el
   100%, por encima no desborda, los datos inválidos no rompen la vista y el
   fixture produce el avance esperado.
+- **8 de Sagas**: 12 capítulos y 16 jefes, lo migrado no se ofrece, completar un
+  capítulo reparte el XP entre sus dos categorías, completar un jefe suma el
+  componente de jefes, nada se duplica y la mecánica semanal queda intacta.
 
 ## La ciudad: distritos y mapeo cerrado
 
@@ -214,7 +217,7 @@ Todo ocurre en el dispositivo. Nada se envía a ningún servidor.
 ```
 index.html              cascarón: canvas, HUD, barra de destinos, chips, hoja, overlay y toasts
 manifest.webmanifest    PWA (ODEA 2 — Costa Neón)
-sw.js                   service worker versionado (odea2-v0.11.0-fase3)
+sw.js                   service worker versionado (odea2-v0.12.0-fase3)
 css/app.css             tema neón + capa de ciudad (HUD, hoja, overlay, toasts)
 js/app.js               orquestador: ciudad, HUD, importación, watchers
 js/city/                layout, world, cámara, renderer, entrada y motor rAF

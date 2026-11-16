@@ -11,14 +11,15 @@
  */
 
 /** Sistemas jugables en Fase 3 (el resto sigue de solo lectura). */
-export const PHASE3_SYSTEMS = ["hub", "empleo", "vida", "capital"];
+export const PHASE3_SYSTEMS = ["hub", "empleo", "vida", "capital", "sagas"];
 
-/** Mapas del catálogo por sistema. */
+/** Mapas del catálogo por sistema. Sagas se resuelve aparte (ver `sagasEntries`). */
 export const SYSTEM_MAPS = {
   hub: ["daily", "weekly"],
   empleo: ["jobs", "b2b", "puente"],
   vida: ["vida"],
-  capital: ["capital.done", "capital.eng", "capital.ai"]
+  capital: ["capital.done", "capital.eng", "capital.ai"],
+  sagas: []
 };
 
 /** Todos los mapas con ids de misión (incluye sistemas aún no jugables). */
@@ -82,6 +83,7 @@ function missionClassOf(entry) {
  */
 export function missionOf(catalog, system, missionId) {
   if (!PHASE3_SYSTEMS.includes(system)) return null;
+  if (system === "sagas") return sagaMissionOf(catalog, missionId);
   const maps = SYSTEM_MAPS[system] || [];
   for (const map of maps) {
     const entryMap = mapOf(catalog, map);
@@ -102,6 +104,38 @@ export function systemOfMap(map) {
 }
 
 /**
+ * Misiones del Mirador de Sagas.
+ *
+ * Sagas es el único dominio con DOS fuentes y ninguna es un mapa plano:
+ *   - `catalog.sagas` es un array de sagas, cada una con sus capítulos y un
+ *     `split` por categoría (kid/pow). El XP del capítulo se reparte al
+ *     derivar, no acá.
+ *   - `catalog.bosses` sí es un mapa id → xp.
+ *
+ * Se normaliza a la misma forma que el resto (`id`, `map`, `xp`, `cls`) para
+ * que la UI y la escritura no necesiten saber nada de esta diferencia.
+ */
+export function sagasEntries(catalog) {
+  const out = [];
+  for (const saga of (catalog && catalog.sagas) || []) {
+    for (const chapter of (saga && saga.chapters) || []) {
+      if (!chapter || !chapter.id) continue;
+      out.push({
+        id: chapter.id,
+        map: `sagas.${saga.id}`,
+        xp: Number(chapter.xp) || 0,
+        cls: "one",
+        entry: chapter
+      });
+    }
+  }
+  for (const [id, xp] of Object.entries((catalog && catalog.bosses) || {})) {
+    out.push({ id, map: "bosses", xp: Number(xp) || 0, cls: "one", entry: xp });
+  }
+  return out;
+}
+
+/**
  * Lista TODAS las misiones de un sistema jugable, en orden estable de mapa y
  * clave. Devuelve `{ id, map, xp, cls, entry }`.
  *
@@ -111,6 +145,7 @@ export function systemOfMap(map) {
  */
 export function missionsOf(catalog, system) {
   if (!PHASE3_SYSTEMS.includes(system)) return [];
+  if (system === "sagas") return sagasEntries(catalog);
   const out = [];
   for (const map of SYSTEM_MAPS[system] || []) {
     const entryMap = mapOf(catalog, map);
@@ -128,4 +163,9 @@ export function missionsOf(catalog, system) {
     }
   }
   return out;
+}
+
+/** Resuelve una misión de Sagas (capítulo o jefe) por id. */
+export function sagaMissionOf(catalog, missionId) {
+  return sagasEntries(catalog).find((mission) => mission.id === missionId) || null;
 }

@@ -198,6 +198,13 @@ const CAPITAL_GROUPS = [
   { label: "IA", match: { map: "capital.ai" } }
 ];
 
+/* Sagas tiene dos fuentes: capítulos (con split por categoría) y jefes. */
+const SAGAS_GROUPS = [
+  { label: "Video", match: { map: "sagas.video" } },
+  { label: "Roblox", match: { map: "sagas.roblox" } },
+  { label: "Jefes", match: { map: "bosses" } }
+];
+
 function empleoPanel(b, catalog, d) {
   const h = hunt(b);
   const p = progress(b);
@@ -391,7 +398,8 @@ function miradorPanel(b, catalog, d) {
       row("bosses_xp", "XP de jefes", fmt(d.xpBreakdown.bosses), { raw: d.xpBreakdown.bosses }),
       row("weekly_boss", "Jefe semanal", `${fmt(jf.victorias || 0)} victorias · ${fmt(jf.semanas || 0)} semanas`),
       row("best", "Mejor ganancia semanal", fmt(jf.mejorGanancia || 0), { raw: Number(jf.mejorGanancia) || 0 })
-    ])
+    ]),
+    play: playOf(b, catalog, "sagas", SAGAS_GROUPS)
   };
 }
 

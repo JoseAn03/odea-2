@@ -257,9 +257,9 @@ test("8. misión desconocida: UNKNOWN_MISSION sin backup ni cambios", () => {
   assert.equal(rawSave(storage), raw);
   assert.equal(backupKeys(storage).length, backups);
 
-  /* Capital ya es jugable (Entrega F); Sagas todavía no, así que sirve de
-     ejemplo de sistema fuera de alcance. */
-  const out = apply(storage, catalog, completeMutation("x", "sagas"));
+  /* Capital y Sagas ya son jugables (Fase 4); Tesoro todavía no, así que sirve
+     de ejemplo de sistema fuera de alcance. */
+  const out = apply(storage, catalog, completeMutation("x", "tesoro"));
   assert.equal(out.error.code, "OUT_OF_SCOPE");
 });
 
