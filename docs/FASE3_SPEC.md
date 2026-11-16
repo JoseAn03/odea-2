@@ -330,6 +330,8 @@ Se usa en dos lugares y en ningún otro:
 
 **Algoritmo determinista:**
 
+0. Si `play` no tiene completaciones de Hub ni check-ins → `streak = baseline`,
+   `streakDate = baselineDate` (guarda de compatibilidad).
 1. Construir `days` = fechas activas ordenadas.
 2. `posteriores` = días estrictamente mayores que `baselineDate`.
 3. Si `posteriores` está vacío → `streak = baseline` y `streakDate =
@@ -356,10 +358,12 @@ reiniciar la racha migrada** salvo que exista un hueco real de fechas contra
 | `2026-11-12` (sin el 11) | **1** (hueco real de un día) |
 | `2026-11-20` | **1** |
 
-**Compatibilidad con Fase 2:** con un bundle **sin** `play`, `deriveStreak`
-devuelve exactamente `core.identity.streak` (la base). Por eso la actualización
-desde la Fase 2 no cambia ningún total, no produce `XP_DRIFT` y la derivación de
-los 61 tests existentes es idéntica.
+**Compatibilidad con Fase 2 y con la migración:** si no hay actividad de Hub ni
+check-ins en `play`, `deriveStreak` devuelve **la base sin más**
+(`core.identity.streak`) y no mira fechas posteriores de `core.activity`. Es una
+guarda explícita, no una consecuencia: así `validateMigration` (que llama a
+`sourcesFromMigrated` sobre bundles sin `play`) y los 61 tests existentes derivan
+exactamente igual, sin `XP_DRIFT` ni cambios de totales.
 
 Los `freezers` y `shieldWeek` migrados **no se consumen** en Fase 3: quedan como
 fuente intacta. Consumirlos sería una decisión nueva.
