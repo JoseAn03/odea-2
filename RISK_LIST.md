@@ -74,7 +74,8 @@ bloqueada · **S3** = deuda/depuración.
 
 Se registran al cerrar la Fase 2. **La Fase 3 no arranca hasta que la Fase 2
 quede verificada.** Ninguna de estas decisiones autoriza todavía código de
-gameplay ni escrituras nuevas.
+gameplay ni escrituras nuevas. El desarrollo técnico está en
+`docs/FASE3_SPEC.md`.
 
 | # | Decisión | Resolución |
 |---|---|---|
