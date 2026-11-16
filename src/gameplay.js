@@ -132,6 +132,13 @@ export function migratedKeys(bundle2, catalog, system, dateKey = localDateKey())
     }
   }
 
+  if (system === "sagas") {
+    /* Capítulos migrados (mapa con fecha) y jefes derrotados (`true`). */
+    const data = (bundle2 && bundle2.worlds && bundle2.worlds.sagas && bundle2.worlds.sagas.data) || {};
+    for (const id of Object.keys(data.chapters || {})) add(id, "one", dateKey);
+    for (const id of Object.keys(core.gods || {})) add(id, "one", dateKey);
+  }
+
   return keys;
 }
 

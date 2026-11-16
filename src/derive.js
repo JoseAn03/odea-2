@@ -240,7 +240,9 @@ export function sourcesFromMigrated(bundle2, catalog = null) {
       eng: union(s.capital && s.capital.eng, extra.capital.eng),
       ai: union(s.capital && s.capital.ai, extra.capital.ai)
     },
-    gods: clone(s.gods || {}),
+    /* Jefes: los migrados están como `true` en el mapa; los nuevos se suman
+       igual sin pisar el valor previo. */
+    gods: { ...clone(s.gods || {}), ...trueMap(extra.gods) },
     focus: clone(s.focus || { log: [] }),
     diary: clone(s.diary || { log: [] }),
     hunt: clone(s.hunt || { log: [] }),
@@ -249,8 +251,24 @@ export function sourcesFromMigrated(bundle2, catalog = null) {
       farm: clone(s.credits && s.credits.farm || { log: [] })
     },
     shop: clone(s.shop || { spent: 0 }),
-    sagas: clone((bundle2.worlds && bundle2.worlds.sagas && bundle2.worlds.sagas.data) || { chapters: {}, weekly: { done: false } })
+    /* Sagas: los capítulos migrados llevan fecha; los nuevos se registran con
+       `true` porque `sagaAreaXP` solo mira la presencia de la clave. */
+    sagas: (() => {
+      const base = clone(
+        (bundle2.worlds && bundle2.worlds.sagas && bundle2.worlds.sagas.data) || {
+          chapters: {},
+          weekly: { done: false }
+        }
+      );
+      return { ...base, chapters: { ...clone(base.chapters || {}), ...trueMap(extra.sagas) } };
+    })()
   };
+}
+
+function trueMap(ids) {
+  const out = {};
+  for (const id of ids || []) out[id] = true;
+  return out;
 }
 
 function union(base, extra) {
@@ -274,6 +292,8 @@ function mergePlaySources(bundle2, catalog) {
     puente: [],
     vida: [],
     capital: { done: [], eng: [], ai: [] },
+    sagas: [],
+    gods: [],
     /* R1: valores congelados al escribir. Se usan EN LUGAR del catálogo para
        esas ocurrencias; el resto sigue leyendo el catálogo (compatibilidad). */
     frozenXP: {},
@@ -318,6 +338,14 @@ function mergePlaySources(bundle2, catalog) {
       else if (hasId(catalog.capital.eng, id)) out.capital.eng.push(id);
       else if (hasId(catalog.capital.ai, id)) out.capital.ai.push(id);
       if (frozenXP != null) out.frozenXP[id] = frozenXP;
+      continue;
+    }
+    if (record.system === "sagas") {
+      /* Sagas mezcla capítulos y jefes: el catálogo de jefes es el que decide. */
+      if (catalog && catalog.bosses && hasId(catalog.bosses, id)) out.gods.push(id);
+      else out.sagas.push(id);
+      /* R1: el XP del capítulo o del jefe también queda congelado. */
+      if (frozenXP != null) out.frozenXP[id] = frozenXP;
     }
   }
   return out;
@@ -354,7 +382,13 @@ function sagaAreaXP(sagas, cat) {
     const share = (saga.split && saga.split[cat]) || 0;
     if (!share) continue;
     for (const ch of saga.chapters) {
-      if (chapterState[ch.id]) total += Math.round(ch.xp * share);
+      if (!chapterState[ch.id]) continue;
+      /* R1: si el capítulo se completó con recompensa congelada, ese XP base
+         manda; el reparto por `split` sigue siendo la regla. */
+      const frozen = CATALOG_SAGAS_HOLDER.frozen;
+      const baseXp =
+        frozen && Object.prototype.hasOwnProperty.call(frozen, ch.id) ? frozen[ch.id] : ch.xp;
+      total += Math.round(baseXp * share);
     }
   }
   const today = CATALOG_SAGAS_HOLDER.referenceDate;
@@ -364,9 +398,11 @@ function sagaAreaXP(sagas, cat) {
 }
 
 /* Holder para no pasar el catálogo por cada helper. Se fija por derive(). */
-const CATALOG_SAGAS_HOLDER = { current: [], referenceDate: "1970-01-01" };
+const CATALOG_SAGAS_HOLDER = { current: [], referenceDate: "1970-01-01", frozen: {} };
 
 export function vidaCompute(sources) {
+  /* R1: los capítulos de saga congelados se leen desde acá también. */
+  CATALOG_SAGAS_HOLDER.frozen = (sources && sources.frozen) || {};
   const gv = sources.vida || {};
   const log = Array.isArray(gv.log) ? gv.log : [];
   const catalog = CATALOG_SAGAS_HOLDER.catalog;
@@ -518,7 +554,11 @@ export function derive(sources, catalog, referenceDate) {
     sumXpWithFrozen(catalog.capital.ai, sources.capital.ai, frozen);
   const focus = ((sources.focus && sources.focus.log) || []).reduce((a, e) => a + (Number(e && e.xp) || 0), 0);
   const diary = ((sources.diary && sources.diary.log) || []).reduce((a, e) => a + (Number(e && e.xp) || 0), 0);
-  const bosses = Object.keys(sources.gods || {}).reduce((a, id) => a + (Number(catalog.bosses[id]) || 0), 0);
+  const bosses = Object.keys(sources.gods || {}).reduce((a, id) => {
+    /* R1: el XP del jefe congelado manda sobre el catálogo. */
+    const frozenXP = Object.prototype.hasOwnProperty.call(frozen, id) ? frozen[id] : null;
+    return a + (frozenXP != null ? frozenXP : Number(catalog.bosses[id]) || 0);
+  }, 0);
   const hunt = ((sources.hunt && sources.hunt.log) || []).reduce((a, e) => a + Math.max(0, Number(e && e.xp) || 0), 0);
   const evento = ((sources.credits.eventRL && sources.credits.eventRL.log) || [])
     .reduce((a, e) => a + Math.max(0, Number(e && e.xp) || 0), 0);
