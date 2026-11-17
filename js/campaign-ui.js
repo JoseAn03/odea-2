@@ -68,7 +68,7 @@ function rewards(mission) {
   const wrapper = node("span", "campaign-rewards");
   wrapper.append(
     node("span", "campaign-reward campaign-reward--xp", `+${format(mission.xp)} XP`),
-    node("span", "campaign-reward campaign-reward--coin", `+${format(mission.coins)} monedas`)
+    node("span", "campaign-reward campaign-reward--coin", `+${format(mission.coins)} ₡`)
   );
   return wrapper;
 }
@@ -425,13 +425,13 @@ function makeApplications(root, state, view) {
   const target = node("div", `campaign-target${state.hit ? " campaign-target--hit" : ""}`);
   target.setAttribute("aria-hidden", "true");
   target.append(node("span", "campaign-target-ring"), node("span", "campaign-target-core", "↗"), node("span", "campaign-target-tag", "ENFOQUE / ACCIÓN"));
-  const burst = node("span", "campaign-reward-burst", "+25 XP · +2 monedas");
+  const burst = node("span", "campaign-reward-burst", "+25 XP · +2 ₡");
   target.append(burst);
   const totals = node("div", "campaign-application-totals");
   totals.append(
     node("strong", "", format(data.count)),
     node("span", "", "postulaciones registradas"),
-    node("small", "", `${format(data.totalXP)} XP · ${format(data.totalCoins)} monedas ficticias`)
+    node("small", "", `${format(data.totalXP)} XP · ₡${format(data.totalCoins)} ODEA virtuales`)
   );
   pitch.append(kicker, title, description, target, totals);
   const activity = node("div", "campaign-application-activity");
@@ -442,7 +442,7 @@ function makeApplications(root, state, view) {
     applicationField(state, "role", "Puesto"),
     applicationField(state, "note", "Nota", true)
   );
-  const submit = node("button", "campaign-button campaign-button--coral", "Disparar postulación · +25 XP · +2 monedas");
+  const submit = node("button", "campaign-button campaign-button--coral", "Disparar postulación · +25 XP · +2 ₡");
   submit.type = "submit";
   submit.disabled = Boolean(state.pending) || typeof state.options.onApply !== "function";
   if (state.pending?.type === "application") {
@@ -478,7 +478,7 @@ function makeApplications(root, state, view) {
         state.applicationMessage = { kind: "error", text: result?.message || "No pudimos registrar la postulación. Conservamos tus datos para reintentar." };
       } else {
         state.applicationDraft = { company: "", role: "", note: "" };
-        state.applicationMessage = { kind: "success", text: "¡En el blanco! Postulación registrada: +25 XP · +2 monedas ficticias." };
+        state.applicationMessage = { kind: "success", text: "¡En el blanco! Postulación registrada: +25 XP · +2 ₡ ODEA virtuales." };
         state.hit = true;
         clearTimeout(state.hitTimer);
         state.hitTimer = setTimeout(() => {
@@ -551,7 +551,7 @@ function paint(root, state) {
   const footer = node("footer", "campaign-footer");
   footer.append(
     node("span", "campaign-footer-mark", "✦ HECHO PARA AVANZAR"),
-    node("p", "", "XP y monedas son recompensas ficticias del juego: no representan ingresos reales."),
+    node("p", "", "XP y ₡ ODEA son recompensas virtuales: no son dinero real. Todavía no hay tienda ni canje activos en ODEA 2."),
     node("p", "", "Las misiones de IA son actividades educativas. Esta pantalla no conecta una IA en vivo.")
   );
   interior.append(footer);
@@ -849,7 +849,7 @@ function paintDaily(root, state) {
   const footer = node("footer", "campaign-footer");
   footer.append(
     node("span", "campaign-footer-mark", "✦ HECHO PARA AVANZAR"),
-    node("p", "", "XP y monedas son recompensas ficticias del juego: no representan ingresos reales.")
+    node("p", "", "XP y ₡ ODEA son recompensas virtuales: no son dinero real. Todavía no hay tienda ni canje activos en ODEA 2.")
   );
   interior.append(footer);
   shell.append(interior);

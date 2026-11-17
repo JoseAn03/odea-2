@@ -260,7 +260,7 @@ export function renderMochila(root, bundle, inventory, flash) {
       ...mochilaSection("Capa de recompensas", inv.rewards.map((item) => itemRow(item)))
     ),
     notice(
-      "La Mochila es de consulta: comprar y equipar todavía no están activos. " +
+      "Tus ₡ ODEA son progreso virtual, no dinero real. Comprar, gastar y equipar todavía no están activos. " +
         "El nivel, el XP y la racha se derivan del historial y no se editan a mano."
     )
   );
@@ -363,7 +363,7 @@ export function renderToday(root, today, actions) {
         { class: "stats" },
         stat("Nivel", fmt(hud.level), "pink"),
         stat("XP global", xpText, "cyan"),
-        stat("Saldo", fmt(hud.coins.balance), "orange"),
+        stat("Saldo ODEA", `₡${fmt(hud.coins.balance)}`, "orange"),
         stat("Racha", `${fmt(hud.streak)} días`, "")
       ),
       progress,
@@ -589,7 +589,7 @@ function characterCard(bundle, flash, actions) {
         stat("Nivel", fmt(derived.campaignLevel), "pink"),
         stat("XP total", fmt(total), "cyan"),
         stat("Racha", `${fmt(identity.streak)} días`, "orange"),
-        stat("Monedas", fmt(coins.balance), "")
+        stat("Saldo ODEA", `₡${fmt(coins.balance)}`, "")
       ),
       h("h3", {}, "Desglose de XP por componente"),
       h(
@@ -618,6 +618,12 @@ function characterCard(bundle, flash, actions) {
           )
         : null
   );
+}
+
+/** Pantalla «Personaje» del overlay: la tarjeta de progreso, solo lectura.
+ *  app.js la invoca al abrir Personaje; la tarjeta vive en characterCard. */
+export function renderCharacter(root, bundle, flash) {
+  root.replaceChildren(characterCard(bundle, flash, null));
 }
 
 export function renderQuarantine(root, bundle, actions) {
