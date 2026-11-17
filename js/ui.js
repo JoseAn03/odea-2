@@ -440,6 +440,19 @@ export function renderMenu(root, { version, actions, sync } = {}) {
   );
 }
 
+/** ¿La app corre instalada (standalone) y no en una pestaña del navegador? */
+function isStandalone() {
+  try {
+    return (
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(display-mode: standalone)").matches
+    );
+  } catch (error) {
+    return false;
+  }
+}
+
 /** Sección de sincronización con Google Drive del Menú (v0.20.0). */
 function syncSection(sync, actions) {
   const title = h("h2", {}, "Sincronización · Google Drive");
@@ -461,6 +474,13 @@ function syncSection(sync, actions) {
           { class: "muted" },
           "Guardá tu partida en tu Google Drive y seguí en cualquier aparato: el teléfono y la computadora quedan al día solos. La partida vive en una carpeta privada que solo esta app puede ver."
         ),
+        isStandalone()
+          ? h(
+              "p",
+              { class: "muted small" },
+              "Estás en la app instalada: si la conexión no avanza, abrí el juego en Chrome (el mismo enlace) y conectá desde ahí; queda conectado en los dos lados."
+            )
+          : null,
         h(
           "div",
           { class: "btn-row" },
