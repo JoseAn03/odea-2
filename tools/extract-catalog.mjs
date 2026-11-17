@@ -177,7 +177,15 @@ const catalog = {
   },
   campaign: keyByXp(FL_MISSIONS),
   campaignBossIds: FL_BOSS_IDS,
-  daily: Object.fromEntries(dailyMissions.map((m) => [m.id, { xp: Number(m.xp) || 0, day: m.day, slot: m.slot }])),
+  daily: Object.fromEntries(dailyMissions.map((m) => [m.id, {
+    xp: Number(m.xp) || 0, day: m.day, slot: m.slot,
+    /* v0.19.0: textos de presentación para la pantalla de Misiones Diarias
+       (mismo formato que las campañas). Son data de juego de ODEA 1, no
+       progreso del usuario; la derivación de XP no los usa. */
+    title: m.title || m.id, description: m.description || "",
+    time: Number(m.time) || 0, verification: m.verification || "",
+    category: m.category || null, week: m.week || null
+  }])),
   dailyTotalDays: new Set(dailyMissions.map((m) => m.day)).size,
   weekly: Object.fromEntries(weeklyMissions.map((m) => [String(m.week), Number(m.xp) || 0])),
   jobs: keyByXp(employmentMissions),

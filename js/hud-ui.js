@@ -95,10 +95,10 @@ export function renderHud(root, hud, actions) {
  * `aria-current`: reemplazar los botones en cada refresh destruiría el que
  * tiene el foco y lo devolvería al body.
  */
-export function renderTabs(root, { active, onSelect } = {}) {
+export function renderTabs(root, { active, onSelect, exclude = [] } = {}) {
   if (root.dataset.ready !== "true") {
     root.replaceChildren(
-      ...TABS.map((tab) =>
+      ...TABS.filter((tab) => !exclude.includes(tab.id)).map((tab) =>
         h(
           "button",
           {
