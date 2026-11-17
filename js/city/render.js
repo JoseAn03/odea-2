@@ -54,6 +54,7 @@ export function createRenderer(canvas) {
   let vh = 1;
   let creditXP = null;
   let playerVisible = false;
+  let playerState = null;
   let selectedRect = null;
   let selectedAccent = PALETTE.pink;
   let reduced = false;
@@ -925,6 +926,30 @@ export function createRenderer(canvas) {
       px.draw(ctx, f3, mx, my + 26, 42, 52, c < 0);
     }
 
+    /* El jugador: el avatar único con gorra, del tamaño de los vecinos,
+       con su flecha «estás aquí» y la pastilla VOS sobre la cabeza. */
+    if (playerVisible && playerState) {
+      const st = playerState;
+      if (visible(view, st.x - 60, st.y - 100, 120, 160)) {
+        ctx.fillStyle = "rgba(6,10,18,0.30)";
+        ctx.beginPath();
+        ctx.ellipse(st.x, st.y + 24, 17, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+        const pstep = st.moving && !reduced ? Math.floor(time * 7) % 2 : 0;
+        const set = st.dir === "back" ? px.player.back : st.dir === "side" ? px.player.side : px.player.front;
+        px.draw(ctx, set[pstep], st.x, st.y + 26, 42, 52, st.flip);
+        const bob = reduced ? 0 : Math.sin(time * 3) * 3;
+        if (px.vos) px.draw(ctx, px.vos, st.x, st.y - 36 + bob, 56, 25);
+        ctx.fillStyle = PALETTE.cyan;
+        ctx.beginPath();
+        ctx.moveTo(st.x - 6, st.y - 34 + bob);
+        ctx.lineTo(st.x + 6, st.y - 34 + bob);
+        ctx.lineTo(st.x, st.y - 25 + bob);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+
     /* Carro pixel por la avenida horizontal sur (centro y = 2015). */
     const cx = reduced ? 420 : ((time * 120) % (S + 320)) - 160;
     if (visible(view, cx - 75, 1975, 150, 90)) {
@@ -1204,40 +1229,6 @@ export function createRenderer(canvas) {
       drawSprite(sprite, p.x, p.y, Math.max(0.8, Math.min(1.05, z)));
     }
 
-    /* Marcador del jugador en El Hub. */
-    if (playerVisible) {
-      const p = camera.worldToScreen(world.playerStart.x, world.playerStart.y);
-      const pulse = reduced ? 0 : Math.sin(time * 2.6) * 3;
-      ctx.fillStyle = alpha(PALETTE.cyan, 0.09);
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, 17 + pulse, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = alpha(PALETTE.cyan, 0.6);
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, 13, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.fillStyle = "#0B0416";
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, 7, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = PALETTE.cyan;
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      ctx.fillStyle = PALETTE.cyan;
-      ctx.beginPath();
-      ctx.moveTo(p.x, p.y - 10);
-      ctx.lineTo(p.x + 4.5, p.y - 2);
-      ctx.lineTo(p.x - 4.5, p.y - 2);
-      ctx.closePath();
-      ctx.fill();
-      /* El avatar pixel (único con gorra) sobre el marcador. */
-      const pxPlayer = art();
-      if (pxPlayer) {
-        const pstep = reduced ? 0 : Math.floor(time * 5) % 2;
-        pxPlayer.draw(ctx, pxPlayer.player.front[pstep], p.x, p.y + 17, 34, 42);
-      }
-    }
   }
 
   /* ---------------------------------- API ---------------------------------- */
@@ -1250,6 +1241,9 @@ export function createRenderer(canvas) {
     },
     setPlayerVisible(value) {
       playerVisible = !!value;
+    },
+    setPlayer(state) {
+      playerState = state || null;
     },
     setSelected(rect, accent = PALETTE.pink) {
       selectedRect = rect || null;

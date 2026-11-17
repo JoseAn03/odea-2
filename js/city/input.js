@@ -5,7 +5,7 @@
 
 import { districtAt } from "../districts.js";
 
-export function createInput({ canvas, camera, onSelectDistrict, onInteract }) {
+export function createInput({ canvas, camera, onSelectDistrict, onInteract, onTapWorld, walkModeActive }) {
   const pointers = new Map();
   let dragging = false;
   let moved = 0;
@@ -92,8 +92,12 @@ export function createInput({ canvas, camera, onSelectDistrict, onInteract }) {
       const elapsed = performance.now() - startedAt;
       if (p && moved < 9 && elapsed < 480) {
         const world = camera.screenToWorld(p.x, p.y);
-        const district = districtAt(world.x, world.y);
-        if (district && typeof onSelectDistrict === "function") onSelectDistrict(district.id);
+        if (typeof walkModeActive === "function" && walkModeActive()) {
+          if (typeof onTapWorld === "function") onTapWorld(world);
+        } else {
+          const district = districtAt(world.x, world.y);
+          if (district && typeof onSelectDistrict === "function") onSelectDistrict(district.id);
+        }
       }
       dragging = false;
     }

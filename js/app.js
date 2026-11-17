@@ -20,6 +20,7 @@ import { localDateKey } from "../src/derive.js";
 import * as ui from "./ui.js";
 import { buildWorld } from "./city/world.js";
 import { createCityView } from "./city/engine.js";
+import { createPlayer } from "./city/player.js";
 import { createViewSession } from "./city/view-session.js";
 import { buildHud } from "./hud.js";
 import { buildDistrictPanel } from "./district-figures.js";
@@ -59,6 +60,7 @@ const els = {
   version: document.getElementById("version-badge"),
   toasts: document.getElementById("toasts"),
   floatingImport: document.getElementById("floating-import"),
+  walkBtn: document.getElementById("walk-btn"),
   backdrop: document.getElementById("sheet-backdrop"),
   sheet: document.getElementById("sheet"),
   tabbar: document.getElementById("tabbar"),
@@ -72,6 +74,9 @@ let storage = null;
 let catalog = null;
 let bundle = null;
 let city = null;
+let player = null;
+let cityWorld = null;
+let walkOn = false;
 let toasts = null;
 let updateWatcher = null;
 let storageWatcher = null;
@@ -118,10 +123,25 @@ function initCity() {
   if (!els.canvas) return;
   try {
     const world = buildWorld();
+    cityWorld = world;
+    player = createPlayer(world.playerStart);
     city = createCityView({
       canvas: els.canvas,
       world,
-      onSelectDistrict: openDistrict
+      onSelectDistrict: openDistrict,
+      onFrame: (dt) => {
+        if (player && city) {
+          city.setPlayer(player.update(dt, cityWorld ? cityWorld.buildings : []));
+        }
+      },
+      onTapWorld: (pt) => {
+        if (!walkOn || !player || !cityWorld) return;
+        const s = cityWorld.size;
+        player.setTarget(
+          Math.max(-s * 0.04, Math.min(s * 1.04, pt.x)),
+          Math.max(-s * 0.04, Math.min(s * 1.04, pt.y))
+        );
+      }
     });
     viewSession = createViewSession(city.camera);
   } catch (error) {
@@ -130,7 +150,21 @@ function initCity() {
   }
 }
 
+function setWalk(on) {
+  walkOn = !!on;
+  if (city) city.setWalkMode(walkOn);
+  if (els.walkBtn) {
+    els.walkBtn.textContent = walkOn ? "⏹ Dejar de caminar" : "🚶 Caminar";
+    els.walkBtn.classList.toggle("on", walkOn);
+  }
+  if (walkOn && player && city) {
+    const st = player.state();
+    city.camera.jumpTo(st.x, st.y + 12, city.camera.clampZoom(1));
+  }
+}
+
 function openDistrict(id) {
+  if (walkOn) setWalk(false);
   if (!bundle || !catalog) return;
   const panel = buildDistrictPanel(id, bundle, catalog);
   if (!panel) return;
@@ -407,6 +441,7 @@ function refresh() {
       city.setPlayerVisible(true);
       city.setCredit(hud.xpBreakdown.evento + hud.xpBreakdown.farm);
     }
+    if (els.walkBtn) els.walkBtn.hidden = false;
     applyAmbience();
 
     /* El overlay solo se repinta si la pestaña abierta lo usa; las pantallas
@@ -427,6 +462,8 @@ function refresh() {
     city.setCredit(null);
     city.clearSelection();
   }
+  if (els.walkBtn) els.walkBtn.hidden = true;
+  setWalk(false);
   applyAmbience();
   els.hud.hidden = true;
   els.chips.hidden = true;
@@ -718,6 +755,9 @@ async function boot() {
   }
   if (els.backdrop) {
     els.backdrop.addEventListener("click", closeSheet);
+  }
+  if (els.walkBtn) {
+    els.walkBtn.addEventListener("click", () => setWalk(!walkOn));
   }
   if (els.floatingImport) {
     els.floatingImport.addEventListener("click", () => openOverlay("Importá tu progreso"));

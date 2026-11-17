@@ -751,6 +751,27 @@ body.no-city #city-canvas { display: none; }
 }
 .floating-import:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
 
+.walk-btn {
+  position: fixed;
+  z-index: 7;
+  right: 12px;
+  bottom: calc(env(safe-area-inset-bottom) + 68px);
+  appearance: none;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 750;
+  color: #06222B;
+  background: var(--cyan);
+  padding: 10px 16px;
+  min-height: 42px;
+  border: none;
+  border-radius: 999px;
+  box-shadow: 0 8px 24px rgba(0, 229, 255, 0.35);
+  cursor: pointer;
+}
+.walk-btn.on { background: var(--pink); color: #fff; box-shadow: 0 8px 24px rgba(255, 46, 147, 0.35); }
+.walk-btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
+
 .version-badge {
   position: fixed;
   z-index: 5;
