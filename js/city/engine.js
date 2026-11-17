@@ -13,7 +13,7 @@ import { getDistrict } from "../districts.js";
 import { MONUMENT } from "./world.js";
 import { applyView, viewOf } from "./view-session.js";
 
-export function createCityView({ canvas, world, onSelectDistrict }) {
+export function createCityView({ canvas, world, onSelectDistrict, onFrame, onTapWorld }) {
   const renderer = createRenderer(canvas);
   const camera = createCamera({ worldSize: world.size });
   const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -25,6 +25,8 @@ export function createCityView({ canvas, world, onSelectDistrict }) {
   let lastDraw = 0;
   let initialized = false;
   let activeHorizontalScale = 1;
+  let walkMode = false;
+  let playerPos = null;
   const COAST_SPAN = world.size * 1.24;
 
   function overviewZoom(width, height, horizontalScale) {
@@ -39,6 +41,8 @@ export function createCityView({ canvas, world, onSelectDistrict }) {
     canvas,
     camera,
     onSelectDistrict,
+    onTapWorld,
+    walkModeActive: () => walkMode,
     onInteract: () => {
       if (reduced) drawNow();
     }
@@ -79,6 +83,13 @@ export function createCityView({ canvas, world, onSelectDistrict }) {
       for (let i = 0; i < 12; i++) camera.update(0.05);
     } else {
       camera.update(dt);
+    }
+
+    /* El jugador avanza por cuadro; en modo caminar la cámara lo sigue
+       mientras se mueve (al detenerse, la cámara queda libre). */
+    if (typeof onFrame === "function") onFrame(dt);
+    if (walkMode && playerPos && playerPos.moving) {
+      camera.jumpTo(playerPos.x, playerPos.y + 12, camera.state.zoom);
     }
 
     if (!reduced || ts - lastDraw > 80) {
@@ -162,6 +173,13 @@ export function createCityView({ canvas, world, onSelectDistrict }) {
     setPlayerVisible(value) {
       renderer.setPlayerVisible(value);
       drawNow();
+    },
+    setPlayer(state) {
+      playerPos = state || null;
+      renderer.setPlayer(state);
+    },
+    setWalkMode(on) {
+      walkMode = !!on;
     },
     /** Perfil visual derivado (js/ambience.js). Solo lectura. */
     setAmbience(value) {

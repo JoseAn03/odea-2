@@ -230,6 +230,23 @@ function bancaCanvas() {
   return c;
 }
 
+/* Pastilla «VOS» que flota sobre el jugador: así se sabe cuál es él. */
+function vosCanvas() {
+  const c = mkCanvas(56, 25);
+  const g = c.getContext("2d");
+  g.fillStyle = "rgba(11,4,22,0.88)";
+  g.fillRect(0, 0, 56, 25);
+  g.strokeStyle = CIAN;
+  g.lineWidth = 2;
+  g.strokeRect(1, 1, 54, 23);
+  g.fillStyle = CIAN;
+  g.font = "800 13px system-ui, sans-serif";
+  g.textAlign = "center";
+  g.textBaseline = "middle";
+  g.fillText("VOS", 28, 13.5);
+  return c;
+}
+
 function carroCanvas(color, techo, luz, sombra) {
   const c = mkCanvas(48, 24);
   const g = c.getContext("2d");
@@ -301,6 +318,7 @@ export function createPixelArt() {
     poste: posteCanvas(),
     arbol: arbolCanvas(),
     palmera: palmeraCanvas(),
+    vos: vosCanvas(),
     banca: bancaCanvas(),
     carro: carroCian,
     carroRosa,
