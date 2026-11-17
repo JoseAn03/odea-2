@@ -64,6 +64,8 @@ La app funciona sin conexión después de la primera carga (service worker
 
 ```bash
 npm test
+npm run check:write-path   # una sola ruta de escritura
+npm run check:ui           # interfaz completa: HUD, Hoy, Mochila, Menú y 9 distritos
 ```
 
 **195 tests** (Node ≥ 20):
