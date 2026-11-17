@@ -22,7 +22,7 @@ import { buildWorld } from "./city/world.js";
 import { createCityView } from "./city/engine.js";
 import { createPlayer } from "./city/player.js";
 import { createViewSession } from "./city/view-session.js";
-import { buildHud, buildInventory } from "./hud.js";
+import { buildHud, buildInventory, buildToday } from "./hud.js";
 import { buildDistrictPanel } from "./district-figures.js";
 import { renderHud, renderChips, renderSheet, renderTabs } from "./hud-ui.js";
 import {
@@ -324,10 +324,11 @@ function selectTab(id) {
   if (!bundle) return;
 
   if (tab === TAB_TODAY) {
-    /* «Hoy» es un acceso directo al Hub: no duplica la lógica diaria. */
-    hideOverlayRaw();
+    /* «Hoy» es el centro de control: usa la MISMA ruta diaria del Hub. */
+    hideSheetRaw();
+    if (viewSession) viewSession.restore();
     setTab(TAB_TODAY);
-    openDistrict("hub");
+    openToday();
     return;
   }
 
@@ -358,7 +359,29 @@ function hideOverlayRaw() {
   document.body.classList.remove("overlay-open");
 }
 
-/** Pantalla «Personaje»: solo lectura del progreso. */
+/** Repinta «Hoy» sin robar el foco (lo usa refresh tras cada escritura). */
+function renderTodayContent() {
+  if (!bundle) return;
+  ui.renderToday(els.overlayContent, buildToday(bundle, catalog), {
+    completeMission: (missionId, system) => completeMission(missionId, system),
+    checkin: () => checkin(),
+    goToDistrict: (districtId) => {
+      closeOverlay();
+      setTab(TAB_CITY);
+      openDistrict(districtId);
+    }
+  });
+}
+
+/** Pantalla «Hoy»: centro de control con la ruta del día. */
+function openToday() {
+  overlayMode = "today";
+  els.overlayTitle.textContent = "Hoy";
+  renderTodayContent();
+  showOverlay();
+}
+
+/** Pantalla «Mochila»: progreso + inventario, todo de consulta. */
 function openMochila() {
   overlayMode = "character";
   els.overlayTitle.textContent = "Mochila";
@@ -446,7 +469,9 @@ function refresh() {
 
     /* El overlay solo se repinta si la pestaña abierta lo usa; las pantallas
        de flujo (importar, cuarentena, errores) se gobiernan a sí mismas. */
-    if (overlayMode === "character") {
+    if (overlayMode === "today") {
+      renderTodayContent();
+    } else if (overlayMode === "character") {
       const message = flash;
       flash = null;
       ui.renderMochila(els.overlayContent, bundle, buildInventory(bundle, catalog, bundle.core.derived), message);

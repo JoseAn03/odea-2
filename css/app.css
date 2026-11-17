@@ -1304,3 +1304,49 @@ body.no-city #city-canvas { display: none; }
   border-color: rgba(0, 229, 255, 0.45);
   background: rgba(0, 229, 255, 0.08);
 }
+
+/* ---------------------------------- hoy ----------------------------------
+ * Cada misión de la ruta: datos a la izquierda, estado y acciones a la derecha.
+ * El estado se dice con texto («Hecha» / «Pendiente»), no solo con color.
+ */
+
+.today-list { gap: 8px; }
+
+.today-mission {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(18, 8, 31, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.today-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.today-btn {
+  width: auto;
+  padding: 6px 12px;
+  font-size: 0.76rem;
+  min-height: 36px;
+}
+
+.today-progress {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0 4px;
+}
+
+.today-progress-text {
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+}

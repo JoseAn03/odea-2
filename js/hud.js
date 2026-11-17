@@ -8,6 +8,7 @@
  */
 
 import { derive, deriveStreak, sourcesFromMigrated, odeLevelFor } from "../src/derive.js";
+import { routeForDay } from "../src/gameplay.js";
 
 function clamp01(n) {
   return Math.max(0, Math.min(1, n));
@@ -178,5 +179,40 @@ export function buildInventory(bundle, catalog, derived) {
     /** La mochila es de consulta: no hay compra ni equipamiento activos. */
     readOnly: true,
     slots: Object.keys(equipped).map((slot) => ({ slot, slotLabel: slotName(slot), id: String(equipped[slot]) }))
+  };
+}
+
+
+/**
+ * buildToday — modelo del centro «Hoy».
+ *
+ * Reutiliza la MISMA proyección del HUD y la MISMA ruta diaria del Hub: no hay
+ * segundo catálogo ni cálculos paralelos. Solo añade lo que la pantalla «Hoy»
+ * necesita: el estado de la ruta y su distrito.
+ */
+export function buildToday(bundle2, catalog, dateKey = undefined) {
+  const hud = buildHud(bundle2, catalog);
+  const route = routeForDay(bundle2, catalog, dateKey);
+  const checkins = (bundle2.play && bundle2.play.checkins) || {};
+
+  const districtId = "hub";
+  const districtName = "Plaza Central";
+  const withDistrict = (mission) => ({ ...mission, districtId, districtName });
+
+  const missions = route.missions.map(withDistrict);
+  const done = missions.filter((m) => m.completed).length;
+
+  return {
+    hud,
+    route: {
+      date: route.date,
+      catalogDay: route.catalogDay,
+      missions,
+      pending: route.pending.map(withDistrict),
+      total: missions.length,
+      done,
+      allDone: missions.length > 0 && done === missions.length
+    },
+    checkin: { done: Boolean(checkins[route.date]) }
   };
 }

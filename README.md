@@ -57,7 +57,7 @@ Sin save, la ciudad se muestra atenuada y la pantalla de importación de la
 Fase 1 queda al frente. No hay datos de ejemplo: el progreso siempre es el real.
 
 La app funciona sin conexión después de la primera carga (service worker
-`odea2-v0.14.0-fase4`). El catálogo de juego se sirve con estrategia
+`odea2-v0.15.0-fase4`). El catálogo de juego se sirve con estrategia
 *network-first* y cae a la caché si no hay red.
 
 ## Correr los tests
@@ -66,7 +66,7 @@ La app funciona sin conexión después de la primera carga (service worker
 npm test
 ```
 
-**170 tests** (Node ≥ 20):
+**185 tests** (Node ≥ 20):
 
 - **33 de Fase 0**: no-pérdida, paridad de los 10 componentes de XP, monedas,
   `eventRL`/`farm`/`canje`, cuarentena, aborto, reimportación, huella, ida y
@@ -91,6 +91,12 @@ npm test
   (Academia 28/29, las dos tiendas de Tesoro, Garaje, jefes y cartas sin id).
 - **3 de T24 (historial grande)**: 14.700 ocurrencias sintéticas sin recorte, sin
   fallo de parseo y con derivación por debajo del umbral.
+- **8 de Hoy**: usa la MISMA proyección del HUD y la MISMA ruta del Hub; cada
+  misión declara su distrito, completar actualiza la ruta, no paga dos veces, no
+  hay premio por reclamar y construir el centro no escribe el bundle.
+- **7 de Mochila**: catálogo de equipo de la fuente, equipo con nombres y estado,
+  objeto sin catálogo no inventado, cosméticos como tienda aparte, recursos sin
+  mezclar, apertura sin escritura y solo consulta declarado.
 - **25 de Fase 3**: `play` perezoso, forma migrada intacta, idempotencia por
   ocurrencia (`one`/`daily`/`weekly`), fail-closed de schema y de derivación,
   backup exacto byte a byte, cuota, concurrencia (CAS), ruta del día
@@ -245,7 +251,7 @@ Todo ocurre en el dispositivo. Nada se envía a ningún servidor.
 ```
 index.html              cascarón: canvas, HUD, barra de destinos, chips, hoja, overlay y toasts
 manifest.webmanifest    PWA (ODEA 2 — Costa Neón)
-sw.js                   service worker versionado (odea2-v0.14.0-fase4)
+sw.js                   service worker versionado (odea2-v0.15.0-fase4)
 css/app.css             tema neón + capa de ciudad (HUD, hoja, overlay, toasts)
 js/app.js               orquestador: ciudad, HUD, importación, watchers
 js/city/                layout, world, cámara, renderer, entrada y motor rAF
@@ -324,3 +330,4 @@ Registrada en `RISK_LIST.md` §3.2 y especificada en `docs/FASE3_SPEC.md`.
 El bundle real del usuario **nunca** se publica ni se sube a ningún servidor.
 `.gitignore` bloquea `odea-progreso-*.json` y `*progreso-real*`, con excepción
 del fixture sintético (`fixtures/odea-progreso-sintetico.json`).
+

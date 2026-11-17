@@ -199,6 +199,145 @@ export function renderMochila(root, bundle, inventory, flash) {
   );
 }
 
+/* --------------------------------- hoy ------------------------------------ */
+
+function missionStateFlag(mission) {
+  return mission.completed
+    ? h("span", { class: "item-flag is-on" }, "Hecha")
+    : h("span", { class: "item-flag" }, "Pendiente");
+}
+
+function todayMissionRow(mission, actions) {
+  return h(
+    "div",
+    { class: "today-mission" },
+    h(
+      "div",
+      { class: "item-main" },
+      h("span", { class: "item-name" }, mission.id),
+      h(
+        "span",
+        { class: "sheet-hint" },
+        `${fmt(mission.xp)} XP · ${mission.districtName}`
+      )
+    ),
+    h(
+      "div",
+      { class: "today-actions" },
+      missionStateFlag(mission),
+      mission.completed
+        ? null
+        : h(
+            "button",
+            {
+              class: "btn primary today-btn",
+              type: "button",
+              onclick: () => actions.completeMission && actions.completeMission(mission.id, "hub")
+            },
+            "Completar"
+          ),
+      h(
+        "button",
+        {
+          class: "btn ghost today-btn",
+          type: "button",
+          "aria-label": `Ver ${mission.id} en ${mission.districtName}`,
+          onclick: () => actions.goToDistrict && actions.goToDistrict(mission.districtId)
+        },
+        "Ver en el mapa"
+      )
+    )
+  );
+}
+
+/**
+ * Pantalla «Hoy»: el centro de control.
+ *
+ * Consume la MISMA proyección del HUD y la MISMA ruta diaria del Hub; no hay
+ * segundo catálogo ni cálculo paralelo. La recompensa se reconoce al completar:
+ * acá no se ofrece ningún botón de «reclamar».
+ */
+export function renderToday(root, today, actions) {
+  const { hud, route, checkin } = today;
+  const xpText = hud.xp.atMax
+    ? `${fmt(hud.totalXP)} XP · nivel máximo`
+    : `${fmt(hud.xp.current)} / ${fmt(hud.xp.next)} XP`;
+
+  const progress = route.total
+    ? h(
+        "div",
+        { class: "today-progress" },
+        h("span", { class: "today-progress-text" }, `${route.done} de ${route.total} completadas`),
+        h(
+          "div",
+          {
+            class: "hud-bar",
+            role: "progressbar",
+            "aria-label": "Progreso de la ruta del día",
+            "aria-valuemin": "0",
+            "aria-valuemax": String(route.total),
+            "aria-valuenow": String(route.done)
+          },
+          h("span", { style: `width:${Math.round((route.done / route.total) * 100)}%` })
+        )
+      )
+    : null;
+
+  const rows = route.missions.length
+    ? route.missions.map((mission) => todayMissionRow(mission, actions))
+    : [h("p", { class: "sheet-hint" }, "No hay misiones en la ruta de hoy.")];
+
+  root.replaceChildren(
+    card(
+      h("h2", {}, `Hoy · día ${route.catalogDay}`),
+      h("p", { class: "muted small" }, `Ruta del día · ${route.date}`),
+      h(
+        "div",
+        { class: "stats" },
+        stat("Nivel", fmt(hud.level), "pink"),
+        stat("XP global", xpText, "cyan"),
+        stat("Saldo", fmt(hud.coins.balance), "orange"),
+        stat("Racha", `${fmt(hud.streak)} días`, "")
+      ),
+      progress,
+      h("div", { class: "item-list today-list" }, ...rows)
+    ),
+    card(
+      h("h2", {}, "Cierre del día"),
+      h(
+        "div",
+        { class: "item-row" },
+        h(
+          "div",
+          { class: "item-main" },
+          h("span", { class: "item-name" }, "Registrar el día"),
+          h("span", { class: "sheet-hint" }, "Cuenta para la racha derivada de fechas")
+        ),
+        checkin.done
+          ? h("span", { class: "item-flag is-on" }, "Día registrado")
+          : h(
+              "button",
+              {
+                class: "btn primary today-btn",
+                type: "button",
+                onclick: () => actions.checkin && actions.checkin()
+              },
+              "Registrar día"
+            )
+      )
+    ),
+    route.allDone
+      ? notice(
+          `Ruta completada: ${route.done} de ${route.total}. ` +
+            "Las recompensas ya se reconocieron al completar cada misión."
+        )
+      : notice(
+          "Completá una misión cuando hayas hecho la acción real. " +
+            "La recompensa se reconoce después de guardar, no hace falta reclamarla."
+        )
+  );
+}
+
 /** Pantalla «Menú»: respaldo, importación y datos de la aplicación. */
 export function renderMenu(root, { version, actions } = {}) {
   root.replaceChildren(
