@@ -12,7 +12,7 @@
  * anterior sigue controlando la pestaña, su caché queda intacto y no se
  * mezclan assets de dos versiones. `activate` borra los cachés viejos.
  */
-const CACHE_VERSION = "odea2-v0.19.0-fase4";
+const CACHE_VERSION = "odea2-v0.20.0-fase4";
 
 const SHELL = [
   "./",
@@ -41,6 +41,8 @@ const SHELL = [
   "./js/district-figures.js",
   "./js/update-watcher.js",
   "./js/storage-watch.js",
+  "./js/sync.js",
+  "./js/sync-config.js",
   "./js/city/layout.js",
   "./js/city/world.js",
   "./js/city/camera.js",
