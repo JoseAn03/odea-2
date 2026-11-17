@@ -33,6 +33,22 @@ export class SyncError extends Error {
   }
 }
 
+/**
+ * La ventana de Google puede no volver nunca dentro de una app instalada
+ * (el popup se abre en otra pestaña y la respuesta se pierde). Sin un límite
+ * de espera, la conexión quedaría en «Conectando...» para siempre: toda
+ * espera de sesión pasa por aquí y vence con un error accionable.
+ */
+export function withTimeout(promise, ms, code, message) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new SyncError(code, message)), ms))
+  ]);
+}
+
+export const SYNC_TIMEOUT_MESSAGE =
+  "El inicio de sesión de Google no volvió. Si estás en la app instalada, abrí el juego en Chrome (el mismo enlace), conectá desde ahí y queda conectado también aquí.";
+
 /** Hash FNV-1a (32 bits) — solo detección de cambios, no criptografía. */
 export function hashText(text) {
   let hash = 0x811c9dc5;
@@ -226,7 +242,7 @@ const FRESH_META = () => ({
   bootstrapped: false
 });
 
-export function createSyncEngine({ storage, readRawSave, applySave, transport, onState, onPulled, debounceMs = 2500, nowIso } = {}) {
+export function createSyncEngine({ storage, readRawSave, applySave, transport, onState, onPulled, debounceMs = 2500, connectTimeoutMs = 25000, sessionTimeoutMs = 12000, nowIso } = {}) {
   const now = nowIso || (() => new Date().toISOString());
   let meta = FRESH_META();
   try {
@@ -327,7 +343,7 @@ export function createSyncEngine({ storage, readRawSave, applySave, transport, o
     setStatus("syncing", state.message);
     let message = "";
     try {
-      await transport.ensureSession();
+      await withTimeout(transport.ensureSession(), sessionTimeoutMs, "timeout", SYNC_TIMEOUT_MESSAGE);
       const cloud = await transport.findFile(SYNC_FILE_NAME);
       const raw = readRawSave();
       const hasLocal = !!raw;
@@ -368,6 +384,8 @@ export function createSyncEngine({ storage, readRawSave, applySave, transport, o
     } catch (error) {
       if (error && error.code === "needs-interaction") {
         setStatus("needsReconnect", "La sesión de Google venció. Tocá Reconectar para seguir sincronizando.");
+      } else if (error && error.code === "timeout") {
+        setStatus("needsReconnect", SYNC_TIMEOUT_MESSAGE);
       } else {
         setStatus("error", (error && error.message) || "La sincronización falló.");
       }
@@ -400,7 +418,12 @@ export function createSyncEngine({ storage, readRawSave, applySave, transport, o
       }
       setStatus("connecting", "Abriendo el inicio de sesión de Google…");
       try {
-        await transport.requestToken({ interactive: true });
+        await withTimeout(
+          transport.requestToken({ interactive: true }),
+          connectTimeoutMs,
+          "timeout",
+          SYNC_TIMEOUT_MESSAGE
+        );
         meta.enabled = true;
         meta.everConnected = true;
         try {
