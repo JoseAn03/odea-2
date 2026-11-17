@@ -855,14 +855,44 @@ porcentaje sigue siendo 29 (`n = min(28, count)`, y 28 ⇒ 29).
 | Concepto | Valor | Fuente |
 |---|---|---|
 | XP por misión | **0** | El catálogo no tiene campo de XP |
-| Sinergia del Tesoro | **+3 monedas**, máximo **3 al día** | `odea-tesoro.js` · `onAcademiaMision()` |
+| Sinergia por misión | **+3 monedas**, máximo **3 al día** | `odea-tesoro.js` · `onAcademiaMision()` |
 | Clave del contador | `academia:YYYY-MM-DD` | `sinergias` del Tesoro |
+| **Bonus por ruta** | **+15 monedas**, una vez por ruta | `odea-tesoro.js` · `busOn("academia.ruta")` → `grantSinergia("ruta:"+id, 15)` |
 | Registro de ruta | `academia.ruta` por el bus del núcleo | `odea-academia.js` |
 
-Verificado en la fuente: `if (n >= 3) return;` y `state.monedas += 3`.
+Verificado en la fuente: `if (n >= 3) return;` y `state.monedas += 3` para la
+misión; `grantSinergia("ruta:" + r, 15)` para la ruta.
 
-**En ODEA 2.** La completación se registra en la sección aditiva con `xp: 0`.
-La ruta avisada se guarda en `worlds.academia.data.rutasAvisadas`.
+> **Corrección (2026-11-16, al implementar).** La versión anterior de esta ficha
+> omitía el **+15 por ruta**. Está en la fuente y se implementó: sin él, cerrar
+> una ruta pagaría de menos.
+
+**Cierre de ruta.** `routeProgress()` cuenta como hechas las misiones reales
+completadas y suma el paso `meta` **solo cuando las 28 reales están hechas**.
+`checkRoutes()` avisa la ruta cuando todo su contenido cuenta como hecho.
+
+**En ODEA 2.** La completación se registra en la sección aditiva con
+`reward: { xp: 0, coins: 0 }`. La sinergia **no** se escribe en
+`worlds.tesoro`: `worlds` es inmutable (decisión cerrada). Se guarda como
+**delta** en `play.academia`:
+
+```json
+"academia": {
+  "sinergias": { "academia:2026-11-16": 3 },
+  "monedasGanadas": 24,
+  "rutas": ["arranque"]
+}
+```
+
+El saldo del Tesoro se **deriva**, nunca se edita:
+
+```
+monedas del Tesoro = worlds.tesoro.data.monedas (migrado) + play.academia.monedasGanadas
+```
+
+Igual que con el XP: se acumulan registros, no totales. `validatePlayState`
+valida la forma de `play.academia` y rechaza enteros negativos, valores no
+enteros o `rutas` que no sea lista.
 
 ### 9.2 Garaje — El Garaje
 

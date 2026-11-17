@@ -29,6 +29,125 @@ export const DAILY_TOTAL_DAYS = 56;
  */
 export const COINS_PER_COMPLETION = 1;
 
+/**
+ * Monedas de sinergia de Academia (verificadas en `assets/odea-tesoro.js`):
+ * `onAcademiaMision` paga +3 por misión con tope de 3 al día, y
+ * `grantSinergia("ruta:" + id, 15)` paga +15 al cerrar una ruta.
+ *
+ * Las monedas van al libro del TESORO (`worlds.tesoro.data.monedas`), no al
+ * saldo del núcleo: son cuentas distintas y no se convierten entre sí.
+ */
+export const ACADEMIA_SYNERGY_COINS = 3;
+export const ACADEMIA_SYNERGY_DAILY_CAP = 3;
+export const ACADEMIA_ROUTE_COINS = 15;
+
+/**
+ * Estado aditivo de Academia.
+ *
+ * `worlds` es **inmutable** (decisión cerrada: la forma migrada no se toca), así
+ * que la sinergia no puede escribirse en `worlds.tesoro`. Se guarda como un
+ * DELTA en `play.academia` y el saldo efectivo se deriva:
+ *
+ *     monedas del Tesoro = worlds.tesoro.data.monedas (migrado) + play.academia.monedasGanadas
+ *
+ * Igual que con el XP: nunca se edita un total, se acumulan registros.
+ */
+export function academiaStateOf(bundle2) {
+  const play = (bundle2 && bundle2.play) || {};
+  const state = play.academia && typeof play.academia === "object" ? play.academia : {};
+  const migrated = (bundle2 && bundle2.worlds && bundle2.worlds.academia && bundle2.worlds.academia.data) || {};
+  const tesoro = (bundle2 && bundle2.worlds && bundle2.worlds.tesoro && bundle2.worlds.tesoro.data) || {};
+
+  const rutas = new Set(
+    Array.isArray(migrated.rutasAvisadas) ? migrated.rutasAvisadas.map(String) : []
+  );
+  for (const id of Array.isArray(state.rutas) ? state.rutas : []) rutas.add(String(id));
+
+  return {
+    sinergias: state.sinergias && typeof state.sinergias === "object" ? state.sinergias : {},
+    monedasGanadas: Number(state.monedasGanadas) || 0,
+    rutas: Array.from(rutas),
+    tesoroMigrado: Number(tesoro.monedas) || 0,
+    /** Saldo del Tesoro = migrado + lo ganado con sinergias. */
+    get monedas() {
+      return this.tesoroMigrado + this.monedasGanadas;
+    }
+  };
+}
+
+/** Ids de Academia ya completados: migrados (`hechas`) + nuevos (`play`). */
+function academiaDoneIds(bundle2, catalog) {
+  const done = new Set();
+  const data = (bundle2 && bundle2.worlds && bundle2.worlds.academia && bundle2.worlds.academia.data) || {};
+  for (const id of Object.keys(data.hechas || {})) done.add(id);
+  const completions = (bundle2 && bundle2.play && bundle2.play.completions) || {};
+  for (const record of Object.values(completions)) {
+    if (record && record.system === "academia" && typeof record.missionId === "string") {
+      done.add(record.missionId);
+    }
+  }
+  return done;
+}
+
+/** Agrupa el catálogo de Academia por ruta, conservando el paso narrativo. */
+export function academiaRoutes(catalog) {
+  const out = {};
+  for (const [id, entry] of Object.entries((catalog && catalog.academia) || {})) {
+    if (!entry || typeof entry !== "object") continue;
+    const route = entry.ruta || "desconocida";
+    (out[route] = out[route] || []).push({
+      id,
+      meta: Boolean(entry.meta),
+      label: entry.rutaNombre || route
+    });
+  }
+  return out;
+}
+
+/**
+ * Efectos de una completación de Academia sobre la sección ADITIVA:
+ * sinergia diaria (+3, tope 3) y cierre de ruta (+15, una vez por ruta).
+ */
+function applyAcademiaEffects(draft, catalog, dateKey) {
+  const play = draft.play;
+  if (!play.academia || typeof play.academia !== "object") {
+    play.academia = { sinergias: {}, monedasGanadas: 0, rutas: [] };
+  }
+  const state = play.academia;
+  if (!state.sinergias || typeof state.sinergias !== "object") state.sinergias = {};
+  if (!Array.isArray(state.rutas)) state.rutas = [];
+  state.monedasGanadas = Number(state.monedasGanadas) || 0;
+
+  const paths = [];
+
+  /* 1. Sinergia por misión, con su tope diario exacto. */
+  const key = `academia:${dateKey}`;
+  const used = Number(state.sinergias[key]) || 0;
+  if (used < ACADEMIA_SYNERGY_DAILY_CAP) {
+    state.sinergias[key] = used + 1;
+    state.monedasGanadas += ACADEMIA_SYNERGY_COINS;
+    paths.push(`play.academia.sinergias.${key}`, "play.academia.monedasGanadas");
+  }
+
+  /* 2. Cierre de ruta. El paso `meta` solo cuenta cuando las 28 reales están
+        hechas, igual que `routeProgress()` de la fuente. */
+  const done = academiaDoneIds(draft, catalog);
+  const routes = academiaRoutes(catalog);
+  const realTotal = Object.values(routes).flat().filter((m) => !m.meta).length;
+  const allRealDone = done.size >= realTotal;
+
+  for (const [routeId, entries] of Object.entries(routes)) {
+    if (state.rutas.includes(routeId)) continue;
+    const completed = entries.filter((m) => (m.meta ? allRealDone : done.has(m.id))).length;
+    if (completed < entries.length) continue;
+    state.rutas.push(routeId);
+    state.monedasGanadas += ACADEMIA_ROUTE_COINS;
+    paths.push("play.academia.rutas", "play.academia.monedasGanadas");
+  }
+
+  return paths;
+}
+
 export function emptyPlay() {
   return { version: PLAY_VERSION, completions: {}, checkins: {} };
 }
@@ -40,12 +159,15 @@ export function emptyPlay() {
  * congela en el registro para que un cambio futuro del catálogo no reescriba
  * el historial.
  */
-export function rewardOf(mission) {
+export function rewardOf(mission, system = null) {
   const xp = Number(mission && mission.xp) || 0;
   const cat = mission && mission.entry && mission.entry.cat ? String(mission.entry.cat) : null;
+  /* Academia no paga monedas por completación: su recompensa es la sinergia del
+     Tesoro, que tiene tope diario y se aplica aparte. */
+  const coins = system === "academia" ? 0 : COINS_PER_COMPLETION;
   return {
     xp,
-    coins: COINS_PER_COMPLETION,
+    coins,
     /* Vida necesita la categoría para su cálculo por pilares; se guarda con la
        recompensa para no depender del catálogo vigente. */
     ...(cat ? { cat } : {})
@@ -137,6 +259,12 @@ export function migratedKeys(bundle2, catalog, system, dateKey = localDateKey())
     const data = (bundle2 && bundle2.worlds && bundle2.worlds.sagas && bundle2.worlds.sagas.data) || {};
     for (const id of Object.keys(data.chapters || {})) add(id, "one", dateKey);
     for (const id of Object.keys(core.gods || {})) add(id, "one", dateKey);
+  }
+
+  if (system === "academia") {
+    /* Lo que ODEA 1 ya tenía hecho en `hechas` no se vuelve a ofrecer. */
+    const data = (bundle2 && bundle2.worlds && bundle2.worlds.academia && bundle2.worlds.academia.data) || {};
+    for (const id of Object.keys(data.hechas || {})) add(id, "one", dateKey);
   }
 
   return keys;
@@ -245,9 +373,14 @@ export function applyMutation(draft, mutation, catalog, { at, date } = {}) {
     at: atIso,
     ...(mission.cls === "one" ? {} : { period: mission.cls === "weekly" ? isoWeekKey(dateKey) : dateKey }),
     /* R1: recompensa congelada + versión de reglas con la que se calculó. */
-    reward: rewardOf(mission),
+    reward: rewardOf(mission, system),
     rulesVersion: RULES_VERSION
   };
+
+  /* Academia tiene efectos propios sobre el Tesoro y sus rutas. */
+  if (system === "academia") {
+    applyAcademiaEffects(draft, catalog, dateKey);
+  }
 
   return { changed: true, duplicate: false, reason: null, paths: [`play.completions.${key}`] };
 }

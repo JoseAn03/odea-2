@@ -353,8 +353,8 @@ for (const district of DISTRICTS) {
 
 /* ------------------- contrato de distritos jugables / solo lectura -------- */
 
-const JUGABLES = ["hub", "empleo", "vida", "torre", "mirador"];
-const SOLO_LECTURA = ["ia", "mercado", "garaje", "rincon"];
+const JUGABLES = ["hub", "ia", "empleo", "vida", "torre", "mirador"];
+const SOLO_LECTURA = ["mercado", "garaje", "rincon"];
 
 await run("los distritos jugables ofrecen acciones", () => {
   const sinAcciones = JUGABLES.filter((id) => {
@@ -383,7 +383,8 @@ await run("cada misión ofrecida existe en el catálogo", () => {
   const fantasmas = [];
   for (const id of JUGABLES) {
     const panel = buildDistrictPanel(id, bundle, catalog);
-    const system = id === "torre" ? "capital" : id === "mirador" ? "sagas" : id;
+    const system =
+      id === "torre" ? "capital" : id === "mirador" ? "sagas" : id === "ia" ? "academia" : id;
     for (const group of (panel && panel.play && panel.play.groups) || []) {
       for (const mission of group.missions || []) {
         if (!missionOf(catalog, system, mission.id)) fantasmas.push(`${id}:${mission.id}`);

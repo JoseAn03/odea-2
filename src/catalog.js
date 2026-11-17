@@ -11,7 +11,7 @@
  */
 
 /** Sistemas jugables en Fase 3 (el resto sigue de solo lectura). */
-export const PHASE3_SYSTEMS = ["hub", "empleo", "vida", "capital", "sagas"];
+export const PHASE3_SYSTEMS = ["hub", "empleo", "vida", "capital", "sagas", "academia"];
 
 /** Mapas del catálogo por sistema. Sagas se resuelve aparte (ver `sagasEntries`). */
 export const SYSTEM_MAPS = {
@@ -19,7 +19,8 @@ export const SYSTEM_MAPS = {
   empleo: ["jobs", "b2b", "puente"],
   vida: ["vida"],
   capital: ["capital.done", "capital.eng", "capital.ai"],
-  sagas: []
+  sagas: [],
+  academia: ["academia"]
 };
 
 /** Todos los mapas con ids de misión (incluye sistemas aún no jugables). */
@@ -31,6 +32,7 @@ export const MISSION_MAPS = [
   "b2b",
   "puente",
   "vida",
+  "academia",
   "capital.done",
   "capital.eng",
   "capital.ai"
@@ -89,6 +91,8 @@ export function missionOf(catalog, system, missionId) {
     const entryMap = mapOf(catalog, map);
     if (!entryMap || !Object.prototype.hasOwnProperty.call(entryMap, missionId)) continue;
     const entry = entryMap[missionId];
+    /* Un paso narrativo nunca es una misión completable. */
+    if (entry && typeof entry === "object" && entry.meta) return null;
     const xp = typeof entry === "object" && entry !== null ? Number(entry.xp) || 0 : Number(entry) || 0;
     return { map, xp, cls: missionClassOf(entry), entry };
   }
@@ -152,6 +156,9 @@ export function missionsOf(catalog, system) {
     if (!entryMap) continue;
     for (const id of Object.keys(entryMap)) {
       const entry = entryMap[id];
+      /* Los pasos narrativos (`meta: true`) no son misiones completables: en
+         Academia el paso final se marca solo cuando las 28 reales están hechas. */
+      if (entry && typeof entry === "object" && entry.meta) continue;
       const numeric = typeof entry === "object" && entry !== null ? Number(entry.xp) : Number(entry);
       out.push({
         id,
