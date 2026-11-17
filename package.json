@@ -1,6 +1,6 @@
 {
   "name": "odea-2",
-  "version": "0.21.0-fase5",
+  "version": "0.22.0-fase6",
   "private": true,
   "type": "module",
   "description": "ODEA 2 (Costa Neón): mapa cenital tropical con terreno reservado para futuras expansiones, sobre el progreso migrado desde ODEA 1.",

@@ -17,10 +17,10 @@ export const TAB_MENU = "menu";
 
 /** Orden fijo de la barra. `hint` alimenta el aria-label de cada botón. */
 export const TABS = [
-  { id: TAB_CITY, label: "Ciudad", icon: "◉", hint: "Mapa de Costa Neón y distritos" },
-  { id: TAB_TODAY, label: "Hoy", icon: "◆", hint: "Ruta del día en el Hub" },
-  { id: TAB_MOCHILA, label: "Mochila", icon: "🎒", hint: "Nivel, XP, inventario y recursos" },
-  { id: TAB_MENU, label: "Menú", icon: "⋯", hint: "Respaldo, importar y versión" }
+  { id: TAB_CITY, label: "Ciudad", icon: "⌖", hint: "Mapa de Costa Neón y distritos" },
+  { id: TAB_TODAY, label: "Hoy", icon: "★", hint: "Ruta del día, misiones y racha" },
+  { id: TAB_MOCHILA, label: "Mochila", icon: "✧", hint: "Nivel, XP, inventario y saldo virtual" },
+  { id: TAB_MENU, label: "Menú", icon: "☰", hint: "Respaldo, importar y versión" }
 ];
 
 export const DEFAULT_TAB = TAB_CITY;
