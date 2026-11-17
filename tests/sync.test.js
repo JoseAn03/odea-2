@@ -47,8 +47,7 @@ function fakeTransport() {
   };
 }
 
-function makeEngine({ localRaw = null, transport = fakeTransport(), engineOpts = {} } = {}) {
-  const storage = createMemoryStorage();
+function makeEngine({ localRaw = null, transport = fakeTransport(), engineOpts = {}, storage = createMemoryStorage() } = {}) {
   const holder = { raw: localRaw };
   const engine = createSyncEngine({
     storage,
@@ -204,6 +203,31 @@ test("sync: una sesión silenciosa colgada vence en needsReconnect, no en syncin
   await engine.syncNow();
   assert.equal(engine.getState().status, "needsReconnect");
   assert.match(engine.getState().message, /Chrome/);
+});
+
+test("sync: al abrir, un fallo silencioso pasajero se reintenta solo y entra sin pedir nada", async () => {
+  const shared = createMemoryStorage();
+  const a = makeEngine({ localRaw: "SAVE-1", storage: shared });
+  await a.engine.connect();
+  assert.equal(a.engine.getState().status, "ready");
+  /* Segundo aparato (o reapertura): la primera renovación silenciosa
+     falla como si la sesión de Google aún no cargara; la segunda entra. */
+  const transport = fakeTransport();
+  let intentos = 0;
+  const ensureOk = transport.ensureSession;
+  transport.ensureSession = async () => {
+    intentos++;
+    if (intentos === 1) {
+      const error = new Error("sin sesión");
+      error.code = "needs-interaction";
+      throw error;
+    }
+    return ensureOk();
+  };
+  const b = makeEngine({ localRaw: "SAVE-1", transport, storage: shared, engineOpts: { retryDelayMs: 5 } });
+  await b.engine.init();
+  assert.equal(intentos, 2);
+  assert.equal(b.engine.getState().status, "ready");
 });
 
 test("sync: desconectar limpia la metadata y no toca la partida", async () => {
