@@ -18,6 +18,11 @@ export const GRID = {
    Distrito IA. Es el primer espacio que se ocupa en la ciudad. */
 export const CLIPS_CELL = { col: 3, row: 0 };
 
+/* La Zona de EVENTOS: la manzana (0,3), esquina suroeste, la única sin
+   distrito. Ahí vive el estadio y el evento vigente (hoy el SJO Decision
+   Lab de ODEA 1); el evento rota, la zona se queda. */
+export const EVENTOS_CELL = { col: 0, row: 3 };
+
 export const WORLD_SIZE =
   GRID.margin * 2 + GRID.cols * GRID.block + (GRID.cols - 1) * GRID.road;
 
@@ -26,6 +31,11 @@ export const CELL_STEP = GRID.block + GRID.road;
 /** Rectángulo de la Zona CLIPS. */
 export function clipsRect() {
   return cellRect(CLIPS_CELL.col, CLIPS_CELL.row);
+}
+
+/** Rectángulo de la Zona de Eventos. */
+export function eventosRect() {
+  return cellRect(EVENTOS_CELL.col, EVENTOS_CELL.row);
 }
 
 /** Rectángulo de una manzana (col, row) con row 0 = norte. */
