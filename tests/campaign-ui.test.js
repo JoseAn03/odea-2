@@ -2,6 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { renderCampaign } from "../js/campaign-ui.js";
+import { renderHud } from "../js/hud-ui.js";
+import { renderCharacter } from "../js/ui.js";
 import { campaignView } from "../src/campaign-state.js";
 import { newPlayerBundle } from "../src/new-player.js";
 import { createMemoryStorage, importBundle, applyGameplayMutation, STORAGE_KEYS } from "../src/storage.js";
@@ -70,6 +72,7 @@ class Element {
 globalThis.document = {
   baseURI: "https://example.test/odea-2/",
   createElement: (tag) => new Element(tag),
+  createTextNode: (value) => Object.assign(new Element("#text"), { _text: String(value) }),
   activeElement: null,
   getElementById: (id) => {
     for (const root of roots) {
@@ -82,6 +85,31 @@ globalThis.document = {
 const catalog = JSON.parse(fs.readFileSync(new URL("../data/xp-catalog.json", import.meta.url)));
 const date = "2026-11-17";
 const options = { date, at: "2026-11-17T12:00:00Z" };
+globalThis.Node = Element;
+
+test("HUD: usa estrella dorada, saldo ₡ con economía canónica y racha", () => {
+  const root = new Element("header");
+  renderHud(root, {
+    playerName: "Mira", level: 2, odeLevel: 3, totalXP: 125,
+    xp: { atMax: false, ratio: 0.5, current: 25, next: 50 },
+    coins: { balance: 12, earned: 20, spent: 8 }, streak: 5
+  }, {});
+  assert.equal(root.querySelector(".hud-avatar").textContent, "★");
+  assert.ok(root.textContent.includes("₡12"));
+  assert.ok(root.textContent.includes("★5"));
+  const coinsChip = root.querySelector(".hud-chip");
+  assert.ok(coinsChip.className.includes("coins"));
+  assert.ok(coinsChip.getAttribute("title").includes("Saldo virtual ODEA"));
+});
+
+test("Personaje: renderCharacter existe y pinta la tarjeta con el saldo ₡", () => {
+  const bundle = newPlayerBundle(catalog, { name: "Mira", date });
+  const root = new Element("div");
+  renderCharacter(root, bundle);
+  assert.ok(root.textContent.includes("Saldo ODEA"));
+  assert.ok(root.textContent.includes("₡"));
+});
+
 function setup() {
   const storage = createMemoryStorage();
   importBundle(newPlayerBundle(catalog, { date }), { storage, catalog, referenceDate: date });
@@ -105,7 +133,7 @@ test("UI: ambas campañas muestran escena, ocho capítulos, seis misiones y nota
       assert.equal(root.querySelectorAll(".campaign-chapter").length, 8);
       assert.equal(root.querySelectorAll(".campaign-mission").length, 6);
       assert.equal(root.querySelectorAll(".campaign-evidence-form").length, 1);
-      assert.ok(root.textContent.includes("monedas son recompensas ficticias"));
+      assert.ok(root.textContent.includes("₡ ODEA son recompensas virtuales"));
       assert.equal(root.querySelectorAll(".campaign-application-form").length, id === "brete" ? 1 : 0);
     }
   }
@@ -154,7 +182,7 @@ test("UI: disparo sólo tras guardado confirmado; bloquea doble submit y envía 
   assert.deepEqual(Object.keys(payload).sort(), ["company", "note", "role"]);
   assert.equal(root.querySelectorAll(".campaign-target--hit").length, 1);
   update();
-  assert.ok(root.textContent.includes("25 XP · 2 monedas ficticias"));
+  assert.ok(root.textContent.includes("25 XP · +2 ₡ ODEA virtuales"));
   assert.equal(campaignView(saved(s), "brete").applications.count, 1);
 });
 
