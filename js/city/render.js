@@ -9,6 +9,7 @@ import { PALETTE, DISTRICTS, alpha, mix } from "../districts.js";
 import { fmt } from "../format.js";
 import { createPixelArt } from "./pixel.js";
 import { clipsRect, cellRect } from "./layout.js";
+import { shopItem } from "../../src/shop.js";
 
 const FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
@@ -56,13 +57,16 @@ export function createRenderer(canvas) {
   let creditXP = null;
   let playerVisible = false;
   let playerState = null;
+  /* Caché del look de la Tienda (atuendo/vehículo): se reconstruye solo
+     cuando cambia el id equipado. */
+  const lookCache = { outfitId: null, outfitFrames: null, vehicleId: null, vehicleSprites: null };
   let selectedRect = null;
   let selectedAccent = PALETTE.pink;
   let reduced = false;
   let glow = null;
   const venuePictures = {};
   if (typeof Image !== "undefined") {
-    for (const id of ["brete", "gamer"]) {
+    for (const id of ["brete", "gamer", "tienda"]) {
       const image = new Image();
       image.src = new URL(`../../assets/slots/${id}.webp`, import.meta.url).href;
       venuePictures[id] = image;
@@ -1020,24 +1024,62 @@ export function createRenderer(canvas) {
     }
 
     /* El jugador: el avatar único con gorra, del tamaño de los vecinos,
-       con su flecha «estás aquí» y la pastilla VOS sobre la cabeza. */
+       con su flecha «estás aquí» y la pastilla VOS sobre la cabeza.
+       Con atuendo de la Tienda usa su paleta; con vehículo equipado se le
+       ve montado (la moto trae piloto; en el carro manda la pastilla VOS). */
     if (playerVisible && playerState) {
       const st = playerState;
-      if (visible(view, st.x - 60, st.y - 100, 120, 160)) {
-        ctx.fillStyle = "rgba(6,10,18,0.30)";
-        ctx.beginPath();
-        ctx.ellipse(st.x, st.y + 24, 17, 6, 0, 0, Math.PI * 2);
-        ctx.fill();
-        const pstep = st.moving && !reduced ? Math.floor(time * 7) % 2 : 0;
-        const set = st.dir === "back" ? px.player.back : st.dir === "side" ? px.player.side : px.player.front;
-        px.draw(ctx, set[pstep], st.x, st.y + 26, 42, 52, st.flip);
+      if (visible(view, st.x - 80, st.y - 110, 160, 220)) {
         const bob = reduced ? 0 : Math.sin(time * 3) * 3;
-        if (px.vos) px.draw(ctx, px.vos, st.x, st.y - 36 + bob, 56, 25);
+        const look = st.look || {};
+        const vehicleItem = look.vehicleId ? shopItem(look.vehicleId) : null;
+        let pillBottom = null;
+        if (vehicleItem && px.shopVehicle) {
+          if (lookCache.vehicleId !== vehicleItem.id) {
+            lookCache.vehicleId = vehicleItem.id;
+            lookCache.vehicleSprites = px.shopVehicle(vehicleItem.spec);
+          }
+          const sprites = lookCache.vehicleSprites;
+          const isMoto = vehicleItem.spec.type === "moto";
+          const side = st.dir === "side";
+          const canvas = sprites ? (side ? sprites.side : sprites.vert) : null;
+          if (canvas) {
+            const w = side ? (isMoto ? 88 : 120) : (isMoto ? 42 : 62);
+            const h = side ? (isMoto ? 42 : 60) : (isMoto ? 88 : 124);
+            const yBase = st.y + h / 2;
+            ctx.fillStyle = "rgba(6,10,18,0.30)";
+            ctx.beginPath();
+            ctx.ellipse(st.x, st.y + h / 2 - 4, w / 3, 7, 0, 0, Math.PI * 2);
+            ctx.fill();
+            px.draw(ctx, canvas, st.x, yBase, w, h, side ? st.flip : false);
+            pillBottom = st.y - h / 2 - 4 + bob;
+          }
+        }
+        if (pillBottom === null) {
+          ctx.fillStyle = "rgba(6,10,18,0.30)";
+          ctx.beginPath();
+          ctx.ellipse(st.x, st.y + 24, 17, 6, 0, 0, Math.PI * 2);
+          ctx.fill();
+          const pstep = st.moving && !reduced ? Math.floor(time * 7) % 2 : 0;
+          let set = px.player;
+          const outfitItem = look.outfitId && look.outfitId !== "clasico" ? shopItem(look.outfitId) : null;
+          if (outfitItem && px.characterFrames) {
+            if (lookCache.outfitId !== outfitItem.id) {
+              lookCache.outfitId = outfitItem.id;
+              lookCache.outfitFrames = px.characterFrames(outfitItem.pal, outfitItem.gorra);
+            }
+            if (lookCache.outfitFrames) set = lookCache.outfitFrames;
+          }
+          const frames = st.dir === "back" ? set.back : st.dir === "side" ? set.side : set.front;
+          px.draw(ctx, frames[pstep], st.x, st.y + 26, 42, 52, st.flip);
+          pillBottom = st.y - 36 + bob;
+        }
+        if (px.vos) px.draw(ctx, px.vos, st.x, pillBottom, 56, 25);
         ctx.fillStyle = PALETTE.cyan;
         ctx.beginPath();
-        ctx.moveTo(st.x - 6, st.y - 34 + bob);
-        ctx.lineTo(st.x + 6, st.y - 34 + bob);
-        ctx.lineTo(st.x, st.y - 25 + bob);
+        ctx.moveTo(st.x - 6, pillBottom + 2);
+        ctx.lineTo(st.x + 6, pillBottom + 2);
+        ctx.lineTo(st.x, pillBottom + 11);
         ctx.closePath();
         ctx.fill();
       }
@@ -1155,7 +1197,7 @@ export function createRenderer(canvas) {
 
   function staticKey(world) {
     const levels = DISTRICTS.map((d) => districtLevelOf(d.id)).join("");
-    const imgs = ["brete", "gamer"]
+    const imgs = ["brete", "gamer", "tienda"]
       .map((id) => (venuePictures[id] && venuePictures[id].complete && venuePictures[id].naturalWidth > 0 ? "1" : "0"))
       .join("");
     return `${levels}|${windowBoost()}|${reduced ? "r" : "n"}|${imgs}`;
@@ -1246,6 +1288,13 @@ export function createRenderer(canvas) {
       if (visible(view, breteCell.x, breteCell.y, breteCell.w, breteCell.h)) {
         drawVenueSkin("brete", breteCell);
         drawVenueSign("EL BRETE", breteCell, PALETTE.cyan);
+      }
+      /* La Tienda ocupa la manzana del Mercado (3,1): su escena estilo
+         Palí cubre el cuadrado entero, con el letrero verde a la entrada. */
+      const tiendaCell = cellRect(3, 1);
+      if (visible(view, tiendaCell.x, tiendaCell.y, tiendaCell.w, tiendaCell.h)) {
+        drawVenueSkin("tienda", tiendaCell);
+        drawVenueSign("TIENDA", tiendaCell, "#3ED97A");
       }
 
       ctx.restore();

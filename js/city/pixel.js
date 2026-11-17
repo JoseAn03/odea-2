@@ -384,6 +384,50 @@ function motoCanvas() {
   return c;
 }
 
+/* --------------------- Tienda: atuendos y vehículos ----------------------
+ * Constructores sueltos (sin crear todo el set de arte) para que la Tienda
+ * pinte las vistas previas y el render arme los sprites del jugador.
+ * El carro de la Tienda sigue el dibujo aprobado por José en la vista
+ * previa del catálogo (variantes por tamaño, techo, franja y alerón). */
+function carroTiendaCanvas(spec) {
+  const w = spec.w || 48, h = spec.h || 24;
+  const c = mkCanvas(w, h);
+  const g = c.getContext("2d");
+  const wr = spec.wheel || 5;
+  g.fillStyle = "#101016";
+  g.fillRect(7, 2, wr, wr); g.fillRect(7, h - 2 - wr, wr, wr);
+  g.fillRect(w - 7 - wr, 2, wr, wr); g.fillRect(w - 7 - wr, h - 2 - wr, wr, wr);
+  g.fillStyle = spec.color; g.fillRect(2, 3, w - 4, h - 6);
+  g.fillStyle = spec.luz; g.fillRect(2, 3, w - 4, 3);
+  g.fillStyle = spec.sombra; g.fillRect(2, h - 5, w - 4, 2);
+  if (spec.stripe) { g.fillStyle = spec.stripe; g.fillRect(2, Math.floor(h / 2) - 1, w - 4, 2); }
+  const rw = spec.roofW || 17, rh = spec.roofH || (h - 12);
+  g.fillStyle = spec.techo; g.fillRect(15, (h - rh) / 2, rw, rh);
+  g.fillStyle = "#1E283C";
+  g.fillRect(12, (h - rh) / 2, 3, rh); g.fillRect(15 + rw, (h - rh) / 2, 3, rh);
+  g.fillStyle = "rgba(255,255,255,0.25)"; g.fillRect(12, (h - rh) / 2, 3, 3);
+  if (spec.rails) {
+    g.fillStyle = "#0C0C12";
+    g.fillRect(17, (h - rh) / 2 + 1, rw - 4, 1); g.fillRect(17, (h - rh) / 2 + rh - 2, rw - 4, 1);
+  }
+  if (spec.spoiler) { g.fillStyle = spec.spoiler; g.fillRect(0, 2, 3, h - 4); }
+  g.fillStyle = "#FFF0B4"; g.fillRect(w - 3, 5, 2, 2); g.fillRect(w - 3, h - 7, 2, 2);
+  g.fillStyle = "#FF3C3C"; g.fillRect(1, 5, 2, 2); g.fillRect(1, h - 7, 2, 2);
+  return c;
+}
+
+/** Sprite frontal de un atuendo (para la Tienda y el Personaje). */
+export function outfitSprite(pal, gorra) {
+  if (typeof document === "undefined") return null;
+  return spriteCanvas(FRENTE_A, pal, gorra);
+}
+
+/** Sprite lateral (horizontal) de un vehículo de la Tienda. */
+export function vehicleSprite(spec) {
+  if (typeof document === "undefined" || !spec) return null;
+  return spec.type === "moto" ? motoPilotoCanvas() : carroTiendaCanvas(spec);
+}
+
 /* --------------------------------- API ---------------------------------- */
 export function createPixelArt() {
   if (typeof document === "undefined") return null;
@@ -419,6 +463,13 @@ export function createPixelArt() {
     carroV: rotar90(carroRosa),
     motoPiloto: motoPilotoCanvas(),
     moto: motoCanvas(),
+    /* Tienda: cuadros del jugador con cualquier paleta (atuendos) y los
+       sprites de un vehículo en horizontal y vertical. */
+    characterFrames: (pal, gorra) => frames(pal, gorra),
+    shopVehicle: (spec) => {
+      const side = vehicleSprite(spec);
+      return side ? { side, vert: rotar90(side) } : null;
+    },
     /** Rellena un rectángulo con un tile repetido, alineado al origen. */
     fill(ctx, name, x, y, w, h) {
       let per = patterns.get(ctx);
