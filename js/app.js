@@ -27,7 +27,7 @@ import { buildDistrictPanel } from "./district-figures.js";
 import { renderHud, renderSheet, renderTabs } from "./hud-ui.js";
 import { routeForDay } from "../src/gameplay.js";
 import {
-  TAB_CHARACTER,
+  TAB_MOCHILA,
   TAB_CITY,
   TAB_MENU,
   TAB_TODAY,
@@ -441,7 +441,7 @@ function selectTab(id) {
   /* Salir de la hoja por la barra también termina el recorrido del distrito. */
   if (viewSession) viewSession.restore();
   setTab(tab);
-  if (tab === TAB_CHARACTER) openCharacter();
+  if (tab === TAB_MOCHILA) openCharacter();
   else openMenu();
 }
 
