@@ -48,7 +48,7 @@ function roundRect(ctx, x, y, w, h, r) {
 }
 
 export function createRenderer(canvas) {
-  const ctx = canvas.getContext("2d", { alpha: false });
+  let ctx = canvas.getContext("2d", { alpha: false });
   const sprites = new Map();
   let dpr = 1;
   let vw = 1;
@@ -1140,7 +1140,131 @@ export function createRenderer(canvas) {
 
   /* --------------------------------- frame --------------------------------- */
 
+  /* ==================== capa estática en caché (v0.21.0) ====================
+     La ciudad casi no cambia cuadro a cuadro: el océano, las calles, los
+     edificios con sus ventanas, la decoración y las escenas de los locales
+     se dibujan UNA vez en un lienzo fuera de pantalla que cubre el viewport
+     más un margen, y cada cuadro solo lo pega (un drawImage) y dibuja la
+     vida que sí se mueve: carros, gente, el jugador, el glitch y las luces
+     de tráfico. El caché se rehace cuando la cámara sale del margen, cambia
+     el zoom o el ambiente, o cada segundo (así los parpadeos de ventanas y
+     farolas laten despacio en vez de costar 30 veces por segundo). */
+  const STATIC_MARGIN = 0.3;
+  const STATIC_REFRESH_S = 1;
+  let staticCache = null;
+
+  function staticKey(world) {
+    const levels = DISTRICTS.map((d) => districtLevelOf(d.id)).join("");
+    const imgs = ["brete", "gamer"]
+      .map((id) => (venuePictures[id] && venuePictures[id].complete && venuePictures[id].naturalWidth > 0 ? "1" : "0"))
+      .join("");
+    return `${levels}|${windowBoost()}|${reduced ? "r" : "n"}|${imgs}`;
+  }
+
+  function ensureStatic(camera, world, time) {
+    const state = camera.state;
+    const hs = state.horizontalScale || 1;
+    const cw = Math.max(2, Math.round(vw * (1 + STATIC_MARGIN * 2)));
+    const ch = Math.max(2, Math.round(vh * (1 + STATIC_MARGIN * 2)));
+    const key = staticKey(world);
+    const c = staticCache;
+    if (
+      c && c.world === world && c.key === key && c.zoom === state.zoom && c.hs === hs &&
+      c.dpr === dpr && c.cw === cw && c.ch === ch &&
+      Math.abs(state.x - c.ax) <= (vw * STATIC_MARGIN) / (state.zoom * hs) &&
+      Math.abs(state.y - c.ay) <= (vh * STATIC_MARGIN) / state.zoom &&
+      time - c.at < STATIC_REFRESH_S
+    ) {
+      return c;
+    }
+
+    if (!c || !c.canvas) {
+      staticCache = { canvas: document.createElement("canvas") };
+    }
+    const cc = staticCache.canvas;
+    const devW = Math.round(cw * dpr);
+    const devH = Math.round(ch * dpr);
+    if (cc.width !== devW || cc.height !== devH) {
+      cc.width = devW;
+      cc.height = devH;
+    }
+    const cacheCtx = cc.getContext("2d");
+    const mainCtx = ctx;
+    const mainVw = vw;
+    const mainVh = vh;
+    ctx = cacheCtx;
+    vw = cw;
+    vh = ch;
+    try {
+      const view = { zoom: state.zoom, x: state.x, y: state.y, horizontalScale: hs };
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.fillStyle = PALETTE.bg;
+      ctx.fillRect(0, 0, cw, ch);
+      ctx.save();
+      ctx.translate(cw / 2, ch / 2);
+      ctx.scale(state.zoom * hs, state.zoom);
+      ctx.translate(-state.x, -state.y);
+
+      drawOcean(view, world);
+      drawCoast(world);
+      drawCoastalLandmarks(world, view, time);
+      drawExpansionIslands(world, view);
+
+      /* Todo el damero vive dentro de la costa; las zonas futuras siguen libres. */
+      ctx.save();
+      traceIsland(world.size);
+      ctx.clip();
+
+      /* Base verde de Costa Neón bajo las avenidas y las manzanas. */
+      if (visible(view, 0, 0, world.size, world.size, 300)) {
+        ctx.fillStyle = C.base;
+        ctx.fillRect(0, 0, world.size, world.size);
+      }
+
+      /* Tinte de distrito bajo las calles. */
+      for (const d of DISTRICTS) {
+        if (!visible(view, d.rect.x, d.rect.y, d.rect.w, d.rect.h)) continue;
+        ctx.fillStyle = alpha(d.accent, 0.045);
+        ctx.fillRect(d.rect.x, d.rect.y, d.rect.w, d.rect.h);
+      }
+
+      drawRoads(view, world, time);
+      drawBlocks(view, world);
+      drawDecor(view, world, time);
+
+      for (const b of world.buildings) {
+        if (!visible(view, b.x - 30, b.y - 30, b.w + 50, b.h + 50)) continue;
+        drawBuilding(b, view, time);
+      }
+
+      drawPixelPark(view, world, time);
+      drawMonument(view, world, time);
+      drawClipsZone(view, world, time);
+      /* El Brete vive en el cuadrado oeste de Empleo (el que José marcó):
+         su escena cubre el cuadrado entero y el letrero va a la entrada. */
+      const breteCell = cellRect(1, 3);
+      if (visible(view, breteCell.x, breteCell.y, breteCell.w, breteCell.h)) {
+        drawVenueSkin("brete", breteCell);
+        drawVenueSign("EL BRETE", breteCell, PALETTE.cyan);
+      }
+
+      ctx.restore();
+      ctx.restore();
+    } finally {
+      ctx = mainCtx;
+      vw = mainVw;
+      vh = mainVh;
+    }
+    staticCache = {
+      canvas: cc, world, key,
+      ax: state.x, ay: state.y, zoom: state.zoom, hs,
+      dpr, cw, ch, at: time
+    };
+    return staticCache;
+  }
+
   function draw(camera, world, time = 0) {
+    const cache = ensureStatic(camera, world, time);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.fillStyle = PALETTE.bg;
     ctx.fillRect(0, 0, vw, vh);
@@ -1163,50 +1287,19 @@ export function createRenderer(canvas) {
     ctx.scale(state.zoom * view.horizontalScale, state.zoom);
     ctx.translate(-state.x, -state.y);
 
-    drawOcean(view, world);
-    drawCoast(world);
-    drawCoastalLandmarks(world, view, time);
-    drawExpansionIslands(world, view);
+    /* La ciudad estática llega de un solo pegado; el rectángulo destino es
+       el que el caché cubrió al crearse (anclado en cache.ax/cache.ay). */
+    const halfW = cache.cw / (2 * state.zoom * view.horizontalScale);
+    const halfH = cache.ch / (2 * state.zoom);
+    ctx.drawImage(cache.canvas, cache.ax - halfW, cache.ay - halfH, halfW * 2, halfH * 2);
 
-    /* Todo el damero vive dentro de la costa; las zonas futuras siguen libres. */
+    /* ------------------------- vida dinámica ------------------------- */
     ctx.save();
     traceIsland(world.size);
     ctx.clip();
 
-    /* Base verde de Costa Neón bajo las avenidas y las manzanas. */
-    if (visible(view, 0, 0, world.size, world.size, 300)) {
-      ctx.fillStyle = C.base;
-      ctx.fillRect(0, 0, world.size, world.size);
-    }
-
-    /* Tinte de distrito bajo las calles. */
-    for (const d of DISTRICTS) {
-      if (!visible(view, d.rect.x, d.rect.y, d.rect.w, d.rect.h)) continue;
-      ctx.fillStyle = alpha(d.accent, 0.045);
-      ctx.fillRect(d.rect.x, d.rect.y, d.rect.w, d.rect.h);
-    }
-
-    drawRoads(view, world, time);
-    drawBlocks(view, world);
-    drawDecor(view, world, time);
-
-    for (const b of world.buildings) {
-      if (!visible(view, b.x - 30, b.y - 30, b.w + 50, b.h + 50)) continue;
-      drawBuilding(b, view, time);
-    }
-
     drawGlitch(view, world, time);
-    drawPixelPark(view, world, time);
-    drawMonument(view, world, time);
     drawTraffic(view, world, time);
-    drawClipsZone(view, world, time);
-    /* El Brete vive en el cuadrado oeste de Empleo (el que José marcó):
-       su escena cubre el cuadrado entero y el letrero va a la entrada. */
-    const breteCell = cellRect(1, 3);
-    if (visible(view, breteCell.x, breteCell.y, breteCell.w, breteCell.h)) {
-      drawVenueSkin("brete", breteCell);
-      drawVenueSign("EL BRETE", breteCell, PALETTE.cyan);
-    }
     drawPixelLife(view, world, time);
     drawSelection(view);
 
