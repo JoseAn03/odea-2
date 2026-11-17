@@ -13,7 +13,7 @@ import { getDistrict } from "../districts.js";
 import { MONUMENT } from "./world.js";
 import { applyView, viewOf } from "./view-session.js";
 
-export function createCityView({ canvas, world, onSelectDistrict, onFrame, onTapWorld }) {
+export function createCityView({ canvas, world, onSelectDistrict, onFrame, onTapWorld, onSteer }) {
   const renderer = createRenderer(canvas);
   const camera = createCamera({ worldSize: world.size });
   const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -42,6 +42,7 @@ export function createCityView({ canvas, world, onSelectDistrict, onFrame, onTap
     camera,
     onSelectDistrict,
     onTapWorld,
+    onSteer,
     walkModeActive: () => walkMode,
     onInteract: () => {
       if (reduced) drawNow();
