@@ -1252,7 +1252,10 @@ body.no-city #city-canvas { display: none; }
 }
 .phone-screen {
   height: 100%; display: flex; flex-direction: column;
-  background: linear-gradient(160deg, #151827 0%, #080A12 55%, #101927 100%);
+  /* Fondo de pantalla personal de José (él e Ian, malecón neón): un velo
+     oscuro suave encima para que las apps se sigan leyendo. */
+  background: linear-gradient(160deg, rgba(16, 14, 34, 0.42) 0%, rgba(8, 10, 18, 0.55) 55%, rgba(10, 16, 30, 0.48) 100%),
+    url("../assets/phone-wallpaper.webp") center / cover no-repeat, #080A12;
   border-radius: 4px; overflow: hidden;
   color: #F3ECFF; font-size: 0.82rem;
 }
