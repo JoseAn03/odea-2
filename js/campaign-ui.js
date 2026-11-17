@@ -620,3 +620,286 @@ export function renderCampaign(root, { view, onComplete, onApply, onBack, compac
   paint(root, state);
   return root;
 }
+
+/* ====================== Misiones Diarias (v0.19.0) =======================
+   La ruta del día con EL MISMO sistema visual de las campañas — pedido de
+   José: que se vea «igual, igual, igual» a El Brete y Zona Gamer —
+   ajustado a la esencia diaria de ODEA 1: sin capítulos secuenciales ni
+   evidencia escrita obligatoria; la verificación se muestra como criterio
+   («cómo sabés que está listo») y completar es un toque, como siempre. */
+
+const dailySessions = new WeakMap();
+let dailyInstanceSequence = 0;
+
+function announceDaily(state, message, kind = "success") {
+  state.message = message ? { text: message, kind } : null;
+}
+
+function redrawDaily(root, state) {
+  paintDaily(root, state);
+}
+
+function moveDailyMission(root, state, missionId) {
+  state.open.add(text(missionId));
+  redrawDaily(root, state);
+  const destination = [...root.querySelectorAll("[data-campaign-mission]")]
+    .find((entry) => entry.dataset.campaignMission === text(missionId));
+  if (destination) {
+    const reduced = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    destination.scrollIntoView?.({ behavior: reduced ? "auto" : "smooth", block: "nearest" });
+    destination.querySelector("summary")?.focus({ preventScroll: true });
+  }
+}
+
+function makeDailyHero(state, view) {
+  const hero = node("header", "campaign-hero");
+  const image = node("img", "campaign-hero-image");
+  image.src = "assets/slots/diarias.webp";
+  image.alt = "";
+  image.setAttribute("aria-hidden", "true");
+  image.dataset.imageSlot = "daily.diarias";
+  image.decoding = "async";
+  image.addEventListener("error", () => { image.hidden = true; }, { once: true });
+  const top = node("div", "campaign-hero-top");
+  const back = button("campaign-back", state.options.compact ? "← Volver" : "← Mapa", () => {
+    state.options.onBack?.();
+  });
+  back.setAttribute("aria-label", state.options.compact ? "Volver al teléfono" : "Volver al mapa");
+  top.append(back, node("span", "campaign-code", "HUB / RUTA DEL DÍA"));
+  const content = node("div", "campaign-hero-content");
+  const title = node("h1", "campaign-title", "Misiones Diarias");
+  title.id = `${state.prefix}-title`;
+  content.append(
+    node("p", "campaign-eyebrow", "MODO CAMPAÑA · TU RITMO DIARIO"),
+    title,
+    node("p", "campaign-subtitle", `Día ${format(view.day)} de ${format(56)} · tu plan personal, como en ODEA 1`),
+    node("p", "campaign-goal", "Tres misiones. Un día a la vez.")
+  );
+  const bottom = node("div", "campaign-hero-bottom");
+  bottom.append(
+    node("span", "campaign-live-dot", "● RUTA DE HOY"),
+    node("span", "campaign-hero-caption", "PASO A PASO. A TU RITMO.")
+  );
+  hero.append(image, top, content, bottom);
+  return hero;
+}
+
+function makeDailyNext(root, state, view) {
+  const next = view.next;
+  if (!next) {
+    const finished = number(view.total) > 0 && number(view.done) >= number(view.total);
+    const empty = node("section", "campaign-next campaign-next--quiet");
+    empty.append(
+      node("span", "campaign-next-icon", finished ? "✦" : "◇"),
+      node("div", "campaign-next-copy")
+    );
+    empty.lastElementChild.append(
+      node("p", "campaign-eyebrow", finished ? "MISIÓN CUMPLIDA" : "SIN MISIONES DISPONIBLES"),
+      node("h2", "", finished ? "Esta ruta ya lleva tu firma." : "Tu próximo movimiento está en preparación."),
+      node("p", "", finished ? "Día cerrado: mañana amanece la siguiente ruta." : "Volvé mañana por la ruta del nuevo día.")
+    );
+    return empty;
+  }
+  const panel = node("section", "campaign-next");
+  const icon = node("span", "campaign-next-icon", "↗");
+  icon.setAttribute("aria-hidden", "true");
+  const copy = node("div", "campaign-next-copy");
+  copy.append(
+    node("p", "campaign-eyebrow", "TU PRÓXIMO MOVIMIENTO"),
+    node("h2", "", next.title),
+    node("p", "", next.brief || "Una misión concreta para seguir avanzando.")
+  );
+  const action = button("campaign-button campaign-button--primary campaign-next-action", "Ir a la misión ↗", () => {
+    moveDailyMission(root, state, next.id);
+  });
+  panel.append(icon, copy, action);
+  return panel;
+}
+
+function makeDailyComplete(root, state, mission, completed) {
+  const block = node("div", "campaign-evidence");
+  if (completed) {
+    block.append(node("p", "campaign-label", "TU ENTREGA REGISTRADA"));
+    block.append(node("p", "campaign-proof", "Misión completada. Tu avance quedó registrado."));
+    return block;
+  }
+  const footer = node("div", "campaign-form-footer");
+  const note = node("span", "campaign-character-count", "Se registra al momento, como en ODEA 1.");
+  const pending = state.pending?.type === "mission" && state.pending.id === text(mission.id);
+  const submit = button(
+    "campaign-button campaign-button--primary",
+    pending ? "Registrando…" : "Completar misión ↗",
+    async () => {
+      if (state.pending || state.saved.has(text(mission.id))) return;
+      if (typeof state.options.onComplete !== "function") return;
+      state.pending = { type: "mission", id: text(mission.id) };
+      state.message = null;
+      redrawDaily(root, state);
+      try {
+        const result = await state.options.onComplete(mission.id);
+        if (!result?.ok) {
+          announceDaily(state, result?.message || "No pudimos registrar la misión. Intentá de nuevo.", "error");
+        } else {
+          state.saved.add(text(mission.id));
+          announceDaily(state, result.message || "¡Misión registrada! Cada paso cuenta.");
+        }
+      } catch {
+        announceDaily(state, "No pudimos registrar la misión. Revisá la conexión e intentá de nuevo.", "error");
+      } finally {
+        state.pending = null;
+        redrawDaily(root, state);
+      }
+    }
+  );
+  submit.disabled = Boolean(state.pending) || typeof state.options.onComplete !== "function";
+  footer.append(note, submit);
+  block.append(footer);
+  if (typeof state.options.onComplete !== "function") {
+    block.append(statusMessage("El registro no está disponible en esta vista.", "info"));
+  }
+  return block;
+}
+
+function makeDailyMission(root, state, mission, index, nextId) {
+  const completed = Boolean(mission.completed || state.saved.has(text(mission.id)));
+  const next = text(mission.id) === text(nextId) && !completed;
+  const classes = [
+    "campaign-mission",
+    completed ? "campaign-mission--done" : "",
+    next ? "campaign-mission--next" : ""
+  ].filter(Boolean).join(" ");
+  const detail = node("details", classes);
+  detail.dataset.campaignMission = text(mission.id);
+  detail.open = state.open.has(text(mission.id));
+  detail.addEventListener("toggle", () => {
+    if (detail.open) state.open.add(text(mission.id));
+    else state.open.delete(text(mission.id));
+  });
+  const summary = node("summary", "campaign-mission-summary");
+  const marker = node("span", "campaign-mission-number", completed ? "✓" : String(index + 1).padStart(2, "0"));
+  marker.setAttribute("aria-hidden", "true");
+  const copy = node("span", "campaign-mission-copy");
+  const metadata = node("span", "campaign-mission-meta");
+  metadata.append(
+    node("span", "campaign-mission-state", completed ? "COMPLETADA" : next ? "SIGUIENTE MISIÓN" : "DISPONIBLE"),
+    node("span", "campaign-duration", `${format(mission.time || 0)} min`)
+  );
+  copy.append(metadata, node("span", "campaign-mission-title", mission.title), rewards({ xp: mission.xp, coins: 1 }));
+  const chevron = node("span", "campaign-chevron", "+");
+  chevron.setAttribute("aria-hidden", "true");
+  summary.append(marker, copy, chevron);
+  const body = node("div", "campaign-mission-body");
+  if (mission.description) body.append(node("p", "campaign-brief", mission.description));
+  if (mission.verification) {
+    const requirements = node("div", "campaign-requirements");
+    const criterion = node("div", "campaign-requirement");
+    criterion.append(node("span", "campaign-label", "CÓMO SABÉS QUE ESTÁ LISTO"), node("p", "", mission.verification));
+    requirements.append(criterion);
+    body.append(requirements);
+  }
+  body.append(makeDailyComplete(root, state, mission, completed));
+  detail.append(summary, body);
+  return detail;
+}
+
+function paintDaily(root, state) {
+  const { view, compact } = state.options;
+  const shell = node("div", `campaign-shell${compact ? " campaign-shell--compact" : ""}`);
+  let accent = "#ffb35c";
+  if (view.accent && typeof CSS !== "undefined" && CSS.supports?.("color", view.accent)) accent = view.accent;
+  shell.style.setProperty("--campaign-accent", accent);
+  shell.setAttribute("aria-labelledby", `${state.prefix}-title`);
+  shell.append(makeDailyHero(state, view));
+  const interior = node("div", "campaign-interior");
+  interior.append(makeStats({
+    rank: `Día ${format(view.day)} de 56`,
+    percent: number(view.total) ? (number(view.done) / number(view.total)) * 100 : 0,
+    done: view.done,
+    total: view.total
+  }, state));
+  if (state.message) interior.append(statusMessage(state.message.text, state.message.kind));
+  interior.append(makeDailyNext(root, state, view));
+  const workspace = node("section", "campaign-workspace");
+  workspace.setAttribute("aria-label", "Misiones de hoy");
+  const heading = node("div", "campaign-section-heading");
+  heading.append(node("h2", "", "Tu ruta"), node("span", "campaign-label", `${format(view.total)} MISIONES / SIN ATAJOS`));
+  const layout = node("div", "campaign-chapter-layout");
+  const rail = node("nav", "campaign-chapter-rail");
+  rail.setAttribute("aria-label", "Ruta del día");
+  const chapterBtn = button("campaign-chapter campaign-chapter--selected", null, () => {});
+  chapterBtn.setAttribute("aria-current", "step");
+  chapterBtn.append(
+    node("span", "campaign-chapter-index", "01 / RUTA"),
+    node("strong", "campaign-chapter-title", `Día ${format(view.day)}`),
+    node("span", "campaign-chapter-count", `${format(view.done)} / ${format(view.total)} misiones ${number(view.total) && number(view.done) >= number(view.total) ? "✓" : "↗"}`)
+  );
+  rail.append(chapterBtn);
+  const panel = node("section", "campaign-chapter-panel");
+  panel.tabIndex = -1;
+  const panelHeading = node("div", "campaign-panel-heading");
+  panelHeading.append(node("p", "campaign-eyebrow", "EXPEDIENTE DE MISIONES"), node("h3", "", "Ruta de hoy"));
+  panelHeading.append(node("p", "campaign-panel-subtitle", "Las misiones de tu día, en el orden de tu plan."));
+  panel.append(panelHeading);
+  const missions = Array.isArray(view.missions) ? view.missions : [];
+  if (!missions.length) panel.append(statusMessage("Hoy no hay misiones en la ruta.", "info"));
+  missions.forEach((mission, index) => panel.append(makeDailyMission(root, state, mission, index, view.next?.id)));
+  layout.append(rail, panel);
+  workspace.append(heading, layout);
+  interior.append(workspace);
+  const footer = node("footer", "campaign-footer");
+  footer.append(
+    node("span", "campaign-footer-mark", "✦ HECHO PARA AVANZAR"),
+    node("p", "", "XP y monedas son recompensas ficticias del juego: no representan ingresos reales.")
+  );
+  interior.append(footer);
+  shell.append(interior);
+  const previousScroll = root.scrollTop;
+  root.replaceChildren(shell);
+  root.scrollTop = previousScroll;
+}
+
+/**
+ * La ruta diaria con el sistema de campañas.
+ * @param {HTMLElement} root Mount point (teléfono o diálogo).
+ * @param {object} options
+ * @param {object} options.view { day, missions, done, total, next? } — la ruta
+ *   del día ya derivada (routeForDay); `next` se calcula si no viene.
+ * @param {function} options.onComplete async (missionId) => {ok, message?}
+ * @param {function} options.onBack Navigation callback.
+ * @param {boolean} [options.compact=false]
+ */
+export function renderDaily(root, { view, onComplete, onBack, compact = false } = {}) {
+  if (!root || typeof root.replaceChildren !== "function") {
+    throw new TypeError("renderDaily necesita un elemento raíz del DOM.");
+  }
+  let state = dailySessions.get(root);
+  if (!state) {
+    state = {
+      prefix: `daily-${++dailyInstanceSequence}`,
+      open: new Set(),
+      saved: new Set(),
+      pending: null,
+      message: null,
+      options: null
+    };
+    dailySessions.set(root, state);
+  }
+  const missions = Array.isArray(view?.missions) ? view.missions : [];
+  const done = missions.filter((mission) => mission.completed || state.saved.has(text(mission.id))).length;
+  const next = missions.find((mission) => !mission.completed && !state.saved.has(text(mission.id))) || null;
+  state.options = {
+    view: {
+      ...view,
+      missions,
+      done,
+      total: missions.length,
+      next: next ? { id: next.id, title: next.title, brief: next.description } : null
+    },
+    onComplete,
+    onBack,
+    compact
+  };
+  if (next && !state.open.size) state.open.add(text(next.id));
+  paintDaily(root, state);
+  return root;
+}
