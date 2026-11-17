@@ -66,7 +66,7 @@ La app funciona sin conexión después de la primera carga (service worker
 npm test
 ```
 
-**185 tests** (Node ≥ 20):
+**195 tests** (Node ≥ 20):
 
 - **33 de Fase 0**: no-pérdida, paridad de los 10 componentes de XP, monedas,
   `eventRL`/`farm`/`canje`, cuarentena, aborto, reimportación, huella, ida y
@@ -91,6 +91,9 @@ npm test
   (Academia 28/29, las dos tiendas de Tesoro, Garaje, jefes y cartas sin id).
 - **3 de T24 (historial grande)**: 14.700 ocurrencias sintéticas sin recorte, sin
   fallo de parseo y con derivación por debajo del umbral.
+- **5 de regresión de vistas**: XP y saldo coinciden en HUD, Hoy y Mochila y
+  salen de la misma derivación; abrir las tres pantallas no escribe el bundle
+  y el Tesoro no se reinterpreta como moneda del núcleo.
 - **8 de Hoy**: usa la MISMA proyección del HUD y la MISMA ruta del Hub; cada
   misión declara su distrito, completar actualiza la ruta, no paga dos veces, no
   hay premio por reclamar y construir el centro no escribe el bundle.
