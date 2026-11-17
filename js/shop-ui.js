@@ -60,22 +60,58 @@ function itemCard(item, state, balance, actions) {
   return card;
 }
 
-export function renderShop(root, { bundle, actions }) {
+/* Cabecera con la escena de la tienda, como los héroes de campaña: es el
+   fondo que José pidió al entrar desde la manzana de la ciudad. */
+function shopHero(actions) {
+  const hero = node("header", "campaign-hero");
+  const image = node("img", "campaign-hero-image");
+  image.src = "assets/slots/tienda.webp";
+  image.alt = "";
+  image.setAttribute("aria-hidden", "true");
+  image.dataset.imageSlot = "shop.tienda";
+  image.decoding = "async";
+  image.addEventListener("error", () => { image.hidden = true; }, { once: true });
+  const top = node("div", "campaign-hero-top");
+  const back = node("button", "campaign-back", "← Mapa");
+  back.type = "button";
+  back.setAttribute("aria-label", "Volver al mapa");
+  back.addEventListener("click", () => actions.onBack());
+  top.append(back, node("span", "campaign-code", "EL MERCADO / TIENDA"));
+  const content = node("div", "campaign-hero-content");
+  content.append(
+    node("p", "campaign-eyebrow", "PRECIOS BAJOS · ₡ ODEA VIRTUALES"),
+    node("h1", "campaign-title", "TIENDA"),
+    node("p", "campaign-subtitle", "Bienvenido a los precios bajos: atuendos y vehículos que se ven en la calle.")
+  );
+  const bottom = node("div", "campaign-hero-bottom");
+  bottom.append(
+    node("span", "campaign-live-dot", "● COMPRAR EQUIPA DE UNA VEZ"),
+    node("span", "campaign-hero-caption", "A TU RITMO.")
+  );
+  hero.append(image, top, content, bottom);
+  return hero;
+}
+
+export function renderShop(root, { bundle, actions, standalone = false }) {
   const derived = (bundle && bundle.core && bundle.core.derived) || {};
   const balance = Number(derived.coins && derived.coins.balance) || 0;
   const state = tiendaState(bundle);
 
   root.replaceChildren();
 
-  const head = node("div", "shop-head");
-  const back = node("button", "shop-back", "← Volver");
-  back.type = "button";
-  back.addEventListener("click", () => actions.onBack());
-  head.append(back);
-  root.append(head);
+  if (standalone) {
+    root.append(shopHero(actions));
+  } else {
+    const head = node("div", "shop-head");
+    const back = node("button", "shop-back", "← Volver");
+    back.type = "button";
+    back.addEventListener("click", () => actions.onBack());
+    head.append(back);
+    root.append(head);
 
-  root.append(node("h3", "phone-screen-title", "Tienda"));
-  root.append(node("p", "phone-screen-sub", "Bienvenido a los precios bajos · El Mercado, manzana este"));
+    root.append(node("h3", "phone-screen-title", "Tienda"));
+    root.append(node("p", "phone-screen-sub", "Bienvenido a los precios bajos · El Mercado, manzana este"));
+  }
   root.append(node("p", "shop-balance", `Tu saldo: ₡${fmt(balance)} ODEA virtuales`));
 
   for (const [kind, title] of [["outfit", "Atuendos"], ["vehicle", "Vehículos"]]) {
@@ -91,4 +127,11 @@ export function renderShop(root, { bundle, actions }) {
     "p", "shop-note",
     "Los ₡ ODEA son progreso virtual: no son dinero real. Lo que comprés se guarda en tu partida y se respalda con la sincronización."
   ));
+
+  if (standalone && actions.onDistrict) {
+    const district = node("button", "shop-btn is-ghost shop-district-btn", "Ver el panel del Mercado (tesoro y canjes)");
+    district.type = "button";
+    district.addEventListener("click", () => actions.onDistrict());
+    root.append(district);
+  }
 }
