@@ -886,41 +886,61 @@ export function createRenderer(canvas) {
   /* Vida pixel: postes con halo en los cruces, vecinos caminando por las
      aceras y un carro pixel por la avenida sur. Todo determinista desde
      `time` (con reduced, time llega en 0 y la escena queda quieta). */
-  /* La Zona CLIPS: el cuadro gamer de la ciudad (tienda de videojuegos,
-     pantalla grande, sillas gamer, arcades y el mando en el suelo). */
+  /* La Zona Gamer: plaza limpia con UN solo protagonista, su cartel
+     callejero. Los adornos pixel que tapaban la escena se retiraron a
+     petición de José (v0.18.1): la imagen se ve completa. */
   function drawClipsZone(view, world, time) {
-    const px = art();
-    if (!px) return;
     const R = clipsRect();
     if (!visible(view, R.x - 60, R.y - 60, R.w + 120, R.h + 120)) return;
-    const cx = R.x + R.w / 2;
-    drawVenueBillboard("gamer", R.x + 75, R.y + 85, 390, PALETTE.pink);
-    if (px.mando) px.draw(ctx, px.mando, cx, R.y + R.h * 0.80, 150, 104);
-    if (px.pantalla) px.draw(ctx, px.pantalla, cx, R.y + 128, 132, 92);
-    if (px.sillaRosa) px.draw(ctx, px.sillaRosa, cx - 62, R.y + 252, 46, 60);
-    if (px.sillaCian) px.draw(ctx, px.sillaCian, cx + 62, R.y + 252, 46, 60);
-    if (px.arcade) {
-      px.draw(ctx, px.arcade, R.x + 58, R.y + 176, 46, 60);
-      px.draw(ctx, px.arcade, R.x + 58, R.y + 268, 46, 60);
-      px.draw(ctx, px.arcade, R.x + 58, R.y + 360, 46, 60);
-    }
-    if (px.tienda) px.draw(ctx, px.tienda, R.x + R.w - 66, R.y + 246, 118, 80);
+    drawVenueBillboard("gamer", R.x + 145, R.y + 150, 250, PALETTE.pink, "ZONA GAMER");
   }
 
-  /** Generated interior artwork becomes an illuminated venue display on the map. */
-  function drawVenueBillboard(id, x, y, w, color) {
+  /* Cartel publicitario de calle, estilo Vice City: la escena llena TODO
+     el panel (sin márgenes ni franjas), marco fino, dos postes con su
+     sombra en el suelo y una plaquita pequeña con el nombre del local.
+     El nombre vive en la calle, en el mundo, no flotando en pantalla. */
+  function drawVenueBillboard(id, x, y, w, color, name) {
     const image = venuePictures[id];
     if (!image || !image.complete || !image.naturalWidth) return;
     const h = w * 9 / 16;
-    ctx.fillStyle = "#090f27";
-    ctx.fillRect(x - 12, y - 12, w + 24, h + 32);
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 6;
-    ctx.strokeRect(x - 7, y - 7, w + 14, h + 14);
-    ctx.imageSmoothingEnabled = false;
+    const postH = 30;
+    /* Sombra en el suelo y postes. */
+    ctx.fillStyle = "rgba(3,6,18,0.35)";
+    ctx.beginPath();
+    ctx.ellipse(x + w / 2, y + h + postH + 4, w * 0.42, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#131a38";
+    ctx.fillRect(x + w * 0.18, y + h, 7, postH);
+    ctx.fillRect(x + w * 0.82 - 7, y + h, 7, postH);
+    /* La imagen abarca el cuadro completo. */
+    ctx.imageSmoothingEnabled = true;
     ctx.drawImage(image, x, y, w, h);
+    /* Marco fino: oscuro por fuera, un hilo de color por dentro. */
+    ctx.strokeStyle = "rgba(6,10,28,0.9)";
+    ctx.lineWidth = 5;
+    ctx.strokeRect(x, y, w, h);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.6;
+    ctx.strokeRect(x, y, w, h);
+    /* Plaquita con el nombre, entre los postes: pequeña y elegante. */
+    const plateW = Math.min(w * 0.62, 168);
+    const plateH = 25;
+    const px0 = x + (w - plateW) / 2;
+    const py0 = y + h + 3;
+    ctx.fillStyle = "rgba(7,11,30,0.92)";
+    ctx.fillRect(px0, py0, plateW, plateH);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.2;
+    ctx.strokeRect(px0, py0, plateW, plateH);
     ctx.fillStyle = color;
-    ctx.fillRect(x + 16, y + h + 17, w - 32, 4);
+    ctx.font = "700 13.5px 'Avenir Next', 'Segoe UI', system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    try { ctx.letterSpacing = "2.5px"; } catch { /* navegadores sin letterSpacing */ }
+    ctx.fillText(name, x + w / 2, py0 + plateH / 2 + 0.5, plateW - 10);
+    try { ctx.letterSpacing = "0px"; } catch { /* idem */ }
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
   }
 
   function drawPixelLife(view, world, time) {
@@ -1155,7 +1175,7 @@ export function createRenderer(canvas) {
     drawClipsZone(view, world, time);
     const breteVenue = DISTRICTS.find((d) => d.id === "empleo").rect;
     if (visible(view, breteVenue.x, breteVenue.y, breteVenue.w, breteVenue.h)) {
-      drawVenueBillboard("brete", breteVenue.x + 78, breteVenue.y + 130, 385, PALETTE.cyan);
+      drawVenueBillboard("brete", breteVenue.x + 90, breteVenue.y + 140, 250, PALETTE.cyan, "EL BRETE");
     }
     drawPixelLife(view, world, time);
     drawSelection(view);
@@ -1193,18 +1213,9 @@ export function createRenderer(canvas) {
   }
 
   function drawScreenLabels(camera, world, time) {
-    // Keep the quiet map; only the two requested playable venues get signage.
-    for (const venue of [
-      { key: "gamer-campaign", title: "ZONA GAMER", sub: "Clips · IA · Primer ingreso", rect: clipsRect(), color: PALETTE.pink },
-      { key: "brete-campaign", title: "EL BRETE", sub: "Analista de datos · Postulaciones", rect: DISTRICTS.find((d) => d.id === "empleo").rect, color: PALETTE.cyan }
-    ]) {
-      const p = camera.worldToScreen(venue.rect.x + venue.rect.w / 2, venue.rect.y + 46);
-      if (p.x < -180 || p.x > vw + 180 || p.y < -60 || p.y > vh + 60) continue;
-      const sprite = labelSprite(venue.key, venue.title, { color: venue.color, size: 20, sub: venue.sub, weight: 800 });
-      ctx.globalAlpha = 0.98;
-      drawSprite(sprite, p.x, p.y, 1);
-    }
-    ctx.globalAlpha = 1;
+    /* v0.18.1: sin rótulos flotantes. Los nombres de los locales viven en
+       la plaquita de su cartel callejero (drawVenueBillboard), integrados
+       al mundo y sutiles, como pidió José. El mapa vuelve a estar quieto. */
   }
 
   /* ---------------------------------- API ---------------------------------- */
