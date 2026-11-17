@@ -6,7 +6,7 @@
  * Nada de esto toca el save: es puro dibujo.
  */
 
-import { cellRect, cellsRect, allCells, WORLD_SIZE, GRID } from "./layout.js";
+import { cellRect, cellsRect, allCells, WORLD_SIZE, GRID, CLIPS_CELL } from "./layout.js";
 import { DISTRICTS, PALETTE, alpha, mix } from "../districts.js";
 
 export const MONUMENT = { x: 1365, y: 1365, r: 96 };
@@ -277,7 +277,13 @@ export function buildWorld() {
     const district = cellDistrict[`${col},${row}`] || null;
     const style = district ? district.style : "filler";
     const accent = district ? district.accent : mixFiller(rand);
-    out.blocks.push({ rect, districtId: district ? district.id : null, style, accent });
+    out.blocks.push({
+      rect,
+      districtId: district ? district.id : null,
+      style,
+      accent,
+      zone: col === CLIPS_CELL.col && row === CLIPS_CELL.row ? "clips" : null
+    });
 
     generateBlock(rect, district, rand, out);
 
