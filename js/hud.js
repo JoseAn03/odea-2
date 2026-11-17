@@ -65,3 +65,118 @@ export function buildHud(bundle2, catalog) {
     xpBreakdown: derived.xpBreakdown
   };
 }
+
+/* ------------------------------- mochila ---------------------------------
+ * Proyección de la Mochila desde el bundle. SOLO LECTURA: no calcula nada
+ * nuevo, solo junta lo que existe de verdad y respeta que las tiendas de
+ * ODEA 1 no se mezclan.
+ */
+
+const SLOT_LABEL = {
+  mano: "Mano",
+  escudo: "Escudo",
+  cabeza: "Cabeza",
+  torso: "Torso",
+  pies: "Pies",
+  hombros: "Hombros"
+};
+
+function slotName(slot) {
+  return SLOT_LABEL[slot] || slot || "—";
+}
+
+/**
+ * @param {object} bundle save activo (solo lectura)
+ * @param {object} catalog catálogo de juego
+ * @param {object} derived proyección canónica (`derive()`), para no recalcular
+ */
+export function buildInventory(bundle, catalog, derived) {
+  const core = (bundle && bundle.core) || {};
+  const shop = core.shop || {};
+  const gear = core.gear || {};
+  const tesoro = (bundle && bundle.worlds && bundle.worlds.tesoro && bundle.worlds.tesoro.data) || {};
+  const garaje = (bundle && bundle.worlds && bundle.worlds.garaje && bundle.worlds.garaje.data) || {};
+
+  const shopCatalog = (catalog && catalog.shop) || {};
+  const cosmeticsCatalog = (catalog && catalog.cosmetics) || {};
+
+  /* --- Equipo del núcleo ------------------------------------------------- */
+  const owned = Array.isArray(shop.owned) ? shop.owned.map(String) : [];
+  const equipped = shop.equipped && typeof shop.equipped === "object" ? shop.equipped : {};
+  const equippedIds = new Set(Object.values(equipped).map(String));
+
+  const equipment = owned.map((id) => {
+    const item = shopCatalog[id] || null;
+    return {
+      id,
+      nombre: item ? item.nombre : id,
+      slot: item ? item.slot : null,
+      slotLabel: item ? slotName(item.slot) : "—",
+      power: item ? item.power : null,
+      price: item ? item.price : null,
+      equipado: equippedIds.has(id),
+      /** Sin catálogo no se inventan propiedades. */
+      conocido: Boolean(item)
+    };
+  });
+
+  const equipmentEquipped = equipment.filter((item) => item.equipado);
+  const equipmentStored = equipment.filter((item) => !item.equipado);
+
+  /* --- Capa de recompensas (gear) ---------------------------------------- */
+  const gearUnlocked = Array.isArray(gear.unlocked) ? gear.unlocked.map(String) : [];
+  const gearEquipped = gear.equipped && typeof gear.equipped === "object" ? gear.equipped : {};
+  const gearIdsEquipped = new Set(Object.values(gearEquipped).map(String));
+
+  const rewards = gearUnlocked.map((id) => ({
+    id,
+    /* No hay catálogo de esta capa en la fuente: se muestra el id, no un nombre
+       inventado. */
+    nombre: null,
+    equipado: gearIdsEquipped.has(id)
+  }));
+
+  /* --- Cosméticos del Tesoro (tienda aparte) ----------------------------- */
+  const cosmeticOwned = Array.isArray(tesoro.propios) ? tesoro.propios.map(String) : [];
+  const cosmetics = cosmeticOwned.map((id) => {
+    const item = cosmeticsCatalog[id] || null;
+    return {
+      id,
+      nombre: item ? item.nombre : id,
+      precio: item ? item.price : null,
+      desc: item ? item.desc : null,
+      conocido: Boolean(item)
+    };
+  });
+
+  /* --- Recursos ---------------------------------------------------------- */
+  const coins = (derived && derived.coins) || {};
+  const resources = [
+    { id: "coins", label: "Monedas del núcleo", value: Number(coins.balance) || 0, hint: "Ganadas menos gastadas" },
+    {
+      id: "tesoro",
+      label: "Monedas del Tesoro",
+      value: Number(tesoro.monedas) || 0,
+      hint: "Cuenta aparte: no se convierte con las del núcleo"
+    },
+    { id: "escudos", label: "Escudos", value: Number(tesoro.escudos) || 0, hint: "Recurso del Tesoro" },
+    {
+      id: "km-carro",
+      label: "Kilómetros · carro",
+      value: Number(garaje.km && garaje.km.carro) || 0,
+      hint: null
+    }
+  ];
+
+  return {
+    equipment,
+    equipmentEquipped,
+    equipmentStored,
+    rewards,
+    cosmetics,
+    resources,
+    /** La mochila es de consulta: no hay compra ni equipamiento activos. */
+    readOnly: true,
+    slots: Object.keys(equipped).map((slot) => ({ slot, slotLabel: slotName(slot), id: String(equipped[slot]) }))
+  };
+}

@@ -2472,5 +2472,229 @@
     "vida": 192,
     "bosses": 16,
     "sagas": 2
+  },
+  "shop": {
+    "sw_wood": {
+      "nombre": "Espada de Madera",
+      "slot": "mano",
+      "power": 50,
+      "price": 20,
+      "tier": "madera",
+      "grantOnly": false
+    },
+    "sw_stone": {
+      "nombre": "Espada de Piedra",
+      "slot": "mano",
+      "power": 150,
+      "price": 70,
+      "tier": "piedra",
+      "grantOnly": false
+    },
+    "sw_iron": {
+      "nombre": "Espada de Hierro",
+      "slot": "mano",
+      "power": 400,
+      "price": 150,
+      "tier": "hierro",
+      "grantOnly": false
+    },
+    "sw_gold": {
+      "nombre": "Espada de Oro",
+      "slot": "mano",
+      "power": 800,
+      "price": 320,
+      "tier": "oro",
+      "grantOnly": false
+    },
+    "sw_diamond": {
+      "nombre": "Espada de Diamante",
+      "slot": "mano",
+      "power": 1500,
+      "price": 650,
+      "tier": "diamante",
+      "grantOnly": false
+    },
+    "ax_wood": {
+      "nombre": "Hacha de Madera",
+      "slot": "mano",
+      "power": 60,
+      "price": 25,
+      "tier": "madera",
+      "grantOnly": false
+    },
+    "ax_iron": {
+      "nombre": "Hacha de Hierro",
+      "slot": "mano",
+      "power": 420,
+      "price": 160,
+      "tier": "hierro",
+      "grantOnly": false
+    },
+    "ax_diamond": {
+      "nombre": "Hacha de Diamante",
+      "slot": "mano",
+      "power": 1600,
+      "price": 680,
+      "tier": "diamante",
+      "grantOnly": false
+    },
+    "pk_wood": {
+      "nombre": "Pico de Madera",
+      "slot": "mano",
+      "power": 40,
+      "price": 18,
+      "tier": "madera",
+      "grantOnly": false
+    },
+    "pk_iron": {
+      "nombre": "Pico de Hierro",
+      "slot": "mano",
+      "power": 380,
+      "price": 140,
+      "tier": "hierro",
+      "grantOnly": false
+    },
+    "pk_diamond": {
+      "nombre": "Pico de Diamante",
+      "slot": "mano",
+      "power": 1400,
+      "price": 600,
+      "tier": "diamante",
+      "grantOnly": false
+    },
+    "sh_wood": {
+      "nombre": "Escudo de Madera",
+      "slot": "escudo",
+      "power": 70,
+      "price": 30,
+      "tier": "madera",
+      "grantOnly": false
+    },
+    "sh_iron": {
+      "nombre": "Escudo de Hierro",
+      "slot": "escudo",
+      "power": 450,
+      "price": 180,
+      "tier": "hierro",
+      "grantOnly": false
+    },
+    "sh_diamond": {
+      "nombre": "Escudo de Diamante",
+      "slot": "escudo",
+      "power": 1700,
+      "price": 700,
+      "tier": "diamante",
+      "grantOnly": false
+    },
+    "hl_iron": {
+      "nombre": "Casco de Hierro",
+      "slot": "cabeza",
+      "power": 300,
+      "price": 130,
+      "tier": "hierro",
+      "grantOnly": false
+    },
+    "hl_diamond": {
+      "nombre": "Casco de Diamante",
+      "slot": "cabeza",
+      "power": 1200,
+      "price": 550,
+      "tier": "diamante",
+      "grantOnly": false
+    },
+    "ch_iron": {
+      "nombre": "Pechera de Hierro",
+      "slot": "torso",
+      "power": 500,
+      "price": 200,
+      "tier": "hierro",
+      "grantOnly": false
+    },
+    "ch_diamond": {
+      "nombre": "Pechera de Diamante",
+      "slot": "torso",
+      "power": 1800,
+      "price": 750,
+      "tier": "diamante",
+      "grantOnly": false
+    },
+    "bt_iron": {
+      "nombre": "Botas de Hierro",
+      "slot": "pies",
+      "power": 280,
+      "price": 120,
+      "tier": "hierro",
+      "grantOnly": false
+    },
+    "bt_diamond": {
+      "nombre": "Botas de Diamante",
+      "slot": "pies",
+      "power": 1100,
+      "price": 500,
+      "tier": "diamante",
+      "grantOnly": false
+    },
+    "xo_costillar": {
+      "nombre": "Exo-armazón «COSTILLAR NEÓN»",
+      "slot": "torso",
+      "power": 1900,
+      "price": 0,
+      "tier": "oraculo",
+      "grantOnly": true
+    },
+    "xo_visor": {
+      "nombre": "Visor «ORÁCULO»",
+      "slot": "cabeza",
+      "power": 1300,
+      "price": 0,
+      "tier": "oraculo",
+      "grantOnly": true
+    },
+    "xo_brazo": {
+      "nombre": "Servobrazo «PRECISIÓN»",
+      "slot": "mano",
+      "power": 1700,
+      "price": 0,
+      "tier": "oraculo",
+      "grantOnly": true
+    },
+    "xo_pistones": {
+      "nombre": "Pistones «SOBRECARGA»",
+      "slot": "pies",
+      "power": 1200,
+      "price": 0,
+      "tier": "oraculo",
+      "grantOnly": true
+    },
+    "xo_nucleo": {
+      "nombre": "Núcleo «DECISIÓN»",
+      "slot": "escudo",
+      "power": 1800,
+      "price": 0,
+      "tier": "oraculo",
+      "grantOnly": true
+    }
+  },
+  "cosmetics": {
+    "titulo": {
+      "nombre": "Título: «el Imparable»",
+      "price": 15,
+      "desc": "Un título junto a tu nombre en el panel lateral."
+    },
+    "marco": {
+      "nombre": "Marco dorado",
+      "price": 25,
+      "desc": "Borde y brillo dorados para tu logo y tu personaje."
+    },
+    "tema-aurora": {
+      "nombre": "Tema Aurora boreal",
+      "price": 40,
+      "desc": "El panel lateral se tiñe de verdes y violetas polares."
+    },
+    "tema-synthwave": {
+      "nombre": "Tema Atardecer synthwave",
+      "price": 40,
+      "desc": "El panel lateral se tiñe de rosa y naranja retro."
+    }
   }
 }
