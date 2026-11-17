@@ -187,7 +187,34 @@ export function playStateOf(bundle2) {
 export function occurrenceKey(missionId, cls, dateKey) {
   if (cls === "daily") return `${missionId}@${dateKey}`;
   if (cls === "weekly") return `${missionId}@${isoWeekKey(dateKey)}`;
+  /* `every` usa la misma forma de clave que `daily` —una por fecha— pero la
+     disponibilidad la decide el ciclo desde la última completación. */
+  if (cls === "every") return `${missionId}@${dateKey}`;
   return missionId;
+}
+
+/** Última fecha en que se completó esa misión (cualquier ciclo), o null. */
+export function lastCompletionDate(play, missionId) {
+  const prefix = `${missionId}@`;
+  let last = null;
+  for (const key of Object.keys((play && play.completions) || {})) {
+    if (!key.startsWith(prefix)) continue;
+    const date = key.slice(prefix.length);
+    if (!isValidDateKey(date)) continue;
+    if (!last || date > last) last = date;
+  }
+  return last;
+}
+
+/**
+ * ¿Está debida una misión de ciclo `every`?
+ * Vuelve a estarlo cuando pasaron `days` días desde la última completación.
+ */
+export function isEveryDue(play, mission, dateKey) {
+  const days = Number(mission && mission.days) || 1;
+  const last = lastCompletionDate(play, mission.id);
+  if (!last) return true;
+  return addDays(last, days) <= dateKey;
 }
 
 /** ¿Está completada la ocurrencia concreta de hoy? */
@@ -360,6 +387,10 @@ export function applyMutation(draft, mutation, catalog, { at, date } = {}) {
   if (play.completions[key]) {
     return { changed: false, duplicate: true, reason: "DUPLICATE", paths: [] };
   }
+  /* Ciclo `every`: no se puede adelantar antes de que venza el intervalo. */
+  if (mission.cls === "every" && !isEveryDue(play, mission, dateKey)) {
+    return { changed: false, duplicate: false, reason: "NOT_DUE", paths: [] };
+  }
   /* Ya venía completo de ODEA 1: no se registra de nuevo, porque `derive`
      deduplica y el resultado sería un "aplicado" sin XP ganada. */
   if (migratedKeys(draft, catalog, system, dateKey).has(key)) {
@@ -400,6 +431,21 @@ export function systemMissions(bundle2, catalog, system, dateKey = localDateKey(
   const migrated = migratedKeys(bundle2, catalog, system, dateKey);
   const missions = missionsOf(catalog, system).map((mission) => {
     const key = occurrenceKey(mission.id, mission.cls, dateKey);
+    if (mission.cls === "every") {
+      const last = lastCompletionDate(play, mission.id);
+      const due = isEveryDue(play, mission, dateKey);
+      return {
+        ...mission,
+        key,
+        period: dateKey,
+        /* `completed` aquí significa «en su ciclo vigente»: si no está debida,
+           no se ofrece. Se expone `dueDate` para poder decirlo en la UI. */
+        completed: !due,
+        migrated: false,
+        lastCompleted: last,
+        dueDate: last ? addDays(last, Number(mission.days) || 1) : null
+      };
+    }
     return {
       ...mission,
       key,

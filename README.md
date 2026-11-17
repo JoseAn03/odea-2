@@ -68,7 +68,7 @@ npm run check:write-path   # una sola ruta de escritura
 npm run check:ui           # interfaz completa: HUD, Hoy, Mochila, Menú y 9 distritos
 ```
 
-**207 tests** (Node ≥ 20):
+**216 tests** (Node ≥ 20):
 
 - **33 de Fase 0**: no-pérdida, paridad de los 10 componentes de XP, monedas,
   `eventRL`/`farm`/`canje`, cuarentena, aborto, reimportación, huella, ida y
@@ -96,6 +96,10 @@ npm run check:ui           # interfaz completa: HUD, Hoy, Mochila, Menú y 9 dis
 - **5 de regresión de vistas**: XP y saldo coinciden en HUD, Hoy y Mochila y
   salen de la misma derivación; abrir las tres pantallas no escribe el bundle
   y el Tesoro no se reinterpreta como moneda del núcleo.
+- **9 de la clase every:Nd**: catálogo con clase e intervalo, entrada sin días
+  válidos cae en one, clave por fecha, rechazo dentro del ciclo, mismo día
+  duplicado, vuelve a estar debida al vencer, dueDate informado y registro que
+  valida sin romper el bundle.
 - **8 de Hoy**: usa la MISMA proyección del HUD y la MISMA ruta del Hub; cada
   misión declara su distrito, completar actualiza la ruta, no paga dos veces, no
   hay premio por reclamar y construir el centro no escribe el bundle.
@@ -335,5 +339,6 @@ Registrada en `RISK_LIST.md` §3.2 y especificada en `docs/FASE3_SPEC.md`.
 El bundle real del usuario **nunca** se publica ni se sube a ningún servidor.
 `.gitignore` bloquea `odea-progreso-*.json` y `*progreso-real*`, con excepción
 del fixture sintético (`fixtures/odea-progreso-sintetico.json`).
+
 
 

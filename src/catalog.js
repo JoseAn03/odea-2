@@ -74,9 +74,28 @@ export function validateCatalog(catalog) {
   };
 }
 
+/**
+ * Clase de idempotencia de una entrada del catálogo.
+ *
+ *   one     → una vez para siempre (clave = id)
+ *   daily   → una por fecha civil (clave = id@fecha)
+ *   weekly  → una por semana ISO (clave = id@semana)
+ *   every   → una por CICLO de N días desde la última vez (clave = id@fecha).
+ *             La diferencia con `daily` no es la clave, es la disponibilidad:
+ *             vuelve a estar debida cuando pasan `entry.days` días.
+ */
 function missionClassOf(entry) {
   const kind = entry && typeof entry === "object" ? entry.kind : null;
-  return kind === "daily" || kind === "weekly" ? kind : "one";
+  if (kind === "daily" || kind === "weekly") return kind;
+  if (kind === "every" && Number(entry.days) > 0) return "every";
+  return "one";
+}
+
+/** Días del ciclo para misiones `every`; null para el resto. */
+function everyDaysOf(entry) {
+  if (!entry || typeof entry !== "object") return null;
+  const days = Number(entry.days);
+  return entry.kind === "every" && Number.isFinite(days) && days > 0 ? days : null;
 }
 
 /**
@@ -94,7 +113,7 @@ export function missionOf(catalog, system, missionId) {
     /* Un paso narrativo nunca es una misión completable. */
     if (entry && typeof entry === "object" && entry.meta) return null;
     const xp = typeof entry === "object" && entry !== null ? Number(entry.xp) || 0 : Number(entry) || 0;
-    return { map, xp, cls: missionClassOf(entry), entry };
+    return { id: missionId, map, xp, cls: missionClassOf(entry), days: everyDaysOf(entry), entry };
   }
   return null;
 }
@@ -165,6 +184,7 @@ export function missionsOf(catalog, system) {
         map,
         xp: Number.isFinite(numeric) ? numeric : 0,
         cls: missionClassOf(entry),
+        days: everyDaysOf(entry),
         entry
       });
     }

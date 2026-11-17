@@ -375,6 +375,29 @@ existente, exactamente como en ODEA 1.
 
 ---
 
+### 2.3.2 Clase `every:Nd` (misión recurrente por intervalo propio)
+
+Añadida para el Garaje, cuyas misiones no son diarias ni semanales: cada una
+trae su intervalo en días (`MISIONES_BASE[].dias`: 7, 14, 15, 30, 90).
+
+| Aspecto | Regla |
+|---|---|
+| Catálogo | `{ kind: "every", days: N }` con `N` entero > 0. Sin `days` válido cae en `one` |
+| Clave | `id@YYYY-MM-DD` — una completación por fecha, igual que `daily` |
+| Disponibilidad | Vuelve a estar debida cuando pasan **N días desde la última completación** |
+| `period` del registro | La fecha de la completación |
+| Repetir el mismo día | `duplicate` |
+| Adelantarse dentro del ciclo | `NOT_DUE` (rechazo, sin escritura) |
+
+La diferencia con `daily` **no es la clave, es la disponibilidad**. Se eligió
+contar desde la última completación —y no desde una época fija— porque así lo
+hace la fuente: el intervalo del Garaje corre desde la última vez que se hizo.
+
+`systemMissions` expone `lastCompleted` y `dueDate`, de modo que la interfaz
+puede decir cuándo vence en vez de mostrar la misión como pendiente sin motivo.
+
+---
+
 ## 3. Punto 2 — Función única de mutación
 
 ### 3.1 Firma exacta
@@ -918,10 +941,9 @@ Verificado en la fuente: `if (n >= 2) return;` y `st.monedas += 2`.
 debida al cumplirse sus `dias`. No es `daily` ni `weekly`.
 La completación se registra **por ciclo**: `missionId` + fecha del ciclo.
 
-> **Consecuencia técnica, no una pregunta abierta:** las tres clases actuales de
-> idempotencia (`one` / `daily` / `weekly`) no cubren «cada N días». Habilitar
-> Garaje exige una cuarta clase (`every:Nd`) o una decisión explícita que lo
-> reduzca. Queda anotado como requisito de implementación de Fase 4.
+> **Resuelto:** la cuarta clase `every:Nd` está implementada y probada (§2.3.2).
+> El Garaje ya tiene el mecanismo de idempotencia que necesita; lo que falta es
+> activar su catálogo.
 
 ### 9.3 El Mercado — dos catálogos, dos monedas
 
