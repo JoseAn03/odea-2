@@ -31,7 +31,7 @@ import { renderCampaign, renderDaily } from "./campaign-ui.js";
 import { renderShop } from "./shop-ui.js";
 import { equippedLook, shopItem } from "../src/shop.js";
 import { DISTRICTS } from "./districts.js";
-import { clipsRect } from "./city/layout.js";
+import { clipsRect, eventosRect } from "./city/layout.js";
 import { newPlayerBundle } from "../src/new-player.js";
 import {
   TAB_MOCHILA,
@@ -308,6 +308,13 @@ function setWalk(on) {
 }
 
 function openDistrict(id) {
+  if (id === "eventos") {
+    /* La manzana del estadio abre el evento vigente (hoy el SJO Decision
+       Lab portado de ODEA 1) en el panel de campañas. */
+    closePhone();
+    openCampaign("eventos");
+    return;
+  }
   if (id === "gamer" || id === "empleo") {
     closePhone();
     openCampaign(id === "gamer" ? "gamer" : "brete");
@@ -509,7 +516,10 @@ function openCampaign(id, inPhone = false) {
   }
   if (city) {
     if (id === "brete") city.focusDistrict("empleo");
-    else {
+    else if (id === "eventos") {
+      const r = eventosRect();
+      city.camera.jumpTo(r.x + r.w / 2, r.y + r.h / 2, city.camera.clampZoom(0.8));
+    } else {
       const r = clipsRect();
       city.camera.jumpTo(r.x + r.w / 2, r.y + r.h / 2, city.camera.clampZoom(0.8));
     }
