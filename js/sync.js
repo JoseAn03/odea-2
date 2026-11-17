@@ -443,14 +443,13 @@ export function createSyncEngine({ storage, readRawSave, applySave, transport, o
         setStatus("off");
         return;
       }
+      /* UN solo intento silencioso al abrir (corrección pedida por José:
+         «me lo hace dos veces»). El reintento automático de arranque que
+         había desde v0.22.1 repetía el inicio de sesión en cada entrada
+         cuando el primero no renovaba; si este intento no renueva, el
+         juego queda tranquilo y la renovación se reintenta sola, con
+         límite de frecuencia, cuando José vuelve a la app. */
       await reconcile("boot");
-      /* La renovación silenciosa al abrir puede fallar por algo pasajero
-         (la sesión de Google aún cargando, red inestable): un segundo
-         intento solo, sin pedirle nada a José, antes de rendirse. */
-      if (state.status === "needsReconnect") {
-        await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
-        await reconcile("boot");
-      }
     },
     async connect() {
       if (!transport) {

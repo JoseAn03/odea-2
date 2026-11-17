@@ -105,8 +105,12 @@ let storageWatcher = null;
 let syncEngine = null;
 /* Marca del último intento automático de renovación al volver a la app:
    como máximo uno cada 10 minutos, para que entrar y salir del juego
-   nunca se convierta en una ráfaga de intentos contra Google. */
-let lastForegroundSyncTry = 0;
+   nunca se convierta en una ráfaga de intentos contra Google. Arranca en
+   «ahora» (al cargar el módulo): el intento de arranque ya ocurrió, y el
+   visibilitychange que dispara la pantalla de bienvenida al abrir la app
+   instalada no debe sumar un segundo inicio de sesión (José: «me lo hace
+   dos veces»). */
+let lastForegroundSyncTry = Date.now();
 let overlayOpen = false;
 let overlayMode = null; /* "character" | "menu" | "flow" */
 let activeTab = TAB_CITY;
