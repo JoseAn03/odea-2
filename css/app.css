@@ -1202,3 +1202,84 @@ body.no-city #city-canvas { display: none; }
   .hud { padding-left: 24px; padding-right: 24px; }
   .chips { padding-left: 24px; padding-right: 24px; }
 }
+
+/* ------------------------------- mochila ---------------------------------
+ * Recursos e inventario son de CONSULTA: no hay acciones, así que no hay
+ * botones. Los estados se distinguen con texto, no solo con color.
+ */
+
+.resources {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.resource {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: rgba(18, 8, 31, 0.55);
+}
+
+.resource-label {
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.resource-value {
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.item-list {
+  display: grid;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(18, 8, 31, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.item-main {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.item-name {
+  font-size: 0.86rem;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.item-flag {
+  flex: none;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+  color: var(--muted);
+  border: 1px solid var(--line-strong);
+}
+
+.item-flag.is-on {
+  color: var(--cyan);
+  border-color: rgba(0, 229, 255, 0.45);
+  background: rgba(0, 229, 255, 0.08);
+}

@@ -97,14 +97,105 @@ export function renderActive(root, bundle, actions, flash) {
   );
 }
 
+/* ------------------------------- mochila --------------------------------- */
+
+function resourcePill(resource) {
+  return h(
+    "div",
+    { class: "resource" },
+    h("span", { class: "resource-label" }, resource.label),
+    h("strong", { class: "resource-value" }, fmt(resource.value)),
+    resource.hint ? h("span", { class: "sheet-hint" }, resource.hint) : null
+  );
+}
+
+function itemRow(item, { showPower = false } = {}) {
+  const meta = [];
+  if (item.slotLabel) meta.push(item.slotLabel);
+  if (showPower && item.power != null) meta.push(`${fmt(item.power)} de poder`);
+  if (item.precio != null || item.price != null) meta.push(`${fmt(item.precio ?? item.price)} monedas`);
+
+  return h(
+    "div",
+    { class: "item-row" },
+    h(
+      "div",
+      { class: "item-main" },
+      h("span", { class: "item-name" }, item.nombre),
+      meta.length ? h("span", { class: "sheet-hint" }, meta.join(" · ")) : null
+    ),
+    item.equipado
+      ? h("span", { class: "item-flag is-on" }, "Equipado")
+      : item.conocido === false
+        ? h("span", { class: "item-flag" }, "Sin catálogo")
+        : null
+  );
+}
+
+function mochilaSection(title, rows, extra = null) {
+  if (!rows.length) {
+    return [
+      h("h4", { class: "sheet-group" }, title),
+      h("p", { class: "sheet-hint" }, "Sin elementos.")
+    ];
+  }
+  return [h("h4", { class: "sheet-group" }, title), h("div", { class: "item-list" }, ...rows), extra].filter(
+    Boolean
+  );
+}
+
 /**
- * Pantalla «Personaje»: el mismo contenido que «Mi progreso», sin acciones.
- * Exportar e importar viven en «Menú» para que cada destino tenga un propósito.
+ * Pantalla «Mochila»: progreso + inventario, equipo, cosméticos y recursos.
+ *
+ * Todo es CONSULTA: comprar y equipar no están activos en esta fase, así que no
+ * se ofrecen botones que aparenten hacerlo. `inventory` viene proyectado desde
+ * `js/inventory.js`; acá no se calcula nada.
  */
-export function renderCharacter(root, bundle, flash) {
+export function renderMochila(root, bundle, inventory, flash) {
+  const inv = inventory || {
+    equipment: [],
+    equipmentEquipped: [],
+    equipmentStored: [],
+    rewards: [],
+    cosmetics: [],
+    resources: [],
+    readOnly: true
+  };
+
   root.replaceChildren(
     characterCard(bundle, flash, null),
-    notice("Nivel, XP y racha son derivados del historial: no se editan a mano.")
+    card(
+      h("h2", {}, "Recursos"),
+      h("div", { class: "resources" }, ...inv.resources.map(resourcePill))
+    ),
+    card(
+      h("h2", {}, "Equipo"),
+      ...mochilaSection(
+        `Equipado (${inv.equipmentEquipped.length})`,
+        inv.equipmentEquipped.map((item) => itemRow(item, { showPower: true }))
+      ),
+      ...mochilaSection(
+        `Guardado (${inv.equipmentStored.length})`,
+        inv.equipmentStored.map((item) => itemRow(item, { showPower: true }))
+      )
+    ),
+    card(
+      h("h2", {}, "Cosméticos del Tesoro"),
+      h(
+        "p",
+        { class: "muted small" },
+        "Tienda aparte de la del núcleo: sus objetos y sus monedas no se mezclan."
+      ),
+      ...mochilaSection("Propios", inv.cosmetics.map((item) => itemRow(item)))
+    ),
+    card(
+      h("h2", {}, "Recompensas desbloqueadas"),
+      ...mochilaSection("Capa de recompensas", inv.rewards.map((item) => itemRow(item)))
+    ),
+    notice(
+      "La Mochila es de consulta: comprar y equipar todavía no están activos. " +
+        "El nivel, el XP y la racha se derivan del historial y no se editan a mano."
+    )
   );
 }
 

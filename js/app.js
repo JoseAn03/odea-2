@@ -21,11 +21,11 @@ import * as ui from "./ui.js";
 import { buildWorld } from "./city/world.js";
 import { createCityView } from "./city/engine.js";
 import { createViewSession } from "./city/view-session.js";
-import { buildHud } from "./hud.js";
+import { buildHud, buildInventory } from "./hud.js";
 import { buildDistrictPanel } from "./district-figures.js";
 import { renderHud, renderChips, renderSheet, renderTabs } from "./hud-ui.js";
 import {
-  TAB_CHARACTER,
+  TAB_MOCHILA,
   TAB_CITY,
   TAB_MENU,
   TAB_TODAY,
@@ -97,7 +97,7 @@ if (els.version) {
 const actions = {
   pickFile,
   exportBackup,
-  openProgress: () => openCharacter(),
+  openProgress: () => openMochila(),
   acceptQuarantine: handleAcceptQuarantine,
   rejectQuarantine: handleRejectQuarantine,
   resetReimport: handleResetReimport,
@@ -301,7 +301,7 @@ function selectTab(id) {
   /* Salir de la hoja por la barra también termina el recorrido del distrito. */
   if (viewSession) viewSession.restore();
   setTab(tab);
-  if (tab === TAB_CHARACTER) openCharacter();
+  if (tab === TAB_MOCHILA) openMochila();
   else openMenu();
 }
 
@@ -325,10 +325,10 @@ function hideOverlayRaw() {
 }
 
 /** Pantalla «Personaje»: solo lectura del progreso. */
-function openCharacter() {
+function openMochila() {
   overlayMode = "character";
-  els.overlayTitle.textContent = "Personaje";
-  if (bundle) ui.renderCharacter(els.overlayContent, bundle);
+  els.overlayTitle.textContent = "Mochila";
+  if (bundle) ui.renderMochila(els.overlayContent, bundle, buildInventory(bundle, catalog, bundle.core.derived));
   showOverlay();
 }
 
@@ -414,7 +414,7 @@ function refresh() {
     if (overlayMode === "character") {
       const message = flash;
       flash = null;
-      ui.renderCharacter(els.overlayContent, bundle, message);
+      ui.renderMochila(els.overlayContent, bundle, buildInventory(bundle, catalog, bundle.core.derived), message);
     } else if (overlayMode === "menu") {
       ui.renderMenu(els.overlayContent, { version: APP_VERSION, actions });
     }

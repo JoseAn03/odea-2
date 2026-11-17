@@ -10,7 +10,7 @@ import assert from "node:assert/strict";
 import {
   DEFAULT_TAB,
   TABS,
-  TAB_CHARACTER,
+  TAB_MOCHILA,
   TAB_CITY,
   TAB_MENU,
   TAB_TODAY,
@@ -23,11 +23,11 @@ import {
 test("tabs: cuatro destinos en el orden de la guía", () => {
   assert.deepEqual(
     TABS.map((tab) => tab.id),
-    [TAB_CITY, TAB_TODAY, TAB_CHARACTER, TAB_MENU]
+    [TAB_CITY, TAB_TODAY, TAB_MOCHILA, TAB_MENU]
   );
   assert.deepEqual(
     TABS.map((tab) => tab.label),
-    ["Ciudad", "Hoy", "Personaje", "Menú"]
+    ["Ciudad", "Hoy", "Mochila", "Menú"]
   );
 });
 
@@ -50,7 +50,7 @@ test("tabs: solo se muestran con un save activo", () => {
 test("tabs: un id desconocido cae en Ciudad, nunca en una pantalla vacía", () => {
   assert.equal(DEFAULT_TAB, TAB_CITY);
   assert.equal(resolveTab(TAB_MENU), TAB_MENU);
-  assert.equal(resolveTab("personaje"), TAB_CHARACTER);
+  assert.equal(resolveTab("mochila"), TAB_MOCHILA);
   assert.equal(resolveTab("inexistente"), TAB_CITY);
   assert.equal(resolveTab(null), TAB_CITY);
   assert.equal(resolveTab(undefined), TAB_CITY);
