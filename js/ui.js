@@ -66,6 +66,7 @@ export function setVersion(node, version) {
 }
 
 export function renderEmpty(root, actions) {
+  const newName = h("input", { id: "new-player-name", type: "text", maxlength: "60", placeholder: "Tu nombre en Costa Neón", class: "campaign-input" });
   root.replaceChildren(
     h(
       "section",
@@ -82,8 +83,15 @@ export function renderEmpty(root, actions) {
         h("button", { class: "btn primary", onclick: () => actions.pickFile() }, "Importar mi progreso de ODEA 1")
       )
     ),
+    h("section", { class: "card" },
+      h("h2", {}, "Tu primera partida"),
+      h("p", { class: "muted" }, "Si no tenés un progreso anterior, empezá en cero. Las dos campañas se guardan en este dispositivo."),
+      h("label", { for: "new-player-name" }, "Nombre del jugador (opcional)"),
+      newName,
+      h("button", { class: "btn primary", type: "button", onclick: () => actions.startFresh && actions.startFresh(newName.value) }, "Empezar desde cero")
+    ),
     notice(
-      "Nada se envía a ningún servidor. El juego todavía no está construido: esta fase solo verifica que el progreso llega entero."
+      "Tu progreso y tus notas se guardan sólo en este navegador. Exportá un respaldo desde Menú para conservarlos o cambiar de dispositivo."
     )
   );
 }

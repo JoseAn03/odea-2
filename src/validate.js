@@ -27,6 +27,7 @@ import {
 } from "./shape.js";
 import { derive, deriveStreak, isoWeekKey, sourcesFromLegacy, sourcesFromMigrated } from "./derive.js";
 import { missionOf, PHASE3_SYSTEMS } from "./catalog.js";
+import { campaignProblems } from "./campaign-state.js";
 import { occurrenceKey } from "./gameplay.js";
 import { loadOdea2 } from "./storage.js";
 import { legacyProjection, XP_COMPONENTS } from "./migrate.js";
@@ -506,6 +507,7 @@ export function validatePlaySection(bundle2, catalog) {
     }
   }
 
+  problems.push(...campaignProblems(bundle2));
   checks.push(
     check(
       "PLAY_RECORDS",

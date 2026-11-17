@@ -16,6 +16,7 @@
 import { addDays, deriveStreak, epochDayOf, isoWeekKey, localDateKey } from "./derive.js";
 import { missionOf, missionsOf, PHASE3_SYSTEMS } from "./catalog.js";
 import { PLAY_VERSION, RULES_VERSION } from "./shape.js";
+import { applyCampaignMutation } from "./campaign-state.js";
 
 export const ROUTE_SIZE = 3;
 export const DAILY_TOTAL_DAYS = 56;
@@ -357,6 +358,10 @@ export function applyMutation(draft, mutation, catalog, { at, date } = {}) {
   if (!play.completions || typeof play.completions !== "object") play.completions = {};
   if (!play.checkins || typeof play.checkins !== "object") play.checkins = {};
   draft.play = play;
+
+  if (mutation && ["campaign.complete", "application.record"].includes(mutation.type)) {
+    return applyCampaignMutation(draft, mutation, { at: atIso, date: dateKey });
+  }
 
   if (mutation && mutation.type === "hub.checkin") {
     /* El día migrado (`lastDailyDate`) ya está contado en la racha base: un
