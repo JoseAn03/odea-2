@@ -58,8 +58,6 @@ import {
   restoreBundle,
   applyGameplayMutationLocked
 } from "./importer.js";
-import { createSyncEngine, createDriveTransport } from "./sync.js";
-import { DRIVE_CLIENT_ID } from "./sync-config.js";
 
 const MAX_FILE_BYTES = 25 * 1024 * 1024;
 
@@ -166,15 +164,6 @@ function setupKeyboardWalk() {
 let toasts = null;
 let updateWatcher = null;
 let storageWatcher = null;
-let syncEngine = null;
-/* Marca del último intento automático de renovación al volver a la app:
-   como máximo uno cada 10 minutos, para que entrar y salir del juego
-   nunca se convierta en una ráfaga de intentos contra Google. Arranca en
-   «ahora» (al cargar el módulo): el intento de arranque ya ocurrió, y el
-   visibilitychange que dispara la pantalla de bienvenida al abrir la app
-   instalada no debe sumar un segundo inicio de sesión (José: «me lo hace
-   dos veces»). */
-let lastForegroundSyncTry = Date.now();
 let overlayOpen = false;
 let overlayMode = null; /* "character" | "menu" | "flow" */
 let activeTab = TAB_CITY;
@@ -208,11 +197,6 @@ const actions = {
   rejectQuarantine: handleRejectQuarantine,
   resetReimport: handleResetReimport,
   restoreConfirm: handleRestore,
-  syncConnect: () => syncEngine && syncEngine.connect(),
-  syncNow: () => syncEngine && syncEngine.syncNow(),
-  syncDisconnect: () => syncEngine && syncEngine.disconnect(),
-  syncUseCloud: () => syncEngine && syncEngine.useCloud(),
-  syncUseLocal: () => syncEngine && syncEngine.useLocal(),
   cancel: () => {
     flash = null;
     refresh();
@@ -999,8 +983,7 @@ function openMenu() {
   els.overlayTitle.textContent = "Menú";
   ui.renderMenu(els.overlayContent, {
     version: APP_VERSION,
-    actions,
-    sync: syncEngine ? syncEngine.getState() : null
+    actions
   });
   showOverlay();
 }
@@ -1081,8 +1064,7 @@ function refresh() {
     } else if (overlayMode === "menu") {
       ui.renderMenu(els.overlayContent, {
         version: APP_VERSION,
-        actions,
-        sync: syncEngine ? syncEngine.getState() : null
+        actions
       });
     }
     return;
@@ -1109,7 +1091,7 @@ function refresh() {
     ui.renderQuarantine(els.overlayContent, quarantine, actions);
   } else {
     els.overlayTitle.textContent = "Importá tu progreso";
-    ui.renderEmpty(els.overlayContent, actions, syncEngine ? syncEngine.getState() : null);
+    ui.renderEmpty(els.overlayContent, actions);
   }
 
   if (!overlayOpen && !autoOpened) {
@@ -1366,63 +1348,6 @@ function setupStorageWatcher() {
   });
 }
 
-/* --------------------------- sincronización Drive -------------------------- */
-
-/**
- * La sincronización es opcional y nunca bloquea el arranque: el motor se
- * crea con el storage y el catálogo ya listos, intenta conciliar en segundo
- * plano si estaba activada, y observa cambios del save cada 5 s para subir.
- * Bajar una copia pasa por restoreBundle (valida y respalda antes de
- * escribir), la misma ruta que restaurar un respaldo a mano.
- */
-function setupSync() {
-  const transport = DRIVE_CLIENT_ID ? createDriveTransport({ clientId: DRIVE_CLIENT_ID }) : null;
-  syncEngine = createSyncEngine({
-    storage,
-    transport,
-    readRawSave: () => {
-      const current = currentBundle(storage);
-      return current ? JSON.stringify(current) : null;
-    },
-    applySave: (text) => {
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch (error) {
-        throw new Error("La copia de Drive no es un respaldo válido.");
-      }
-      restoreBundle(data, { catalog, storage });
-    },
-    onState: () => {
-      if (overlayOpen && overlayMode === "menu") {
-        ui.renderMenu(els.overlayContent, {
-          version: APP_VERSION,
-          actions,
-          sync: syncEngine.getState()
-        });
-      } else if (!bundle && overlayOpen) {
-        /* La pantalla sin partida muestra el estado de la recuperación. */
-        refresh();
-      }
-    },
-    onPulled: ({ conflict }) => {
-      closeSheet();
-      refresh();
-      if (toasts) {
-        toasts.show(
-          conflict
-            ? "Conflicto resuelto: se aplicó la copia de Drive y la de este aparato quedó guardada en Drive."
-            : "Progreso sincronizado desde Drive.",
-          { tone: "ok" }
-        );
-      }
-    }
-  });
-  syncEngine.init();
-  setInterval(() => syncEngine.notifyChanged(), 5000);
-  window.addEventListener("online", () => syncEngine.syncNow());
-}
-
 /* --------------------------------- arranque ------------------------------- */
 
 async function boot() {
@@ -1513,29 +1438,17 @@ async function boot() {
   }
 
   refresh();
-  setupSync();
+  /* La sincronización con Google Drive se retiró a pedido de José
+     (v0.27.0): el respaldo es manual, exportando el archivo. Se borra la
+     metadata que la sync dejó en este aparato; la partida no se toca. */
+  try { localStorage.removeItem("odea2_sync_v1"); } catch (_) { /* sin storage */ }
   setupServiceWorker();
 
   /* La luz depende de la hora: se revisa cada 5 minutos y al volver a la app,
      porque un teléfono puede quedar en segundo plano toda la tarde. */
   setInterval(applyAmbience, 5 * 60 * 1000);
   document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) {
-      applyAmbience();
-      /* Si la sesión de Google quedó esperando reconexión, al volver a la
-         app se intenta renovar EN SILENCIO (prompt "none": sin ninguna
-         pantalla de inicio de sesión), como máximo una vez cada 10
-         minutos. Si Google no renueva solo, el juego se queda tranquilo:
-         la reconexión manual vive en el Menú, cuando José la quiera. */
-      if (
-        syncEngine &&
-        syncEngine.getState().status === "needsReconnect" &&
-        Date.now() - lastForegroundSyncTry > 10 * 60 * 1000
-      ) {
-        lastForegroundSyncTry = Date.now();
-        syncEngine.syncNow();
-      }
-    }
+    if (!document.hidden) applyAmbience();
   });
 }
 
