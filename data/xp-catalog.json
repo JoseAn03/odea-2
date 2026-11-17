@@ -105,842 +105,1850 @@
     "1A": {
       "xp": 60,
       "day": 1,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Radiografía de tu perfil actual",
+      "description": "Auditar tu CV, LinkedIn y portafolio actuales con lupa de reclutador. Listar qué falta para competir por roles de datos/marketing.",
+      "time": 45,
+      "verification": "Lista de brechas de tu perfil actual",
+      "category": "employability",
+      "week": 1
     },
     "1B": {
       "xp": 150,
       "day": 1,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ CV Maestro 2.0",
+      "description": "Reescribir tu CV con métricas en cada logro, formato ATS-friendly, una página si es posible, versión en español y en inglés.",
+      "time": 120,
+      "verification": "2 versiones de CV (ES/EN) finales y pulidas",
+      "category": "employability",
+      "week": 1
     },
     "1C": {
       "xp": 50,
       "day": 1,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 CV listo y verificado",
+      "description": "Pasar tu CV por un escáner ATS y verificar que los roles clave (data analyst, marketing analytics) aparezcan con keywords.",
+      "time": 30,
+      "verification": "CV verificado en ATS con keywords",
+      "category": "employability",
+      "week": 1
     },
     "2A": {
       "xp": 60,
       "day": 2,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 LinkedIn que vende",
+      "description": "Estudiar 5 perfiles de analistas de datos/marketing que ya trabajan. Identificar qué estructura, keywords y pruebas usan.",
+      "time": 45,
+      "verification": "5 perfiles analizados con aprendizajes",
+      "category": "employability",
+      "week": 1
     },
     "2B": {
       "xp": 160,
       "day": 2,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Optimizar LinkedIn 10/10",
+      "description": "Reescribir tu headline con keywords, banner, 'about' con historia y métricas, featured con tus proyectos y lista de skills.",
+      "time": 120,
+      "verification": "Perfil de LinkedIn revisado con checklist completa",
+      "category": "employability",
+      "week": 1
     },
     "2C": {
       "xp": 50,
       "day": 2,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 Perfil 10/10 verificado",
+      "description": "Pedir feedback de tu LinkedIn a 1 persona y ajustar lo que detecte.",
+      "time": 30,
+      "verification": "Feedback recibido y aplicado",
+      "category": "employability",
+      "week": 1
     },
     "3A": {
       "xp": 60,
       "day": 3,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Portafolio que impresiona",
+      "description": "Estudiar 3 portafolios de analistas que consiguieron trabajo. Definir la estructura del tuyo (GitHub Pages, Notion o landing).",
+      "time": 45,
+      "verification": "Estructura de portafolio definida",
+      "category": "employability",
+      "week": 1
     },
     "3B": {
       "xp": 170,
       "day": 3,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Montar tu portafolio",
+      "description": "Crear tu portafolio con 3 secciones: sobre mí, proyectos (con impacto medible) y contacto. Publicarlo en un enlace real.",
+      "time": 150,
+      "verification": "Portafolio publicado con enlace real",
+      "category": "employability",
+      "week": 1
     },
     "3C": {
       "xp": 50,
       "day": 3,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 Portafolio vivo",
+      "description": "Agregar tu primer proyecto real (aunque sea pequeño) y verificar que cargue bien en móvil.",
+      "time": 30,
+      "verification": "Portafolio con 1 proyecto y responsive",
+      "category": "employability",
+      "week": 1
     },
     "4A": {
       "xp": 60,
       "day": 4,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Tu lista de 30 empresas objetivo",
+      "description": "Definir los criterios para elegir 30 empresas (CR + remoto) con fit real: sector, stack, cultura y por qué te interesan.",
+      "time": 45,
+      "verification": "Criterios de selección definidos",
+      "category": "employability",
+      "week": 1
     },
     "4B": {
       "xp": 160,
       "day": 4,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Construir la lista de 30",
+      "description": "Documentar 30 empresas objetivo en tu tracker: sector, puesto, stack, contacto, link y por qué te interesa.",
+      "time": 120,
+      "verification": "30 empresas documentadas en tu tracker",
+      "category": "employability",
+      "week": 1
     },
     "4C": {
       "xp": 50,
       "day": 4,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 Lista priorizada",
+      "description": "Ordenar tus 30 empresas por fit y probabilidad (top 10 primero) para saber dónde atacar primero.",
+      "time": 30,
+      "verification": "Top 10 priorizado",
+      "category": "employability",
+      "week": 1
     },
     "5A": {
       "xp": 60,
       "day": 5,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Keywords ATS y roles",
+      "description": "Investigar qué keywords piden las vacantes de data analyst y marketing analytics: SQL, Python, Power BI, métricas, etc.",
+      "time": 45,
+      "verification": "Lista de keywords por rol",
+      "category": "employability",
+      "week": 1
     },
     "5B": {
       "xp": 160,
       "day": 5,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Adaptar CV por sector (3 versiones)",
+      "description": "Crear 3 versiones de CV: data analyst, marketing analytics y soporte/BI, con keywords distintas cada una.",
+      "time": 120,
+      "verification": "3 CVs sectoriales listos",
+      "category": "employability",
+      "week": 1
     },
     "5C": {
       "xp": 50,
       "day": 5,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 3 CVs sectoriales",
+      "description": "Verificar que cada CV sectorial pase el filtro de keywords de su rol.",
+      "time": 30,
+      "verification": "3 CVs verificados por keywords",
+      "category": "employability",
+      "week": 1
     },
     "6A": {
       "xp": 60,
       "day": 6,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Pitch de 30 segundos",
+      "description": "Escribir tu elevator pitch: quién sos, qué sabés hacer y qué buscás, con una prueba concreta de valor.",
+      "time": 45,
+      "verification": "Pitch de 30 segundos escrito",
+      "category": "employability",
+      "week": 1
     },
     "6B": {
       "xp": 120,
       "day": 6,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Grabar tu pitch y refinarlo",
+      "description": "Grabarte diciendo tu pitch en 30 segundos, escucharlo y pulirlo hasta que suene natural y seguro.",
+      "time": 60,
+      "verification": "Grabación de pitch refinada",
+      "category": "employability",
+      "week": 1
     },
     "6C": {
       "xp": 50,
       "day": 6,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 Pitch memorizado",
+      "description": "Decir tu pitch de memoria 5 veces sin titubear. Tenerlo listo para llamadas y entrevistas.",
+      "time": 30,
+      "verification": "Pitch dicho 5 veces de memoria",
+      "category": "employability",
+      "week": 1
     },
     "7A": {
       "xp": 60,
       "day": 7,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Tracker maestro de búsqueda",
+      "description": "Diseñar tu hoja de seguimiento: empresa, puesto, fecha, estado, salario, contacto, link y notas.",
+      "time": 45,
+      "verification": "Estructura del tracker definida",
+      "category": "employability",
+      "week": 1
     },
     "7B": {
       "xp": 150,
       "day": 7,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Montar el tracker",
+      "description": "Crear tu tracker con 50 filas listas para usar, con filtros y métricas (respuestas, entrevistas, tasa de conversión).",
+      "time": 90,
+      "verification": "Tracker con 50 filas operativo",
+      "category": "employability",
+      "week": 1
     },
     "7C": {
       "xp": 100,
       "day": 7,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 Semana 1 consolidada",
+      "description": "Repasar la semana: perfil listo (CV, LinkedIn, portafolio, pitch, lista y tracker). Confirmar que podés postular desde mañana.",
+      "time": 30,
+      "verification": "Checklist de la semana 1 completado",
+      "category": "employability",
+      "week": 1
     },
     "8A": {
       "xp": 60,
       "day": 8,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Contenido que atrae reclutadores",
+      "description": "Estudiar qué publican los analistas que destacan en LinkedIn: historias, resultados, mini-casos y opiniones.",
+      "time": 45,
+      "verification": "3 ejemplos de contenido analizados",
+      "category": "employability",
+      "week": 2
     },
     "8B": {
       "xp": 150,
       "day": 8,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Publicar post #1 (historia + resultado)",
+      "description": "Escribir y publicar tu primer post contando un aprendizaje o resultado de tus proyectos (datos + historia).",
+      "time": 90,
+      "verification": "Post #1 publicado en LinkedIn",
+      "category": "employability",
+      "week": 2
     },
     "8C": {
       "xp": 50,
       "day": 8,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 Post publicado + métricas",
+      "description": "Registrar el post y revisar sus métricas (views, reacciones, comentarios) para aprender qué funciona.",
+      "time": 30,
+      "verification": "Métricas del post registradas",
+      "category": "employability",
+      "week": 2
     },
     "9A": {
       "xp": 60,
       "day": 9,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Estudio de caso de datos",
+      "description": "Aprender a contar un caso: problema → proceso → resultado medible. Elegir uno de tus proyectos reales.",
+      "time": 45,
+      "verification": "Caso elegido y estructurado",
+      "category": "employability",
+      "week": 2
     },
     "9B": {
       "xp": 160,
       "day": 9,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Publicar mini caso (SQL/Power BI/A-B test)",
+      "description": "Publicar un mini caso práctico con el proceso y el resultado, incluyendo una visual.",
+      "time": 90,
+      "verification": "Mini caso publicado con visual",
+      "category": "employability",
+      "week": 2
     },
     "9C": {
       "xp": 50,
       "day": 9,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 Caso publicado",
+      "description": "Responder comentarios y agradecer interacciones. Registrar métricas.",
+      "time": 30,
+      "verification": "Comentarios respondidos",
+      "category": "employability",
+      "week": 2
     },
     "10A": {
       "xp": 60,
       "day": 10,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Documentar tu proyecto estrella",
+      "description": "Elegir tu proyecto insignia y documentar su impacto real (antes/después, métricas, decisión que habilitó).",
+      "time": 45,
+      "verification": "Proyecto estrella documentado",
+      "category": "employability",
+      "week": 2
     },
     "10B": {
       "xp": 170,
       "day": 10,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Publicar post de tu proyecto insignia",
+      "description": "Publicar el caso de tu proyecto estrella con visual e impacto medible. Etiquetar personas o empresas relevantes.",
+      "time": 90,
+      "verification": "Post del proyecto publicado",
+      "category": "employability",
+      "week": 2
     },
     "10C": {
       "xp": 50,
       "day": 10,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 Proyecto publicado + etiquetado",
+      "description": "Verificar que el post tenga etiquetas correctas y registrar métricas.",
+      "time": 30,
+      "verification": "Etiquetas y métricas registradas",
+      "category": "employability",
+      "week": 2
     },
     "11A": {
       "xp": 60,
       "day": 11,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Repost + comentar líderes",
+      "description": "Identificar 5 líderes/empresas de datos y marketing que seguís y en cuyas publicaciones podés aportar valor.",
+      "time": 45,
+      "verification": "5 líderes identificados",
+      "category": "employability",
+      "week": 2
     },
     "11B": {
       "xp": 140,
       "day": 11,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Comentar 5 posts de líderes",
+      "description": "Dejar 5 comentarios con valor real (no 'buen post') en publicaciones de líderes y empresas objetivo.",
+      "time": 60,
+      "verification": "5 comentarios de valor publicados",
+      "category": "employability",
+      "week": 2
     },
     "11C": {
       "xp": 50,
       "day": 11,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 5 comentarios de valor",
+      "description": "Registrar con quién interactuaste y seguir a quienes respondieron.",
+      "time": 30,
+      "verification": "Interacciones registradas",
+      "category": "employability",
+      "week": 2
     },
     "12A": {
       "xp": 60,
       "day": 12,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Pieza de portafolio (dashboard)",
+      "description": "Planear un dashboard público (Power BI o similar) que demuestre tu capacidad de análisis.",
+      "time": 45,
+      "verification": "Plan del dashboard definido",
+      "category": "employability",
+      "week": 2
     },
     "12B": {
       "xp": 170,
       "day": 12,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Crear dashboard público",
+      "description": "Construir un dashboard con datos reales y publicarlo con un enlace compartible para tu portafolio.",
+      "time": 120,
+      "verification": "Dashboard publicado con enlace",
+      "category": "employability",
+      "week": 2
     },
     "12C": {
       "xp": 50,
       "day": 12,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 Dashboard en portafolio",
+      "description": "Agregar el dashboard a tu portafolio y LinkedIn con una frase de impacto.",
+      "time": 30,
+      "verification": "Dashboard en portafolio y LinkedIn",
+      "category": "employability",
+      "week": 2
     },
     "13A": {
       "xp": 60,
       "day": 13,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Post de opinión de mercado",
+      "description": "Formar tu opinión sobre el mercado de datos/marketing en CR: salarios, demanda, tendencias.",
+      "time": 45,
+      "verification": "Opinión estructurada",
+      "category": "employability",
+      "week": 2
     },
     "13B": {
       "xp": 150,
       "day": 13,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Publicar tu opinión del mercado",
+      "description": "Publicar tu post de opinión con datos que la respalden.",
+      "time": 90,
+      "verification": "Post de opinión publicado",
+      "category": "employability",
+      "week": 2
     },
     "13C": {
       "xp": 50,
       "day": 13,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 Post de opinión publicado",
+      "description": "Responder comentarios y registrar métricas.",
+      "time": 30,
+      "verification": "Métricas registradas",
+      "category": "employability",
+      "week": 2
     },
     "14A": {
       "xp": 60,
       "day": 14,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Repaso de la semana de contenido",
+      "description": "Revisar qué contenido funcionó mejor esta semana y qué tema dio más interacción.",
+      "time": 45,
+      "verification": "Resumen de la semana de contenido",
+      "category": "employability",
+      "week": 2
     },
     "14B": {
       "xp": 180,
       "day": 14,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Publicar video corto (caso de éxito)",
+      "description": "Grabar y publicar un video corto explicando tu proyecto insignia y su impacto.",
+      "time": 120,
+      "verification": "Video publicado en LinkedIn",
+      "category": "employability",
+      "week": 2
     },
     "14C": {
       "xp": 100,
       "day": 14,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 Semana 2 consolidada",
+      "description": "Confirmar que publicaste 4+ veces esta semana y que tu marca es visible.",
+      "time": 30,
+      "verification": "Checklist de la semana 2 completado",
+      "category": "employability",
+      "week": 2
     },
     "15A": {
       "xp": 60,
       "day": 15,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Cómo postular con calidad",
+      "description": "Estudiar qué hace que una aplicación destaque: CV adaptado, cover letter breve y mensaje al reclutador.",
+      "time": 45,
+      "verification": "Notas de postulación de calidad",
+      "category": "employability",
+      "week": 3
     },
     "15B": {
       "xp": 160,
       "day": 15,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Ronda 1: enviar 5 aplicaciones",
+      "description": "Enviar 5 aplicaciones personalizadas (CV adaptado + cover letter) a ofertas reales de tu lista.",
+      "time": 120,
+      "verification": "5 aplicaciones enviadas y registradas",
+      "category": "employability",
+      "week": 3
     },
     "15C": {
       "xp": 50,
       "day": 15,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 5 aplicaciones registradas",
+      "description": "Registrar cada aplicación en tu tracker con estado y fecha de seguimiento.",
+      "time": 30,
+      "verification": "5 aplicaciones en el tracker",
+      "category": "employability",
+      "week": 3
     },
     "16A": {
       "xp": 60,
       "day": 16,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Cover letters que destacan",
+      "description": "Aprender a escribir cover letters que no repitan el CV: qué problema resuelves y por qué esa empresa.",
+      "time": 45,
+      "verification": "Notas de cover letters",
+      "category": "employability",
+      "week": 3
     },
     "16B": {
       "xp": 150,
       "day": 16,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Escribir 3 plantillas de cover letter",
+      "description": "Crear 3 plantillas: data analyst, marketing analytics y soporte/BI, con huecos para personalizar.",
+      "time": 120,
+      "verification": "3 plantillas de cover letter listas",
+      "category": "employability",
+      "week": 3
     },
     "16C": {
       "xp": 50,
       "day": 16,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 3 plantillas listas",
+      "description": "Verificar que cada plantilla tiene gancho de apertura y cierre con llamado a la acción.",
+      "time": 30,
+      "verification": "Plantillas revisadas",
+      "category": "employability",
+      "week": 3
     },
     "17A": {
       "xp": 60,
       "day": 17,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Ronda 2: apuntar con más precisión",
+      "description": "Elegir 5 vacantes de tu top 10 con mejor fit y preparar una personalización específica para cada una.",
+      "time": 45,
+      "verification": "5 vacantes elegidas",
+      "category": "employability",
+      "week": 3
     },
     "17B": {
       "xp": 160,
       "day": 17,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Ronda 2: +5 aplicaciones",
+      "description": "Enviar 5 aplicaciones más personalizadas a las vacantes elegidas.",
+      "time": 120,
+      "verification": "10 aplicaciones acumuladas",
+      "category": "employability",
+      "week": 3
     },
     "17C": {
       "xp": 50,
       "day": 17,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 10 aplicaciones acumuladas",
+      "description": "Actualizar el tracker con las nuevas aplicaciones.",
+      "time": 30,
+      "verification": "Tracker actualizado (10)",
+      "category": "employability",
+      "week": 3
     },
     "18A": {
       "xp": 60,
       "day": 18,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Mensajes personalizados a reclutadores",
+      "description": "Aprender a escribir mensajes cortos a reclutadores que acompañan una aplicación.",
+      "time": 45,
+      "verification": "Plantilla de mensaje a reclutador",
+      "category": "employability",
+      "week": 3
     },
     "18B": {
       "xp": 160,
       "day": 18,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Ronda 3: +5 aplicaciones con mensaje",
+      "description": "Enviar 5 aplicaciones más, cada una con mensaje personalizado al reclutador.",
+      "time": 120,
+      "verification": "15 aplicaciones acumuladas",
+      "category": "employability",
+      "week": 3
     },
     "18C": {
       "xp": 50,
       "day": 18,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 15 aplicaciones acumuladas",
+      "description": "Actualizar el tracker y anotar qué mensajes tuvieron respuesta.",
+      "time": 30,
+      "verification": "Tracker actualizado (15)",
+      "category": "employability",
+      "week": 3
     },
     "19A": {
       "xp": 60,
       "day": 19,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Automatizar alertas de empleo",
+      "description": "Aprender a configurar alertas automáticas de empleo para no perder vacantes.",
+      "time": 45,
+      "verification": "Notas de alertas de empleo",
+      "category": "employability",
+      "week": 3
     },
     "19B": {
       "xp": 140,
       "day": 19,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Configurar alertas (LinkedIn + n8n)",
+      "description": "Configurar tus alertas diarias (jobbot LinkedIn + n8n APIs) y revisar ofertas nuevas cada mañana 15 minutos.",
+      "time": 90,
+      "verification": "Alertas activas y rutina diaria",
+      "category": "employability",
+      "week": 3
     },
     "19C": {
       "xp": 50,
       "day": 19,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 Alertas activas",
+      "description": "Verificar que las alertas llegan y que las revisás cada mañana.",
+      "time": 30,
+      "verification": "Alertas funcionando",
+      "category": "employability",
+      "week": 3
     },
     "20A": {
       "xp": 60,
       "day": 20,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Ronda 4: empresas con networking",
+      "description": "Elegir 5 vacantes de empresas donde ya hiciste networking o tenés contacto.",
+      "time": 45,
+      "verification": "5 vacantes con contacto",
+      "category": "employability",
+      "week": 3
     },
     "20B": {
       "xp": 160,
       "day": 20,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Ronda 4: +5 aplicaciones",
+      "description": "Enviar 5 aplicaciones más, mencionando tu contacto o networking en el mensaje.",
+      "time": 120,
+      "verification": "20 aplicaciones acumuladas",
+      "category": "employability",
+      "week": 3
     },
     "20C": {
       "xp": 50,
       "day": 20,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 20 aplicaciones acumuladas",
+      "description": "Actualizar el tracker con las nuevas aplicaciones.",
+      "time": 30,
+      "verification": "Tracker actualizado (20)",
+      "category": "employability",
+      "week": 3
     },
     "21A": {
       "xp": 60,
       "day": 21,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Analizar tu tracker",
+      "description": "Revisar tu tracker: qué canales responden mejor y ajustar tu estrategia de postulación.",
+      "time": 45,
+      "verification": "Análisis del tracker escrito",
+      "category": "employability",
+      "week": 3
     },
     "21B": {
       "xp": 160,
       "day": 21,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Ronda 5: +5 aplicaciones",
+      "description": "Enviar 5 aplicaciones más con tu estrategia ajustada.",
+      "time": 120,
+      "verification": "25 aplicaciones acumuladas",
+      "category": "employability",
+      "week": 3
     },
     "21C": {
       "xp": 100,
       "day": 21,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 Semana 3 consolidada",
+      "description": "Confirmar 25 aplicaciones y métricas de la semana registradas.",
+      "time": 30,
+      "verification": "Checklist de la semana 3 completado",
+      "category": "employability",
+      "week": 3
     },
     "22A": {
       "xp": 60,
       "day": 22,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Networking cálido",
+      "description": "Identificar 10 personas de tu red existente que pueden ayudarte (excompañeros, conocidos en empresas objetivo).",
+      "time": 45,
+      "verification": "10 personas cálidas identificadas",
+      "category": "employability",
+      "week": 4
     },
     "22B": {
       "xp": 150,
       "day": 22,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Contactar 5 personas cálidas",
+      "description": "Enviar 5 mensajes de contacto personalizados (no plantilla) a personas de tu red.",
+      "time": 90,
+      "verification": "5 mensajes de contacto enviados",
+      "category": "employability",
+      "week": 4
     },
     "22C": {
       "xp": 50,
       "day": 22,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 5 conversaciones iniciadas",
+      "description": "Registrar las conversaciones iniciadas y su estado.",
+      "time": 30,
+      "verification": "5 conversaciones registradas",
+      "category": "employability",
+      "week": 4
     },
     "23A": {
       "xp": 60,
       "day": 23,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Mensajes de conexión que responden",
+      "description": "Estudiar cómo escribir mensajes de conexión en LinkedIn que de verdad obtienen respuesta.",
+      "time": 45,
+      "verification": "Plantilla de conexión lista",
+      "category": "employability",
+      "week": 4
     },
     "23B": {
       "xp": 150,
       "day": 23,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Enviar 10 mensajes de conexión",
+      "description": "Enviar 10 mensajes personalizados a profesionales de datos/marketing de tus empresas objetivo.",
+      "time": 90,
+      "verification": "10 conexiones solicitadas",
+      "category": "employability",
+      "week": 4
     },
     "23C": {
       "xp": 50,
       "day": 23,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 10 conexiones solicitadas",
+      "description": "Registrar las conexiones y quiénes aceptaron.",
+      "time": 30,
+      "verification": "Conexiones registradas",
+      "category": "employability",
+      "week": 4
     },
     "24A": {
       "xp": 60,
       "day": 24,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Recruiters nearshore",
+      "description": "Investigar recruiters tech y de datos (CR + LATAM) que colocan roles de analista.",
+      "time": 45,
+      "verification": "Lista de recruiters objetivo",
+      "category": "employability",
+      "week": 4
     },
     "24B": {
       "xp": 150,
       "day": 24,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Contactar 5 recruiters",
+      "description": "Enviar 5 mensajes a recruiters presentándote y pidiendo consejo o agendando una charla corta.",
+      "time": 90,
+      "verification": "5 recruiters contactados",
+      "category": "employability",
+      "week": 4
     },
     "24C": {
       "xp": 50,
       "day": 24,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 5 recruiters contactados",
+      "description": "Registrar la respuesta de cada recruiter.",
+      "time": 30,
+      "verification": "Respuestas registradas",
+      "category": "employability",
+      "week": 4
     },
     "25A": {
       "xp": 60,
       "day": 25,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Entrevista informativa",
+      "description": "Preparar 5 preguntas para una entrevista informativa con un analista o manager de datos.",
+      "time": 45,
+      "verification": "5 preguntas preparadas",
+      "category": "employability",
+      "week": 4
     },
     "25B": {
       "xp": 160,
       "day": 25,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Entrevista informativa #1",
+      "description": "Conversar 15 minutos con un analista o manager de datos sobre su rol, equipo y cómo entró.",
+      "time": 60,
+      "verification": "Entrevista informativa realizada",
+      "category": "employability",
+      "week": 4
     },
     "25C": {
       "xp": 50,
       "day": 25,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 Entrevista informativa registrada",
+      "description": "Registrar lo aprendido y agradecer a la persona.",
+      "time": 30,
+      "verification": "Notas de la entrevista + agradecimiento",
+      "category": "employability",
+      "week": 4
     },
     "26A": {
       "xp": 60,
       "day": 26,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Eventos de datos",
+      "description": "Buscar meetups, webinars o conferencias de datos (virtual o presencial) esta semana.",
+      "time": 45,
+      "verification": "Evento elegido",
+      "category": "employability",
+      "week": 4
     },
     "26B": {
       "xp": 150,
       "day": 26,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Asistir a un evento de datos",
+      "description": "Asistir al evento y participar activamente (preguntar, comentar).",
+      "time": 90,
+      "verification": "Evento asistido",
+      "category": "employability",
+      "week": 4
     },
     "26C": {
       "xp": 50,
       "day": 26,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 Evento + 3 contactos",
+      "description": "Registrar 3+ contactos nuevos hechos en el evento.",
+      "time": 30,
+      "verification": "3 contactos nuevos registrados",
+      "category": "employability",
+      "week": 4
     },
     "27A": {
       "xp": 60,
       "day": 27,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Pedir referidos",
+      "description": "Identificar 3 contactos a quienes pedir referido y preparar cómo pedirlo.",
+      "time": 45,
+      "verification": "3 contactos para referido",
+      "category": "employability",
+      "week": 4
     },
     "27B": {
       "xp": 150,
       "day": 27,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Pedir 3 referidos",
+      "description": "Pedir referidos o recomendaciones a 3 contactos en empresas objetivo.",
+      "time": 60,
+      "verification": "3 referidos solicitados",
+      "category": "employability",
+      "week": 4
     },
     "27C": {
       "xp": 50,
       "day": 27,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 3 referidos solicitados",
+      "description": "Registrar el estado de cada referido.",
+      "time": 30,
+      "verification": "Referidos registrados",
+      "category": "employability",
+      "week": 4
     },
     "28A": {
       "xp": 60,
       "day": 28,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Repaso networking",
+      "description": "Revisar el progreso de networking de la semana: qué funcionó y qué ajustar.",
+      "time": 45,
+      "verification": "Resumen de networking",
+      "category": "employability",
+      "week": 4
     },
     "28B": {
       "xp": 160,
       "day": 28,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Entrevista informativa #2",
+      "description": "Segunda entrevista informativa, esta vez en una empresa de tu lista top 10.",
+      "time": 60,
+      "verification": "2ª entrevista informativa realizada",
+      "category": "employability",
+      "week": 4
     },
     "28C": {
       "xp": 100,
       "day": 28,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 Semana 4 consolidada",
+      "description": "Confirmar networking de la semana registrado y agradecimientos enviados.",
+      "time": 30,
+      "verification": "Checklist de la semana 4 completado",
+      "category": "employability",
+      "week": 4
     },
     "29A": {
       "xp": 60,
       "day": 29,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Banco de 50 preguntas",
+      "description": "Armar tu banco de 50 preguntas técnicas y conductuales comunes para roles de datos/marketing.",
+      "time": 45,
+      "verification": "Banco de 50 preguntas armado",
+      "category": "employability",
+      "week": 5
     },
     "29B": {
       "xp": 160,
       "day": 29,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Responder 25 preguntas por escrito",
+      "description": "Responder 25 preguntas del banco por escrito con tus métricas (STAR).",
+      "time": 120,
+      "verification": "25 respuestas escritas",
+      "category": "employability",
+      "week": 5
     },
     "29C": {
       "xp": 50,
       "day": 29,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 25 respuestas listas",
+      "description": "Revisar que cada respuesta tenga un resultado medible.",
+      "time": 30,
+      "verification": "Respuestas revisadas",
+      "category": "employability",
+      "week": 5
     },
     "30A": {
       "xp": 60,
       "day": 30,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Método STAR",
+      "description": "Dominar el método STAR (Situación, Tarea, Acción, Resultado) para contar logros.",
+      "time": 45,
+      "verification": "Notas del método STAR",
+      "category": "employability",
+      "week": 5
     },
     "30B": {
       "xp": 160,
       "day": 30,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Responder otras 25 preguntas (STAR)",
+      "description": "Responder las 25 restantes usando STAR con métricas reales.",
+      "time": 120,
+      "verification": "50 respuestas listas",
+      "category": "employability",
+      "week": 5
     },
     "30C": {
       "xp": 50,
       "day": 30,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 50 respuestas listas",
+      "description": "Tener tu banco completo listo para entrevistas.",
+      "time": 30,
+      "verification": "Banco de 50 completo",
+      "category": "employability",
+      "week": 5
     },
     "31A": {
       "xp": 60,
       "day": 31,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Simulacro técnico",
+      "description": "Preparar un simulacro técnico: SQL + Python + estadística para roles de datos.",
+      "time": 45,
+      "verification": "Temario del simulacro",
+      "category": "employability",
+      "week": 5
     },
     "31B": {
       "xp": 160,
       "day": 31,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Simulacro IA #1 (SQL + Python)",
+      "description": "Hacer una entrevista técnica simulada con IA y anotar errores.",
+      "time": 120,
+      "verification": "Simulacro 1 completado con notas",
+      "category": "employability",
+      "week": 5
     },
     "31C": {
       "xp": 50,
       "day": 31,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 Simulacro 1 + correcciones",
+      "description": "Corregir los errores detectados en el simulacro.",
+      "time": 30,
+      "verification": "Errores corregidos",
+      "category": "employability",
+      "week": 5
     },
     "32A": {
       "xp": 60,
       "day": 32,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Tu historia en 2 minutos",
+      "description": "Escribir tu presentación de 2 minutos: quién sos, qué lograste y qué buscás.",
+      "time": 45,
+      "verification": "Presentación de 2 min escrita",
+      "category": "employability",
+      "week": 5
     },
     "32B": {
       "xp": 120,
       "day": 32,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Grabar tu presentación y pulirla",
+      "description": "Grabarte contando tu historia en 2 minutos y pulirla hasta que suene natural.",
+      "time": 60,
+      "verification": "Grabación de presentación refinada",
+      "category": "employability",
+      "week": 5
     },
     "32C": {
       "xp": 50,
       "day": 32,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 Presentación de 2 min lista",
+      "description": "Decir tu presentación de memoria 3 veces sin titubear.",
+      "time": 30,
+      "verification": "Presentación memorizada",
+      "category": "employability",
+      "week": 5
     },
     "33A": {
       "xp": 60,
       "day": 33,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Agenda y logística de entrevista",
+      "description": "Preparar la logística: agenda, Zoom/Meet, cámara, luz y fondo.",
+      "time": 45,
+      "verification": "Logística lista",
+      "category": "employability",
+      "week": 5
     },
     "33B": {
       "xp": 160,
       "day": 33,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Agendar una entrevista real",
+      "description": "Responder a invitaciones y agendar una entrevista real esta semana.",
+      "time": 60,
+      "verification": "Entrevista real agendada",
+      "category": "employability",
+      "week": 5
     },
     "33C": {
       "xp": 50,
       "day": 33,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 Entrevista real agendada",
+      "description": "Confirmar fecha y preparar tu pitch + 3 preguntas para ellos.",
+      "time": 30,
+      "verification": "Entrevista confirmada",
+      "category": "employability",
+      "week": 5
     },
     "34A": {
       "xp": 60,
       "day": 34,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Simulacro de caso de negocio",
+      "description": "Preparar un caso de negocio típico de marketing analytics (métrica que baja, ¿qué haces?).",
+      "time": 45,
+      "verification": "Caso preparado",
+      "category": "employability",
+      "week": 5
     },
     "34B": {
       "xp": 160,
       "day": 34,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Simulacro de caso + feedback",
+      "description": "Resolver el caso en voz alta y pedir feedback.",
+      "time": 120,
+      "verification": "Caso resuelto con feedback",
+      "category": "employability",
+      "week": 5
     },
     "34C": {
       "xp": 50,
       "day": 34,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 Caso simulado listo",
+      "description": "Registrar aprendizajes del caso.",
+      "time": 30,
+      "verification": "Aprendizajes registrados",
+      "category": "employability",
+      "week": 5
     },
     "35A": {
       "xp": 60,
       "day": 35,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Repaso entrevistas",
+      "description": "Revisar tu banco de respuestas y casos esta semana.",
+      "time": 45,
+      "verification": "Repaso completado",
+      "category": "employability",
+      "week": 5
     },
     "35B": {
       "xp": 160,
       "day": 35,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Mock final con alguien",
+      "description": "Hacer un mock completo de entrevista con una persona real.",
+      "time": 90,
+      "verification": "Mock final realizado",
+      "category": "employability",
+      "week": 5
     },
     "35C": {
       "xp": 100,
       "day": 35,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 Semana 5 consolidada",
+      "description": "Confirmar preparación de entrevistas completa.",
+      "time": 30,
+      "verification": "Checklist de la semana 5 completado",
+      "category": "employability",
+      "week": 5
     },
     "36A": {
       "xp": 60,
       "day": 36,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Estrategia de volumen + calidad",
+      "description": "Revisar tu estrategia: cuántas aplicaciones por semana y qué canales priorizar.",
+      "time": 45,
+      "verification": "Estrategia ajustada",
+      "category": "employability",
+      "week": 6
     },
     "36B": {
       "xp": 160,
       "day": 36,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Ronda 6: +5 aplicaciones",
+      "description": "Enviar 5 aplicaciones más con tu estrategia ajustada.",
+      "time": 120,
+      "verification": "30 aplicaciones acumuladas",
+      "category": "employability",
+      "week": 6
     },
     "36C": {
       "xp": 50,
       "day": 36,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 30 aplicaciones acumuladas",
+      "description": "Actualizar el tracker.",
+      "time": 30,
+      "verification": "Tracker actualizado (30)",
+      "category": "employability",
+      "week": 6
     },
     "37A": {
       "xp": 60,
       "day": 37,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Post de lección de búsqueda",
+      "description": "Planear un post contando una lección de tu proceso de búsqueda.",
+      "time": 45,
+      "verification": "Post planeado",
+      "category": "employability",
+      "week": 6
     },
     "37B": {
       "xp": 150,
       "day": 37,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Publicar post de tu proceso",
+      "description": "Publicar el post contando tu aprendizaje o progreso de la búsqueda.",
+      "time": 90,
+      "verification": "Post publicado",
+      "category": "employability",
+      "week": 6
     },
     "37C": {
       "xp": 50,
       "day": 37,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 Post publicado",
+      "description": "Registrar métricas del post.",
+      "time": 30,
+      "verification": "Métricas registradas",
+      "category": "employability",
+      "week": 6
     },
     "38A": {
       "xp": 60,
       "day": 38,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Ronda 7: priorizar referidos",
+      "description": "Elegir 5 vacantes de empresas donde tenés referido o contacto.",
+      "time": 45,
+      "verification": "5 vacantes priorizadas",
+      "category": "employability",
+      "week": 6
     },
     "38B": {
       "xp": 160,
       "day": 38,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Ronda 7: +5 aplicaciones",
+      "description": "Enviar 5 aplicaciones más priorizando tus contactos.",
+      "time": 120,
+      "verification": "35 aplicaciones acumuladas",
+      "category": "employability",
+      "week": 6
     },
     "38C": {
       "xp": 50,
       "day": 38,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 35 aplicaciones acumuladas",
+      "description": "Actualizar el tracker.",
+      "time": 30,
+      "verification": "Tracker actualizado (35)",
+      "category": "employability",
+      "week": 6
     },
     "39A": {
       "xp": 60,
       "day": 39,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Pieza de portafolio #2",
+      "description": "Planear una segunda pieza de portafolio (proyecto o análisis).",
+      "time": 45,
+      "verification": "Pieza #2 planeada",
+      "category": "employability",
+      "week": 6
     },
     "39B": {
       "xp": 170,
       "day": 39,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Crear 2ª pieza (proyecto)",
+      "description": "Construir y publicar tu segunda pieza de portafolio.",
+      "time": 120,
+      "verification": "Pieza #2 publicada",
+      "category": "employability",
+      "week": 6
     },
     "39C": {
       "xp": 50,
       "day": 39,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 Pieza publicada",
+      "description": "Agregar la pieza a LinkedIn y portafolio.",
+      "time": 30,
+      "verification": "Pieza en LinkedIn y portafolio",
+      "category": "employability",
+      "week": 6
     },
     "40A": {
       "xp": 60,
       "day": 40,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Ronda 8: nuevos canales",
+      "description": "Probar un canal nuevo (portales, referidos, directo a empresas).",
+      "time": 45,
+      "verification": "Canal nuevo elegido",
+      "category": "employability",
+      "week": 6
     },
     "40B": {
       "xp": 160,
       "day": 40,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Ronda 8: +5 aplicaciones",
+      "description": "Enviar 5 aplicaciones más por el canal nuevo.",
+      "time": 120,
+      "verification": "40 aplicaciones acumuladas",
+      "category": "employability",
+      "week": 6
     },
     "40C": {
       "xp": 50,
       "day": 40,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 40 aplicaciones acumuladas",
+      "description": "Actualizar el tracker.",
+      "time": 30,
+      "verification": "Tracker actualizado (40)",
+      "category": "employability",
+      "week": 6
     },
     "41A": {
       "xp": 60,
       "day": 41,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Video corto #2",
+      "description": "Planear un segundo video corto con una lección o resultado.",
+      "time": 45,
+      "verification": "Video #2 planeado",
+      "category": "employability",
+      "week": 6
     },
     "41B": {
       "xp": 160,
       "day": 41,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Publicar video #2",
+      "description": "Grabar y publicar tu segundo video corto.",
+      "time": 90,
+      "verification": "Video #2 publicado",
+      "category": "employability",
+      "week": 6
     },
     "41C": {
       "xp": 50,
       "day": 41,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 Video publicado",
+      "description": "Registrar métricas del video.",
+      "time": 30,
+      "verification": "Métricas registradas",
+      "category": "employability",
+      "week": 6
     },
     "42A": {
       "xp": 60,
       "day": 42,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Repaso volante",
+      "description": "Revisar el ritmo de la semana: aplicaciones + contenido + networking.",
+      "time": 45,
+      "verification": "Resumen de la semana",
+      "category": "employability",
+      "week": 6
     },
     "42B": {
       "xp": 160,
       "day": 42,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Ronda 9: +5 aplicaciones",
+      "description": "Enviar 5 aplicaciones más.",
+      "time": 120,
+      "verification": "45 aplicaciones acumuladas",
+      "category": "employability",
+      "week": 6
     },
     "42C": {
       "xp": 100,
       "day": 42,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 Semana 6 consolidada",
+      "description": "Confirmar 45 aplicaciones y contenido publicado.",
+      "time": 30,
+      "verification": "Checklist de la semana 6 completado",
+      "category": "employability",
+      "week": 6
     },
     "43A": {
       "xp": 60,
       "day": 43,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Seguimiento efectivo",
+      "description": "Aprender a hacer seguimiento de aplicaciones sin parecer insistente.",
+      "time": 45,
+      "verification": "Plan de seguimiento",
+      "category": "employability",
+      "week": 7
     },
     "43B": {
       "xp": 150,
       "day": 43,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Seguimiento de aplicaciones",
+      "description": "Enviar seguimiento a las aplicaciones sin respuesta (día 7+).",
+      "time": 90,
+      "verification": "Seguimientos enviados",
+      "category": "employability",
+      "week": 7
     },
     "43C": {
       "xp": 50,
       "day": 43,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 Respuestas registradas",
+      "description": "Registrar respuestas de seguimiento en el tracker.",
+      "time": 30,
+      "verification": "Respuestas registradas",
+      "category": "employability",
+      "week": 7
     },
     "44A": {
       "xp": 60,
       "day": 44,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Negociación salarial",
+      "description": "Investigar rangos salariales de data analyst/marketing en CR y remoto.",
+      "time": 45,
+      "verification": "Rangos salariales investigados",
+      "category": "employability",
+      "week": 7
     },
     "44B": {
       "xp": 150,
       "day": 44,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Definir tus números de negociación",
+      "description": "Definir tu rango objetivo (mínimo, ideal) y tus no negociables.",
+      "time": 60,
+      "verification": "Números de negociación definidos",
+      "category": "employability",
+      "week": 7
     },
     "44C": {
       "xp": 50,
       "day": 44,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 Números definidos",
+      "description": "Tener claros tus números antes de cualquier oferta.",
+      "time": 30,
+      "verification": "Rango y no negociables claros",
+      "category": "employability",
+      "week": 7
     },
     "45A": {
       "xp": 60,
       "day": 45,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Practicar negociación",
+      "description": "Preparar frases para negociar sueldo y beneficios con seguridad.",
+      "time": 45,
+      "verification": "Frases preparadas",
+      "category": "employability",
+      "week": 7
     },
     "45B": {
       "xp": 140,
       "day": 45,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Role-play de negociación",
+      "description": "Practicar la negociación en voz alta o con alguien.",
+      "time": 60,
+      "verification": "Role-play realizado",
+      "category": "employability",
+      "week": 7
     },
     "45C": {
       "xp": 50,
       "day": 45,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 Negociación practicada",
+      "description": "Registrar aprendizajes de la práctica.",
+      "time": 30,
+      "verification": "Aprendizajes registrados",
+      "category": "employability",
+      "week": 7
     },
     "46A": {
       "xp": 60,
       "day": 46,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Ronda 10: asedio final",
+      "description": "Elegir las últimas vacantes de mayor fit para completar 50 aplicaciones.",
+      "time": 45,
+      "verification": "Últimas vacantes elegidas",
+      "category": "employability",
+      "week": 7
     },
     "46B": {
       "xp": 200,
       "day": 46,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Últimas 5 aplicaciones (50 total)",
+      "description": "Enviar tus últimas 5 aplicaciones para completar 50.",
+      "time": 120,
+      "verification": "50 aplicaciones totales registradas",
+      "category": "employability",
+      "week": 7
     },
     "46C": {
       "xp": 50,
       "day": 46,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 50 aplicaciones alcanzadas",
+      "description": "Actualizar el tracker con las métricas finales.",
+      "time": 30,
+      "verification": "Métricas finales registradas",
+      "category": "employability",
+      "week": 7
     },
     "47A": {
       "xp": 60,
       "day": 47,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Analizar ofertas",
+      "description": "Aprender a comparar ofertas: sueldo, beneficios, crecimiento y fit.",
+      "time": 45,
+      "verification": "Criterios de comparación",
+      "category": "employability",
+      "week": 7
     },
     "47B": {
       "xp": 150,
       "day": 47,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Comparar ofertas en tu tracker",
+      "description": "Comparar las ofertas recibidas con tus criterios.",
+      "time": 60,
+      "verification": "Ofertas comparadas",
+      "category": "employability",
+      "week": 7
     },
     "47C": {
       "xp": 50,
       "day": 47,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 Ofertas comparadas",
+      "description": "Registrar el resultado de la comparación.",
+      "time": 30,
+      "verification": "Comparación registrada",
+      "category": "employability",
+      "week": 7
     },
     "48A": {
       "xp": 60,
       "day": 48,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Cerrar procesos",
+      "description": "Aprender a cerrar procesos abiertos con profesionalismo.",
+      "time": 45,
+      "verification": "Plan de cierre",
+      "category": "employability",
+      "week": 7
     },
     "48B": {
       "xp": 140,
       "day": 48,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Responder/cerrar procesos",
+      "description": "Responder o cerrar los procesos que ya no te interesan.",
+      "time": 60,
+      "verification": "Procesos cerrados",
+      "category": "employability",
+      "week": 7
     },
     "48C": {
       "xp": 50,
       "day": 48,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 Resultado registrado",
+      "description": "Registrar el resultado de cada proceso.",
+      "time": 30,
+      "verification": "Resultados registrados",
+      "category": "employability",
+      "week": 7
     },
     "49A": {
       "xp": 60,
       "day": 49,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Repaso negociación",
+      "description": "Revisar lo aprendido sobre negociación y seguimiento.",
+      "time": 45,
+      "verification": "Resumen de la semana",
+      "category": "employability",
+      "week": 7
     },
     "49B": {
       "xp": 150,
       "day": 49,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Documentar tu plan de siguiente ronda",
+      "description": "Escribir tu plan de los próximos 15 días.",
+      "time": 60,
+      "verification": "Plan de 15 días escrito",
+      "category": "employability",
+      "week": 7
     },
     "49C": {
       "xp": 100,
       "day": 49,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 Semana 7 consolidada",
+      "description": "Confirmar negociación y seguimiento completos.",
+      "time": 30,
+      "verification": "Checklist de la semana 7 completado",
+      "category": "employability",
+      "week": 7
     },
     "50A": {
       "xp": 60,
       "day": 50,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Decisión de oferta",
+      "description": "Definir tus criterios de decisión final: sueldo, crecimiento, cultura, ubicación.",
+      "time": 45,
+      "verification": "Criterios de decisión definidos",
+      "category": "employability",
+      "week": 8
     },
     "50B": {
       "xp": 150,
       "day": 50,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Evaluar oferta vs prioridades",
+      "description": "Evaluar la oferta final contra tus prioridades reales.",
+      "time": 60,
+      "verification": "Oferta evaluada",
+      "category": "employability",
+      "week": 8
     },
     "50C": {
       "xp": 50,
       "day": 50,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 Criterios de decisión listos",
+      "description": "Tener claro qué aceptar y qué no.",
+      "time": 30,
+      "verification": "Criterios claros",
+      "category": "employability",
+      "week": 8
     },
     "51A": {
       "xp": 60,
       "day": 51,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Onboarding exitoso",
+      "description": "Aprender cómo tener un gran primer mes en un trabajo nuevo.",
+      "time": 45,
+      "verification": "Notas de onboarding",
+      "category": "employability",
+      "week": 8
     },
     "51B": {
       "xp": 170,
       "day": 51,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Preparar tu plan de primeros 90 días",
+      "description": "Escribir tu plan de 30/60/90 días para tu nuevo rol.",
+      "time": 120,
+      "verification": "Plan 30/60/90 escrito",
+      "category": "employability",
+      "week": 8
     },
     "51C": {
       "xp": 50,
       "day": 51,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 Plan de 90 días listo",
+      "description": "Tener tu plan listo para el primer día.",
+      "time": 30,
+      "verification": "Plan listo",
+      "category": "employability",
+      "week": 8
     },
     "52A": {
       "xp": 60,
       "day": 52,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Auditoría de decisión",
+      "description": "Repasar tu proceso completo para asegurar una buena decisión.",
+      "time": 45,
+      "verification": "Auditoría completada",
+      "category": "employability",
+      "week": 8
     },
     "52B": {
       "xp": 180,
       "day": 52,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Tomar la decisión explícita",
+      "description": "Tomar la decisión de aceptar o rechazar la oferta de forma explícita.",
+      "time": 60,
+      "verification": "Decisión tomada",
+      "category": "employability",
+      "week": 8
     },
     "52C": {
       "xp": 50,
       "day": 52,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 Decisión tomada",
+      "description": "Comunicar tu decisión con profesionalismo.",
+      "time": 30,
+      "verification": "Decisión comunicada",
+      "category": "employability",
+      "week": 8
     },
     "53A": {
       "xp": 60,
       "day": 53,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Documentar tu proceso",
+      "description": "Escribir tu caso de éxito: de buscar a conseguir el trabajo.",
+      "time": 45,
+      "verification": "Caso de éxito escrito",
+      "category": "employability",
+      "week": 8
     },
     "53B": {
       "xp": 150,
       "day": 53,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Escribir tu caso de éxito",
+      "description": "Redactar tu historia completa con métricas para compartir.",
+      "time": 90,
+      "verification": "Caso de éxito redactado",
+      "category": "employability",
+      "week": 8
     },
     "53C": {
       "xp": 50,
       "day": 53,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 Caso documentado",
+      "description": "Guardar tu caso como material para futuras oportunidades.",
+      "time": 30,
+      "verification": "Caso guardado",
+      "category": "employability",
+      "week": 8
     },
     "54A": {
       "xp": 60,
       "day": 54,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Compartir tu logro",
+      "description": "Planear cómo compartir tu logro con tu red.",
+      "time": 45,
+      "verification": "Plan de publicación",
+      "category": "employability",
+      "week": 8
     },
     "54B": {
       "xp": 180,
       "day": 54,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Publicar tu logro (post final)",
+      "description": "Publicar tu logro de haber conseguido el trabajo.",
+      "time": 90,
+      "verification": "Post final publicado",
+      "category": "employability",
+      "week": 8
     },
     "54C": {
       "xp": 50,
       "day": 54,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 Logro publicado",
+      "description": "Registrar la reacción de tu red.",
+      "time": 30,
+      "verification": "Reacción registrada",
+      "category": "employability",
+      "week": 8
     },
     "55A": {
       "xp": 60,
       "day": 55,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Plan de la siguiente ronda",
+      "description": "Diseñar tu plan de los próximos 15 días en tu nuevo rol o siguiente objetivo.",
+      "time": 45,
+      "verification": "Plan de 15 días diseñado",
+      "category": "employability",
+      "week": 8
     },
     "55B": {
       "xp": 150,
       "day": 55,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Documentar tu plan",
+      "description": "Escribir tu plan con acciones concretas y fechas.",
+      "time": 60,
+      "verification": "Plan documentado",
+      "category": "employability",
+      "week": 8
     },
     "55C": {
       "xp": 50,
       "day": 55,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 Comparte tu plan",
+      "description": "Compartir tu plan con alguien de confianza para comprometerte.",
+      "time": 30,
+      "verification": "Plan compartido",
+      "category": "employability",
+      "week": 8
     },
     "56A": {
       "xp": 60,
       "day": 56,
-      "slot": "A"
+      "slot": "A",
+      "title": "📚 Retrospectiva final",
+      "description": "Repasar todo lo logrado: de 'sin perfil' a 'conseguí el trabajo'. Medir tu progreso real.",
+      "time": 45,
+      "verification": "Retrospectiva final escrita",
+      "category": "employability",
+      "week": 8
     },
     "56B": {
       "xp": 200,
       "day": 56,
-      "slot": "B"
+      "slot": "B",
+      "title": "🛠️ Celebra + consolida logros",
+      "description": "Listar todos tus logros tangibles (aplicaciones, entrevistas, ofertas, el trabajo) y celebrarlos.",
+      "time": 90,
+      "verification": "Lista de logros de la campaña",
+      "category": "employability",
+      "week": 8
     },
     "56C": {
       "xp": 50,
       "day": 56,
-      "slot": "C"
+      "slot": "C",
+      "title": "🎯 La meta final",
+      "description": "Confirmar que conseguiste el trabajo o estás en la ronda final con oferta en camino.",
+      "time": 30,
+      "verification": "Checklist de la meta final completado",
+      "category": "employability",
+      "week": 8
     }
   },
   "dailyTotalDays": 56,
