@@ -75,7 +75,7 @@ export function renderHud(root, hud, actions) {
       h(
         "div",
         { class: "hud-meta" },
-        hudChip("coins", "●", hud.coins.balance, `Saldo virtual ODEA · ganadas ${fmt(hud.coins.earned)} · gastadas ${fmt(hud.coins.spent)} · sin tienda activa, no es dinero real ni canjeable`, "₡"),
+        hudChip("coins", "●", hud.coins.balance, `Saldo virtual ODEA · ganadas ${fmt(hud.coins.earned)} · gastadas ${fmt(hud.coins.spent)} · se gastan en la Tienda, no es dinero real`, "₡"),
         hudChip("streak", "★", hud.streak, "Racha actual de metas en días")
       )
     ),
