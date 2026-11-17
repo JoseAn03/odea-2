@@ -575,3 +575,33 @@
   }
   .campaign-target--hit .campaign-reward-burst { opacity: 1; transform: translate(-50%, -14px); }
 }
+
+/* ------------------------------- Tienda ------------------------------- */
+.shop-head { display: flex; margin-bottom: 6px; }
+.shop-back {
+  background: #1D2233; color: #FFF8F4; border: 1px solid #31EBDD;
+  border-radius: 10px; padding: 6px 12px; font: inherit; cursor: pointer;
+}
+.shop-balance { color: #FFD166; font-weight: 700; margin: 8px 0 2px; }
+.shop-section { margin: 16px 0 8px; color: #31EBDD; letter-spacing: 1px; font-size: 0.85rem; text-transform: uppercase; }
+.shop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.shop-card {
+  background: #151827; border: 1px solid #1D2233; border-radius: 14px;
+  padding: 12px 10px; text-align: center;
+}
+.shop-preview {
+  min-height: 64px; display: flex; align-items: center; justify-content: center;
+  background: #0C0F1A; border-radius: 10px; margin-bottom: 8px;
+}
+.shop-sprite-outfit { width: 48px; height: 60px; image-rendering: pixelated; }
+.shop-sprite-vehicle { width: 104px; max-height: 56px; image-rendering: pixelated; }
+.shop-name { margin: 0 0 2px; font-size: 0.92rem; }
+.shop-tag { margin: 0 0 8px; color: #8E93A8; font-size: 0.75rem; }
+.shop-btn {
+  width: 100%; background: #FFD166; color: #080A12; border: none; border-radius: 10px;
+  padding: 8px 6px; font: inherit; font-weight: 700; cursor: pointer; margin-top: 4px;
+}
+.shop-btn.is-equipped { background: #1D2233; color: #3ED97A; cursor: default; }
+.shop-btn.is-ghost { background: transparent; color: #FFF8F4; border: 1px solid #1D2233; font-weight: 400; }
+.shop-btn.is-disabled { background: #1D2233; color: #8E93A8; cursor: not-allowed; font-weight: 400; }
+.shop-note { color: #8E93A8; font-size: 0.78rem; margin: 16px 0 4px; }
