@@ -68,7 +68,7 @@ npm run check:write-path   # una sola ruta de escritura
 npm run check:ui           # interfaz completa: HUD, Hoy, Mochila, Menú y 9 distritos
 ```
 
-**195 tests** (Node ≥ 20):
+**207 tests** (Node ≥ 20):
 
 - **33 de Fase 0**: no-pérdida, paridad de los 10 componentes de XP, monedas,
   `eventRL`/`farm`/`canje`, cuarentena, aborto, reimportación, huella, ida y
