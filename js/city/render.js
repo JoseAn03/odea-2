@@ -97,7 +97,7 @@ export function createRenderer(canvas) {
     if (sprites.has(key)) return sprites.get(key);
 
     const scale = 2;
-    const pad = 11;
+    const pad = 9;
     const subSize = size * 0.46;
     const mainW = measure(text, size, weight) + letter * Math.max(0, text.length - 1);
     const subW = sub ? measure(sub, subSize, 600) + letter * 0.6 * Math.max(0, sub.length - 1) : 0;
@@ -1146,7 +1146,7 @@ export function createRenderer(canvas) {
         if (p.x < -160 || p.x > vw + 160 || p.y < -60 || p.y > vh + 60) continue;
         const sprite = labelSprite(`road:${road.text}`, road.text, {
           color: PALETTE.cyan,
-          size: 14,
+          size: 11,
           weight: 700,
           letter: 1.1
         });
@@ -1157,13 +1157,13 @@ export function createRenderer(canvas) {
     }
 
     /* Rótulos de distrito. */
-    const labelScale = Math.max(0.74, Math.min(1.12, z * 1.05));
+    const labelScale = Math.max(0.66, Math.min(1.0, z * 0.95));
     for (const d of DISTRICTS) {
       const p = camera.worldToScreen(d.label.x, d.label.y);
       if (p.x < -140 || p.x > vw + 140 || p.y < -60 || p.y > vh + 60) continue;
       const sprite = labelSprite(`d:${d.id}`, d.name.toUpperCase(), {
         color: d.accent,
-        size: d.id === "rincon" ? 18 : 22,
+        size: d.id === "rincon" ? 14 : 16,
         sub: d.subtitle,
         weight: 800
       });
@@ -1182,7 +1182,7 @@ export function createRenderer(canvas) {
         if (p.x < -130 || p.x > vw + 130 || p.y < -50 || p.y > vh + 50) continue;
         const sprite = labelSprite(`expansion:${zone.id}`, `EXPANSIÓN ${zone.id}`, {
           color: PALETTE.orange,
-          size: 14,
+          size: 11,
           sub: "Terreno reservado",
           weight: 800,
           letter: 0.8
@@ -1197,7 +1197,7 @@ export function createRenderer(canvas) {
       const p = camera.worldToScreen(m.x, m.y + m.r + 34);
       const sprite = labelSprite(`credit:${creditXP}`, `CRÉDITO · ${fmt(creditXP)} XP`, {
         color: PALETTE.cyan,
-        size: 12,
+        size: 10,
         weight: 700,
         letter: 1
       });
