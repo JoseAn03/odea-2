@@ -219,7 +219,7 @@ export function createRenderer(canvas) {
     for (const b of bands) {
       if (!visible(view, b.x, b.y, b.w, b.h)) continue;
       if (pxRoads) pxRoads.fill(ctx, "asfalto", b.x, b.y, b.w, b.h);
-      ctx.fillStyle = alpha(C.road, pxRoads ? 0.55 : 1);
+      ctx.fillStyle = alpha(C.road, pxRoads ? 0.38 : 1);
       ctx.fillRect(b.x, b.y, b.w, b.h);
     }
 
@@ -265,9 +265,13 @@ export function createRenderer(canvas) {
       const r = block.rect;
       if (!visible(view, r.x, r.y, r.w, r.h)) continue;
       if (pxBlocks) pxBlocks.fill(ctx, "acera", r.x, r.y, r.w, r.h);
-      ctx.fillStyle = pxBlocks ? alpha(C.sidewalk, 0.55) : C.sidewalk;
+      ctx.fillStyle = pxBlocks ? alpha(C.sidewalk, 0.38) : C.sidewalk;
       ctx.fillRect(r.x, r.y, r.w, r.h);
-      ctx.fillStyle = C.ground;
+      if (pxBlocks) {
+        pxBlocks.fill(ctx, block.districtId === "vida" ? "grama" : "plaza",
+          r.x + 22, r.y + 22, r.w - 44, r.h - 44);
+      }
+      ctx.fillStyle = pxBlocks ? alpha(C.ground, 0.62) : C.ground;
       ctx.fillRect(r.x + 22, r.y + 22, r.w - 44, r.h - 44);
       ctx.fillStyle = alpha(block.accent, 0.075);
       ctx.fillRect(r.x + 22, r.y + 22, r.w - 44, r.h - 44);
@@ -462,6 +466,10 @@ export function createRenderer(canvas) {
         ctx.stroke();
       }
     }
+
+    /* Capa pixel: textura de techo con detalles e ícono del distrito. */
+    const pxB = art();
+    if (pxB && view.zoom > 0.4) pxB.roof(ctx, b);
 
     /* Ventanas iluminadas en la cara visible (derecha y abajo). */
     if (view.zoom > 0.55) {
@@ -693,6 +701,13 @@ export function createRenderer(canvas) {
       }
     }
 
+    /* Árboles pixel sobre las posiciones de árboles del mundo. */
+    for (const t of world.trees) {
+      if (!visible(view, t.x - 45, t.y - 45, 90, 90)) continue;
+      const sz = Math.max(32, t.r * 3);
+      px.draw(ctx, px.arbol, t.x, t.y + sz * 0.32, sz, sz);
+    }
+
     /* Vecinos con rutas deterministas (ida y vuelta). */
     const walk = (offset, speed, span) => {
       const ph = (((offset + time * speed) % (2 * span)) + 2 * span) % (2 * span);
@@ -722,6 +737,61 @@ export function createRenderer(canvas) {
     const cx = reduced ? 420 : ((time * 120) % (S + 320)) - 160;
     if (visible(view, cx - 75, 1975, 150, 90)) {
       px.draw(ctx, px.carro, cx, 2050, 120, 60);
+    }
+
+    /* Carro rosa vertical por la avenida oeste (centro x = 715). */
+    const cy2 = reduced ? 620 : ((time * 95) % (S + 320)) - 160;
+    if (visible(view, 640, cy2 - 80, 150, 160)) {
+      px.draw(ctx, px.carroV, 715, cy2 + 62, 62, 124);
+    }
+
+    /* Moto con piloto por la avenida central (y = 1365), sentido contrario. */
+    const mx2 = reduced ? 1800 : (S + 140) - ((time * 175) % (S + 280));
+    if (visible(view, mx2 - 65, 1355, 130, 60)) {
+      px.draw(ctx, px.motoPiloto, mx2, 1414, 88, 42, true);
+    }
+
+    /* Parqueados: carro rosa al este y una moto junto al parque. */
+    if (visible(view, 2600, 830, 140, 160)) px.draw(ctx, px.carroV, 2670, 960, 62, 124);
+    if (visible(view, 1450, 1400, 130, 80)) px.draw(ctx, px.moto, 1518, 1472, 58, 24);
+  }
+
+  /* Parque pixel central: grama y plaza alrededor del Monumento, con
+     árboles, bancas y halos de luz. El Monumento se dibuja encima. */
+  function drawPixelPark(view, world, time) {
+    const px = art();
+    if (!px) return;
+    const cx = 1365, cy = 1365;
+    if (!visible(view, cx - 210, cy - 210, 420, 420)) return;
+    ctx.save();
+    ctx.beginPath(); ctx.arc(cx, cy, 182, 0, Math.PI * 2); ctx.clip();
+    px.fill(ctx, "grama", cx - 182, cy - 182, 364, 364);
+    ctx.fillStyle = "rgba(10,20,14,0.22)";
+    ctx.fillRect(cx - 182, cy - 182, 364, 364);
+    ctx.beginPath(); ctx.arc(cx, cy, 118, 0, Math.PI * 2); ctx.clip();
+    px.fill(ctx, "plaza", cx - 118, cy - 118, 236, 236);
+    ctx.fillStyle = "rgba(18,8,31,0.15)";
+    ctx.fillRect(cx - 118, cy - 118, 236, 236);
+    ctx.restore();
+    ctx.strokeStyle = alpha(PALETTE.pink, 0.35);
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(cx, cy, 182, 0, Math.PI * 2); ctx.stroke();
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2 + 0.39;
+      px.draw(ctx, px.arbol, cx + Math.cos(a) * 150, cy + Math.sin(a) * 150 + 16, 52, 52);
+    }
+    for (let i = 0; i < 4; i++) {
+      const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
+      px.draw(ctx, px.banca, cx + Math.cos(a) * 128, cy + Math.sin(a) * 128 + 6, 40, 17);
+      const lx = cx + Math.cos(a + Math.PI / 4) * 166, ly = cy + Math.sin(a + Math.PI / 4) * 166;
+      px.glow(ctx, lx, ly - 18, 58, 0.13);
+    }
+    if (!reduced) {
+      for (let i = 0; i < 6; i++) {
+        const a = time * 0.25 + (i / 6) * Math.PI * 2;
+        ctx.fillStyle = alpha(i % 2 ? PALETTE.cyan : PALETTE.pink, 0.5);
+        ctx.fillRect(cx + Math.cos(a) * 104 - 1.5, cy + Math.sin(a) * 104 - 1.5, 3, 3);
+      }
     }
   }
 
@@ -818,6 +888,7 @@ export function createRenderer(canvas) {
     }
 
     drawGlitch(view, world, time);
+    drawPixelPark(view, world, time);
     drawMonument(view, world, time);
     drawTraffic(view, world, time);
     drawPixelLife(view, world, time);
