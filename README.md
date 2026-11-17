@@ -45,7 +45,7 @@ Sin save, la ciudad se muestra atenuada y la pantalla de importación de la
 Fase 1 queda al frente. No hay datos de ejemplo: el progreso siempre es el real.
 
 La app funciona sin conexión después de la primera carga (service worker
-`odea2-v0.12.0-fase3`). El catálogo de juego se sirve con estrategia
+`odea2-v0.13.0-fase3`). El catálogo de juego se sirve con estrategia
 *network-first* y cae a la caché si no hay red.
 
 ## Correr los tests
@@ -233,7 +233,7 @@ Todo ocurre en el dispositivo. Nada se envía a ningún servidor.
 ```
 index.html              cascarón: canvas, HUD, barra de destinos, chips, hoja, overlay y toasts
 manifest.webmanifest    PWA (ODEA 2 — Costa Neón)
-sw.js                   service worker versionado (odea2-v0.12.0-fase3)
+sw.js                   service worker versionado (odea2-v0.13.0-fase3)
 css/app.css             tema neón + capa de ciudad (HUD, hoja, overlay, toasts)
 js/app.js               orquestador: ciudad, HUD, importación, watchers
 js/city/                layout, world, cámara, renderer, entrada y motor rAF
