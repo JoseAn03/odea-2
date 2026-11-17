@@ -30,12 +30,12 @@ function h(tag, attrs = {}, ...children) {
 
 /* ---------------------------------- HUD ----------------------------------- */
 
-function hudChip(className, label, value, title) {
+function hudChip(className, label, value, title, prefix = "") {
   return h(
     "span",
     { class: `hud-chip ${className}`, title: title || null },
     h("span", { class: "hud-chip-icon", "aria-hidden": "true" }, label),
-    h("span", { class: "hud-chip-value" }, fmt(value))
+    h("span", { class: "hud-chip-value" }, `${prefix}${fmt(value)}`)
   );
 }
 
@@ -68,15 +68,15 @@ export function renderHud(root, hud, actions) {
     h(
       "div",
       { class: "hud-top" },
-      h("span", { class: "hud-avatar", "aria-hidden": "true" }, "◆"),
+      h("span", { class: "hud-avatar", "aria-hidden": "true" }, "★"),
       h("span", { class: "hud-name", title: hud.playerName }, hud.playerName),
       h("span", { class: "hud-level", title: "Nivel de campaña" }, `Nv ${fmt(hud.level)}`),
       h("span", { class: "hud-odea", title: "Nivel ODEA" }, `ODEA ${fmt(hud.odeLevel)}`),
       h(
         "div",
         { class: "hud-meta" },
-        hudChip("coins", "◈", hud.coins.balance, `Ganadas ${fmt(hud.coins.earned)} · Gastadas ${fmt(hud.coins.spent)}`),
-        hudChip("streak", "▲", hud.streak, "Racha actual en días")
+        hudChip("coins", "●", hud.coins.balance, `Saldo virtual ODEA · ganadas ${fmt(hud.coins.earned)} · gastadas ${fmt(hud.coins.spent)} · sin tienda activa, no es dinero real ni canjeable`, "₡"),
+        hudChip("streak", "★", hud.streak, "Racha actual de metas en días")
       )
     ),
     h(

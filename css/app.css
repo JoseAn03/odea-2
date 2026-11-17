@@ -3,17 +3,17 @@
    estado/importación de la Fase 1 vive dentro del overlay «Mi progreso». */
 
 :root {
-  --bg: #12081F;
-  --bg-soft: #190C2B;
-  --panel: #1E1033;
-  --panel-2: #251340;
+  --bg: #080A12;
+  --bg-soft: #10131E;
+  --panel: #151827;
+  --panel-2: #1D2233;
   --line: rgba(255, 255, 255, 0.1);
-  --line-strong: rgba(255, 255, 255, 0.18);
-  --text: #F3ECFF;
-  --muted: #A79BC0;
-  --pink: #FF2E93;
-  --cyan: #00E5FF;
-  --orange: #FF8A3D;
+  --line-strong: rgba(255, 209, 102, 0.24);
+  --text: #FFF8F4;
+  --muted: #B7B8C8;
+  --pink: #FF2B9D;
+  --cyan: #31EBDD;
+  --orange: #FFD166;
   --ok: #4BE3A2;
   --warn: #FFC24B;
   --danger: #FF5C7A;
@@ -47,7 +47,7 @@ body {
   left: -999px;
   top: 8px;
   background: var(--pink);
-  color: #12081F;
+  color: #080A12;
   padding: 8px 14px;
   border-radius: 8px;
   font-weight: 700;
@@ -483,9 +483,9 @@ body.no-city #city-canvas { display: none; }
   padding: calc(env(safe-area-inset-top) + 9px) 12px 12px;
   background: linear-gradient(
     180deg,
-    rgba(18, 8, 31, 0.96),
-    rgba(18, 8, 31, 0.78) 68%,
-    rgba(18, 8, 31, 0)
+    rgba(8, 10, 18, 0.96),
+    rgba(8, 10, 18, 0.78) 68%,
+    rgba(8, 10, 18, 0)
   );
   pointer-events: none;
 }
@@ -505,10 +505,11 @@ body.no-city #city-canvas { display: none; }
   height: 26px;
   flex: none;
   border-radius: 8px;
-  color: #12081f;
-  font-size: 0.72rem;
-  background: linear-gradient(135deg, var(--pink), var(--orange));
-  box-shadow: 0 0 14px rgba(255, 46, 147, 0.45);
+  color: #16110A;
+  font-size: 0.94rem;
+  background: linear-gradient(145deg, #FFE9A8, var(--orange));
+  border: 1px solid rgba(255, 248, 220, 0.7);
+  box-shadow: 0 0 14px rgba(255, 209, 102, 0.42);
 }
 
 .hud-name {
@@ -533,12 +534,12 @@ body.no-city #city-canvas { display: none; }
   white-space: nowrap;
 }
 .hud-level {
-  color: #1a0820;
-  background: var(--pink);
+  color: #170914;
+  background: linear-gradient(110deg, var(--pink), #FF6BC2);
 }
 .hud-odea {
   color: var(--cyan);
-  border: 1px solid rgba(0, 229, 255, 0.35);
+  border: 1px solid rgba(49, 235, 221, 0.4);
   background: rgba(0, 229, 255, 0.08);
 }
 
@@ -564,7 +565,9 @@ body.no-city #city-canvas { display: none; }
 }
 .hud-chip-icon { font-size: 0.66rem; }
 .hud-chip.coins .hud-chip-icon { color: var(--orange); }
-.hud-chip.streak .hud-chip-icon { color: var(--pink); }
+.hud-chip.coins .hud-chip-value { color: var(--orange); }
+.hud-chip.streak { border-color: rgba(255, 209, 102, 0.35); }
+.hud-chip.streak .hud-chip-icon { color: var(--orange); }
 
 .hud-xp-row {
   display: flex;
@@ -587,8 +590,8 @@ body.no-city #city-canvas { display: none; }
   display: block;
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--cyan), var(--pink));
-  box-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+  background: linear-gradient(90deg, var(--cyan), var(--pink), var(--orange));
+  box-shadow: 0 0 10px rgba(49, 235, 221, 0.45);
   transition: width 0.4s ease;
 }
 
@@ -610,7 +613,7 @@ body.no-city #city-canvas { display: none; }
   font-size: 0.7rem;
   font-weight: 700;
   color: var(--text);
-  background: rgba(37, 19, 64, 0.86);
+  background: rgba(18, 23, 37, 0.92);
   border: 1px solid var(--line-strong);
   border-radius: 999px;
   padding: 5px 9px;
@@ -640,8 +643,9 @@ body.no-city #city-canvas { display: none; }
   grid-template-columns: repeat(4, 1fr);
   gap: 2px;
   padding: 5px 6px calc(env(safe-area-inset-bottom, 0px) + 5px);
-  background: rgba(13, 6, 24, 0.97);
-  border-top: 1px solid var(--line-strong);
+  background: linear-gradient(180deg, rgba(12, 15, 26, 0.98), rgba(5, 7, 12, 0.99));
+  border-top: 1px solid rgba(255, 209, 102, 0.45);
+  box-shadow: 0 -10px 32px rgba(0, 0, 0, 0.35);
   backdrop-filter: blur(12px);
 }
 
@@ -674,11 +678,16 @@ body.no-city #city-canvas { display: none; }
 }
 .tab[aria-current="page"] {
   color: var(--cyan);
-  background: rgba(0, 229, 255, 0.1);
+  background: linear-gradient(180deg, rgba(49, 235, 221, 0.13), rgba(255, 43, 157, 0.08));
+  box-shadow: inset 0 1px 0 rgba(255, 209, 102, 0.4);
 }
+.tab:nth-child(2) .tab-icon { color: var(--orange); }
+.tab:nth-child(3) .tab-icon { color: var(--pink); }
+.tab:nth-child(4) .tab-icon { color: var(--cyan); }
+.tab[aria-current="page"] .tab-icon { filter: drop-shadow(0 0 5px currentColor); }
 .tab.walk-tab.on {
   color: #fff;
-  background: rgba(255, 46, 147, 0.28);
+  background: rgba(255, 43, 157, 0.28);
 }
 
 /* -------------------------------- chips --------------------------------- */
@@ -697,9 +706,9 @@ body.no-city #city-canvas { display: none; }
   -webkit-overflow-scrolling: touch;
   background: linear-gradient(
     0deg,
-    rgba(18, 8, 31, 0.96),
-    rgba(18, 8, 31, 0.72) 62%,
-    rgba(18, 8, 31, 0)
+    rgba(8, 10, 18, 0.96),
+    rgba(8, 10, 18, 0.72) 62%,
+    rgba(8, 10, 18, 0)
   );
 }
 .chips::-webkit-scrollbar { display: none; }
@@ -767,7 +776,7 @@ body.no-city #city-canvas { display: none; }
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.08em;
   color: rgba(243, 236, 255, 0.55);
-  background: rgba(18, 8, 31, 0.62);
+  background: rgba(8, 10, 18, 0.68);
   border: 1px solid var(--line);
   border-radius: 999px;
   padding: 2px 8px;
@@ -802,7 +811,7 @@ body.no-city #city-canvas { display: none; }
       color-mix(in srgb, var(--accent, #ff2e93) 16%, transparent),
       transparent 70%
     ),
-    linear-gradient(180deg, rgba(37, 19, 64, 0.99), rgba(22, 11, 38, 0.99));
+    linear-gradient(180deg, rgba(21, 24, 39, 0.99), rgba(8, 10, 18, 0.99));
   border-top: 2px solid var(--accent, var(--pink));
   border-radius: 22px 22px 0 0;
   box-shadow: 0 -22px 60px rgba(0, 0, 0, 0.62);
@@ -890,7 +899,7 @@ body.no-city #city-canvas { display: none; }
   padding: 0 10px 8px;
   border: 1px solid var(--line-strong);
   border-radius: 12px;
-  background: rgba(18, 8, 31, 0.45);
+  background: rgba(8, 10, 18, 0.58);
 }
 .sheet-group-summary {
   display: flex;
@@ -1145,7 +1154,7 @@ body.no-city #city-canvas { display: none; }
   border-radius: 12px;
   border: 1px solid var(--line-strong);
   border-left: 3px solid var(--cyan);
-  background: rgba(24, 12, 42, 0.97);
+  background: rgba(13, 17, 28, 0.98);
   box-shadow: var(--shadow);
   font-size: 0.84rem;
   animation: toast-in 0.2s ease;
@@ -1243,7 +1252,7 @@ body.no-city #city-canvas { display: none; }
 }
 .phone-screen {
   height: 100%; display: flex; flex-direction: column;
-  background: linear-gradient(160deg, #1B0F2E 0%, #12081F 55%, #0A1428 100%);
+  background: linear-gradient(160deg, #151827 0%, #080A12 55%, #101927 100%);
   border-radius: 4px; overflow: hidden;
   color: #F3ECFF; font-size: 0.82rem;
 }

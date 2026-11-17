@@ -153,7 +153,7 @@ export function buildInventory(bundle, catalog, derived) {
   /* --- Recursos ---------------------------------------------------------- */
   const coins = (derived && derived.coins) || {};
   const resources = [
-    { id: "coins", label: "Monedas del núcleo", value: Number(coins.balance) || 0, hint: "Ganadas menos gastadas" },
+    { id: "coins", label: "Saldo ODEA · ₡ virtuales", value: Number(coins.balance) || 0, hint: "Ganado en misiones, menos gastos históricos. No es dinero real." },
     {
       id: "tesoro",
       label: "Monedas del Tesoro",

@@ -26,9 +26,9 @@
 }
 .campaign-shell {
   --campaign-accent: #77ead2;
-  --campaign-coral: #ffb2a0;
-  --campaign-ink: #0b1520;
-  --campaign-panel: #111f2b;
+  --campaign-coral: #FFD166;
+  --campaign-ink: #080A12;
+  --campaign-panel: #121A26;
   --campaign-muted: #a9bfca;
   --campaign-line: rgba(169, 203, 211, .19);
   --campaign-display: Impact, "Arial Narrow", "Franklin Gothic Medium", sans-serif;
