@@ -23,13 +23,30 @@
   <span id="version-badge" class="version-badge">v—</span>
   <div id="toasts" class="toasts" role="status" aria-live="polite"></div>
 
-  <nav id="district-chips" class="chips" aria-label="Distritos de Costa Neón" hidden></nav>
 
   <nav id="tabbar" class="tabbar" aria-label="Navegación principal" hidden></nav>
 
   <button id="floating-import" class="floating-import" hidden>Importar mi progreso</button>
 
   <button id="walk-btn" class="walk-btn" hidden>🚶 Caminar</button>
+
+  <div id="phone-backdrop" class="phone-backdrop" hidden>
+    <div id="phone" class="phone" role="dialog" aria-label="Teléfono de Costa Neón">
+      <div class="phone-camera" aria-hidden="true"></div>
+      <div class="phone-speaker" aria-hidden="true"></div>
+      <div class="phone-screen">
+        <div class="phone-status"><span id="phone-clock">--:--</span><span class="phone-status-net">ODEA 2</span></div>
+        <div id="phone-home" class="phone-home">
+          <button class="phone-app" type="button" data-app="missions"><span class="phone-app-icon" aria-hidden="true">🎯</span><span>Misiones</span></button>
+          <button class="phone-app" type="button" data-app="map"><span class="phone-app-icon" aria-hidden="true">🗺️</span><span>Mapa</span><span class="phone-soon">Pronto</span></button>
+          <button class="phone-app" type="button" data-app="bag"><span class="phone-app-icon" aria-hidden="true">🎒</span><span>Inventario</span><span class="phone-soon">Pronto</span></button>
+          <button class="phone-app" type="button" data-app="gear"><span class="phone-app-icon" aria-hidden="true">⚙️</span><span>Ajustes</span><span class="phone-soon">Pronto</span></button>
+        </div>
+        <div id="phone-missions" class="phone-missions" hidden></div>
+      </div>
+      <button id="phone-home-btn" class="phone-home-btn" type="button" aria-label="Inicio del teléfono"></button>
+    </div>
+  </div>
 
   <div id="sheet-backdrop" class="sheet-backdrop" hidden></div>
   <aside id="sheet" class="sheet" role="dialog" aria-modal="false" aria-labelledby="sheet-title" hidden></aside>

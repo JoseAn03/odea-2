@@ -14,10 +14,19 @@ export const GRID = {
   rows: 4
 };
 
+/* La Zona CLIPS: una manzana libre (sin distrito) al noreste, junto al
+   Distrito IA. Es el primer espacio que se ocupa en la ciudad. */
+export const CLIPS_CELL = { col: 3, row: 0 };
+
 export const WORLD_SIZE =
   GRID.margin * 2 + GRID.cols * GRID.block + (GRID.cols - 1) * GRID.road;
 
 export const CELL_STEP = GRID.block + GRID.road;
+
+/** Rectángulo de la Zona CLIPS. */
+export function clipsRect() {
+  return cellRect(CLIPS_CELL.col, CLIPS_CELL.row);
+}
 
 /** Rectángulo de una manzana (col, row) con row 0 = norte. */
 export function cellRect(col, row) {

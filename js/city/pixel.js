@@ -247,6 +247,94 @@ function vosCanvas() {
   return c;
 }
 
+/* ------------------------- props Zona CLIPS --------------------------- */
+
+function arcadeCanvas() {
+  const c = mkCanvas(28, 36);
+  const g = c.getContext("2d");
+  g.fillStyle = "#17102A"; g.fillRect(0, 0, 28, 36);
+  g.fillStyle = ROSA; g.fillRect(0, 0, 3, 36); g.fillRect(25, 0, 3, 36);
+  g.fillStyle = ROSA; g.fillRect(4, 1, 20, 4);
+  g.fillStyle = CIAN; g.fillRect(6, 2, 3, 2); g.fillRect(13, 2, 3, 2); g.fillRect(20, 2, 2, 2);
+  g.fillStyle = "#0B2B3A"; g.fillRect(5, 7, 18, 12);
+  g.fillStyle = CIAN; g.fillRect(7, 9, 14, 8);
+  g.fillStyle = ROSA; g.fillRect(9, 11, 5, 2); g.fillRect(15, 14, 5, 2);
+  g.fillStyle = "#FFF6D5"; g.fillRect(18, 9, 3, 2);
+  g.fillStyle = "#241743"; g.fillRect(4, 21, 20, 6);
+  g.fillStyle = "#0D0919"; g.fillRect(8, 22, 2, 4);
+  g.fillStyle = ROSA; g.fillRect(7, 21, 4, 2);
+  g.fillStyle = CIAN; g.fillRect(17, 23, 4, 4);
+  g.fillStyle = "#0D0919"; g.fillRect(0, 32, 28, 4);
+  return c;
+}
+
+function sillaCanvas(trim) {
+  const c = mkCanvas(26, 34);
+  const g = c.getContext("2d");
+  g.fillStyle = "#12101E"; g.fillRect(4, 2, 18, 21);
+  g.fillStyle = trim; g.fillRect(2, 6, 3, 14); g.fillRect(21, 6, 3, 14);
+  g.fillStyle = trim; g.fillRect(8, 4, 10, 5);
+  g.fillStyle = "#0B0916"; g.fillRect(11, 5, 4, 3);
+  g.fillStyle = "#1D1830"; g.fillRect(7, 11, 12, 10);
+  g.fillStyle = trim; g.fillRect(12, 11, 2, 10);
+  g.fillStyle = "#1D1830"; g.fillRect(4, 22, 18, 5);
+  g.fillStyle = "#12101E"; g.fillRect(1, 19, 4, 8); g.fillRect(21, 19, 4, 8);
+  g.fillStyle = trim; g.fillRect(1, 19, 4, 2); g.fillRect(21, 19, 4, 2);
+  g.fillStyle = "#333340"; g.fillRect(12, 27, 3, 4); g.fillRect(6, 31, 14, 2);
+  return c;
+}
+
+function pantallaCanvas() {
+  const c = mkCanvas(58, 40);
+  const g = c.getContext("2d");
+  g.fillStyle = "#0B0B12"; g.fillRect(0, 0, 58, 31);
+  g.fillStyle = CIAN; g.fillRect(3, 3, 52, 9);
+  g.fillStyle = "#7A4FD0"; g.fillRect(3, 12, 52, 8);
+  g.fillStyle = ROSA; g.fillRect(3, 20, 52, 8);
+  g.fillStyle = "rgba(255,255,255,0.25)"; g.fillRect(3, 3, 52, 2);
+  g.fillStyle = "#FFFFFF";
+  g.fillRect(26, 10, 3, 11); g.fillRect(29, 12, 3, 7); g.fillRect(32, 14, 3, 3);
+  g.fillStyle = "#0B0B12"; g.fillRect(26, 30, 6, 6); g.fillRect(18, 36, 22, 3);
+  return c;
+}
+
+function mandoCanvas() {
+  const c = mkCanvas(66, 46);
+  const g = c.getContext("2d");
+  g.fillStyle = "rgba(16,10,28,0.92)"; g.fillRect(4, 8, 58, 30);
+  g.fillStyle = "rgba(255,46,147,0.5)"; g.fillRect(4, 8, 58, 3);
+  g.fillStyle = "#3A3352"; g.fillRect(14, 15, 5, 17); g.fillRect(8, 21, 17, 5);
+  g.fillStyle = "#565064"; g.fillRect(15, 16, 3, 15); g.fillRect(9, 22, 15, 3);
+  g.fillStyle = ROSA; g.fillRect(47, 14, 6, 6);
+  g.fillStyle = CIAN; g.fillRect(55, 21, 6, 6);
+  g.fillStyle = "#FFD23F"; g.fillRect(47, 28, 6, 6);
+  g.fillStyle = "#4CAF50"; g.fillRect(39, 21, 6, 6);
+  g.fillStyle = "#3A3352"; g.fillRect(29, 22, 8, 3);
+  return c;
+}
+
+function tiendaCanvas() {
+  const c = mkCanvas(68, 46);
+  const g = c.getContext("2d");
+  for (let x = 0, i = 0; x < 68; x += 8, i++) {
+    g.fillStyle = i % 2 === 0 ? ROSA : "#F3E9D2";
+    g.fillRect(x, 2, 8, 10);
+  }
+  g.fillStyle = "rgba(0,0,0,0.25)"; g.fillRect(0, 11, 68, 2);
+  g.fillStyle = "#1A1428"; g.fillRect(0, 13, 68, 33);
+  g.fillStyle = "#0D0919"; g.fillRect(0, 13, 68, 5);
+  g.fillStyle = ROSA; g.fillRect(4, 15, 3, 2); g.fillRect(14, 15, 3, 2); g.fillRect(24, 15, 3, 2);
+  g.fillStyle = CIAN; g.fillRect(34, 15, 3, 2); g.fillRect(44, 15, 3, 2); g.fillRect(54, 15, 3, 2);
+  g.fillStyle = "#0E2A3A"; g.fillRect(5, 21, 36, 17);
+  g.fillStyle = "rgba(0,229,255,0.35)"; g.fillRect(5, 21, 36, 3);
+  g.fillStyle = "#0B0B12"; g.fillRect(15, 26, 16, 8);
+  g.fillStyle = ROSA; g.fillRect(27, 28, 3, 3);
+  g.fillStyle = CIAN; g.fillRect(17, 28, 3, 3);
+  g.fillStyle = "#241743"; g.fillRect(47, 21, 14, 25);
+  g.fillStyle = CIAN; g.fillRect(57, 32, 2, 2);
+  return c;
+}
+
 function carroCanvas(color, techo, luz, sombra) {
   const c = mkCanvas(48, 24);
   const g = c.getContext("2d");
@@ -319,6 +407,12 @@ export function createPixelArt() {
     arbol: arbolCanvas(),
     palmera: palmeraCanvas(),
     vos: vosCanvas(),
+    arcade: arcadeCanvas(),
+    sillaRosa: sillaCanvas(ROSA),
+    sillaCian: sillaCanvas(CIAN),
+    pantalla: pantallaCanvas(),
+    mando: mandoCanvas(),
+    tienda: tiendaCanvas(),
     banca: bancaCanvas(),
     carro: carroCian,
     carroRosa,
