@@ -8,7 +8,7 @@
 import { PALETTE, DISTRICTS, alpha, mix } from "../districts.js";
 import { fmt } from "../format.js";
 import { createPixelArt } from "./pixel.js";
-import { clipsRect, cellRect } from "./layout.js";
+import { clipsRect, cellRect, eventosRect } from "./layout.js";
 import { shopItem } from "../../src/shop.js";
 
 const FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
@@ -66,7 +66,7 @@ export function createRenderer(canvas) {
   let glow = null;
   const venuePictures = {};
   if (typeof Image !== "undefined") {
-    for (const id of ["brete", "gamer", "tienda"]) {
+    for (const id of ["brete", "gamer", "tienda", "eventos"]) {
       const image = new Image();
       image.src = new URL(`../../assets/slots/${id}.webp`, import.meta.url).href;
       venuePictures[id] = image;
@@ -1295,6 +1295,15 @@ export function createRenderer(canvas) {
       if (visible(view, tiendaCell.x, tiendaCell.y, tiendaCell.w, tiendaCell.h)) {
         drawVenueSkin("tienda", tiendaCell);
         drawVenueSign("TIENDA", tiendaCell, "#3ED97A");
+      }
+
+      /* La Zona de Eventos ocupa la manzana (0,3), la única sin distrito:
+         el estadio cubre el cuadrado entero, con su letrero rojo a la
+         entrada. El evento rota (hoy: SJO Decision Lab); la zona no. */
+      const eventosCell = eventosRect();
+      if (visible(view, eventosCell.x, eventosCell.y, eventosCell.w, eventosCell.h)) {
+        drawVenueSkin("eventos", eventosCell);
+        drawVenueSign("EVENTOS", eventosCell, "#EF3E4A");
       }
 
       ctx.restore();
