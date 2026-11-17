@@ -205,13 +205,16 @@ test("sync: una sesión silenciosa colgada vence en needsReconnect, no en syncin
   assert.match(engine.getState().message, /Chrome/);
 });
 
-test("sync: al abrir, un fallo silencioso pasajero se reintenta solo y entra sin pedir nada", async () => {
+test("sync: al abrir hay UN solo intento silencioso; si falla, queda tranquilo y un syncNow posterior entra sin pedir nada", async () => {
   const shared = createMemoryStorage();
   const a = makeEngine({ localRaw: "SAVE-1", storage: shared });
   await a.engine.connect();
   assert.equal(a.engine.getState().status, "ready");
-  /* Segundo aparato (o reapertura): la primera renovación silenciosa
-     falla como si la sesión de Google aún no cargara; la segunda entra. */
+  /* Segundo aparato (o reapertura): la renovación silenciosa de arranque
+     falla como si la sesión de Google aún no cargara. Desde v0.25.2 el
+     arranque NO reintenta solo (José: «me lo hace dos veces»): un único
+     intento y estado needsReconnect en silencio. La renovación llega
+     después por la vía normal (volver a la app / syncNow) y entra sola. */
   const transport = fakeTransport();
   let intentos = 0;
   const ensureOk = transport.ensureSession;
@@ -224,8 +227,11 @@ test("sync: al abrir, un fallo silencioso pasajero se reintenta solo y entra sin
     }
     return ensureOk();
   };
-  const b = makeEngine({ localRaw: "SAVE-1", transport, storage: shared, engineOpts: { retryDelayMs: 5 } });
+  const b = makeEngine({ localRaw: "SAVE-1", transport, storage: shared });
   await b.engine.init();
+  assert.equal(intentos, 1);
+  assert.equal(b.engine.getState().status, "needsReconnect");
+  await b.engine.syncNow();
   assert.equal(intentos, 2);
   assert.equal(b.engine.getState().status, "ready");
 });
