@@ -93,7 +93,10 @@ export function createCityView({ canvas, world, onSelectDistrict, onFrame, onTap
       camera.jumpTo(playerPos.x, playerPos.y + 12, camera.state.zoom);
     }
 
-    if (!reduced || ts - lastDraw > 80) {
+    /* La simulación/cámara siguen a la frecuencia del dispositivo, pero el
+       canvas (la parte más costosa) se limita a 30 FPS: fluido al jugar y con
+       casi la mitad de trabajo de rasterizado en pantallas de 60 Hz. */
+    if (reduced ? ts - lastDraw > 80 : ts - lastDraw >= 1000 / 30) {
       lastDraw = ts;
       drawNow();
     }
