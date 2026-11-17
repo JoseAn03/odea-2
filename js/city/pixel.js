@@ -120,39 +120,39 @@ function speckle(g, base, colors, n, seed) {
 }
 
 function paintAsfalto(g, seed = 1) {
-  speckle(g, "#1B1B26", ["#23232F", "#14141D", "#2A2A38"], 110, seed);
+  speckle(g, "#25283C", ["#30354A", "#1F2233", "#394056"], 92, seed);
 }
 
 const TILES = {
   asfalto: () => tileCanvas((g) => paintAsfalto(g, 1)),
   acera: () => tileCanvas((g) => {
-    speckle(g, "#3A3A4A", ["#424254", "#323240"], 60, 3);
-    g.fillStyle = "#2C2C3A";
+    speckle(g, "#B7875B", ["#C59664", "#A97851", "#D0A778"], 46, 3);
+    g.fillStyle = "#8B684D";
     g.fillRect(0, 0, 32, 1); g.fillRect(0, 0, 1, 32);
-    g.fillStyle = "#32323F";
+    g.fillStyle = "#D5AE7A";
     g.fillRect(15, 0, 1, 32); g.fillRect(0, 15, 32, 1);
   }),
   cebra: () => tileCanvas((g) => {
     paintAsfalto(g, 4);
-    g.fillStyle = "#D2D2D7";
+    g.fillStyle = "#FFF0C8";
     for (const x of [3, 10, 17, 24]) g.fillRect(x, 2, 4, 28);
   }),
   grama: () => tileCanvas((g) => {
-    speckle(g, "#0E2E22", ["#14532D", "#1B4332", "#0A241A"], 150, 5);
+    speckle(g, "#246342", ["#2D8050", "#1B573A", "#377F4A"], 140, 5);
     g.fillStyle = ROSA; g.fillRect(7, 11, 1, 1); g.fillRect(25, 5, 1, 1);
     g.fillStyle = CIAN; g.fillRect(23, 25, 1, 1); g.fillRect(4, 27, 1, 1);
     g.fillStyle = "#FFD678"; g.fillRect(15, 19, 1, 1);
   }),
   plaza: () => tileCanvas((g) => {
-    speckle(g, "#2A1430", ["#3D1D45", "#221028"], 70, 7);
-    g.fillStyle = "#50245C"; g.fillRect(0, 0, 32, 1); g.fillRect(0, 0, 1, 32);
-    g.fillStyle = "#42204E"; g.fillRect(15, 0, 1, 32); g.fillRect(0, 15, 32, 1);
+    speckle(g, "#806184", ["#A0728F", "#694F78", "#A77282"], 52, 7);
+    g.fillStyle = "#B58091"; g.fillRect(0, 0, 32, 1); g.fillRect(0, 0, 1, 32);
+    g.fillStyle = "#72576F"; g.fillRect(15, 0, 1, 32); g.fillRect(0, 15, 32, 1);
     g.fillStyle = ROSA; g.fillRect(7, 7, 1, 1);
     g.fillStyle = CIAN; g.fillRect(23, 23, 1, 1);
   }),
   techo: () => tileCanvas((g) => {
-    speckle(g, "#241A33", ["#2C2040", "#1C1429"], 50, 12);
-    g.fillStyle = "#1A1226";
+    speckle(g, "#404967", ["#56617F", "#343D5A", "#6A597C"], 44, 12);
+    g.fillStyle = "#30384F";
     g.fillRect(0, 0, 32, 1); g.fillRect(0, 0, 1, 32);
   })
 };
@@ -178,6 +178,41 @@ function arbolCanvas() {
   for (let i = 0; i < 14; i++) g.fillRect(4 + Math.floor(rnd() * 20), 2 + Math.floor(rnd() * 18), 1, 1);
   g.fillStyle = ROSA; g.fillRect(9, 9, 1, 1);
   g.fillStyle = CIAN; g.fillRect(19, 13, 1, 1);
+  return c;
+}
+
+function palmeraCanvas() {
+  const c = mkCanvas(32, 40);
+  const g = c.getContext("2d");
+  g.fillStyle = "#5A3A2A";
+  for (let y = 10; y < 39; y += 4) {
+    const bend = Math.floor((y - 10) / 8);
+    g.fillRect(15 + bend, y, 4, 5);
+  }
+  g.fillStyle = "#8B593A";
+  for (let y = 14; y < 36; y += 8) {
+    const bend = Math.floor((y - 10) / 8);
+    g.fillRect(15 + bend, y, 2, 4);
+  }
+
+  const leaves = [
+    [14, 0, 5, 13, "#52B85B"],
+    [5, 2, 12, 5, "#43A94E"],
+    [17, 2, 12, 5, "#2F9650"],
+    [1, 9, 14, 5, "#2B8A49"],
+    [18, 9, 13, 5, "#55B857"],
+    [4, 15, 12, 5, "#348B48"],
+    [17, 15, 11, 5, "#297844"]
+  ];
+  for (const [x, y, w, h, color] of leaves) {
+    g.fillStyle = color;
+    g.fillRect(x, y, w, h);
+    g.fillStyle = "rgba(202,255,142,0.35)";
+    g.fillRect(x + 1, y + 1, Math.max(2, w - 4), 1);
+  }
+  g.fillStyle = "#FFE38A";
+  g.fillRect(14, 9, 3, 3);
+  g.fillRect(18, 11, 3, 3);
   return c;
 }
 
@@ -260,6 +295,7 @@ export function createPixelArt() {
     npcs: [frames(PAL_NPC1, false), frames(PAL_NPC2, false)],
     poste: posteCanvas(),
     arbol: arbolCanvas(),
+    palmera: palmeraCanvas(),
     banca: bancaCanvas(),
     carro: carroCian,
     carroRosa,

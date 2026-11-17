@@ -10,6 +10,18 @@ del distrito con completaciones idempotentes; el resto de distritos sigue en
 No hay frameworks ni assets externos: toda la ciudad se dibuja por código con
 Canvas 2D, sobre la paleta oficial (`#12081F`, `#FF2E93`, `#00E5FF`, `#FF8A3D`).
 
+## Costa Neón en isla · 0.13.0-fase4
+
+El mapa ahora presenta la ciudad como una isla tropical: mar turquesa, borde de
+arena y espuma, palmeras, faro, muelle y dos terrenos reservados para expansiones.
+La vista inicial muestra el conjunto panorámico en escritorio; en móvil conserva
+el recorrido táctil y ajusta el encuadre. Los terrenos marcados **02** y **03**
+son decorativos por ahora: no se pueden visitar ni desbloquear todavía.
+
+La actualización mantiene los nueve distritos, sus ubicaciones, las misiones, el
+importador y el formato del progreso. Los cambios visuales no requieren volver
+a importar una partida.
+
 ## Estado de las fases
 
 | Fase | Estado | Contenido |
@@ -45,7 +57,7 @@ Sin save, la ciudad se muestra atenuada y la pantalla de importación de la
 Fase 1 queda al frente. No hay datos de ejemplo: el progreso siempre es el real.
 
 La app funciona sin conexión después de la primera carga (service worker
-`odea2-v0.12.0-fase3`). El catálogo de juego se sirve con estrategia
+`odea2-v0.13.0-fase4`). El catálogo de juego se sirve con estrategia
 *network-first* y cae a la caché si no hay red.
 
 ## Correr los tests
@@ -233,7 +245,7 @@ Todo ocurre en el dispositivo. Nada se envía a ningún servidor.
 ```
 index.html              cascarón: canvas, HUD, barra de destinos, chips, hoja, overlay y toasts
 manifest.webmanifest    PWA (ODEA 2 — Costa Neón)
-sw.js                   service worker versionado (odea2-v0.12.0-fase3)
+sw.js                   service worker versionado (odea2-v0.13.0-fase4)
 css/app.css             tema neón + capa de ciudad (HUD, hoja, overlay, toasts)
 js/app.js               orquestador: ciudad, HUD, importación, watchers
 js/city/                layout, world, cámara, renderer, entrada y motor rAF

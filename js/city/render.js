@@ -12,12 +12,12 @@ import { createPixelArt } from "./pixel.js";
 const FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
 const C = {
-  base: "#0F0618",
-  ground: "#1B0D2F",
-  sidewalk: "#2C1A45",
-  road: "#150A24",
-  roof: "#2A1442",
-  side: "#0B0514",
+  base: "#318760",
+  ground: "#28553F",
+  sidewalk: "#B7875B",
+  road: "#25283C",
+  roof: "#47516F",
+  side: "#172332",
   text: "#F3ECFF",
   muted: "#B6A9CC"
 };
@@ -190,13 +190,205 @@ export function createRenderer(canvas) {
   /* --------------------------------- helpers ------------------------------- */
 
   function visible(view, x, y, w, h, pad = 140) {
-    const halfW = vw / (2 * view.zoom) + pad;
+    const halfW = vw / (2 * view.zoom * view.horizontalScale) + pad;
     const halfH = vh / (2 * view.zoom) + pad;
     return x + w > view.x - halfW && x < view.x + halfW && y + h > view.y - halfH && y < view.y + halfH;
   }
 
   function roofColor(b) {
     return mix(C.roof, b.accent, 0.2 + b.lit * 0.16);
+  }
+
+  function traceIsland(size) {
+    const s = size;
+    ctx.beginPath();
+    ctx.moveTo(s * 0.07, -s * 0.06);
+    ctx.bezierCurveTo(s * 0.25, -s * 0.09, s * 0.31, -s * 0.055, s * 0.43, -s * 0.065);
+    ctx.bezierCurveTo(s * 0.61, -s * 0.085, s * 0.78, -s * 0.09, s * 0.91, -s * 0.045);
+    ctx.bezierCurveTo(s * 1.04, -s * 0.01, s * 1.055, s * 0.08, s * 1.03, s * 0.2);
+    ctx.bezierCurveTo(s * 1.015, s * 0.31, s * 1.07, s * 0.37, s * 1.035, s * 0.48);
+    ctx.bezierCurveTo(s * 1.01, s * 0.57, s * 1.065, s * 0.66, s * 1.035, s * 0.77);
+    ctx.bezierCurveTo(s * 1.005, s * 0.91, s * 0.965, s * 1.005, s * 0.85, s * 1.035);
+    ctx.bezierCurveTo(s * 0.74, s * 1.065, s * 0.68, s * 1.025, s * 0.59, s * 1.07);
+    ctx.bezierCurveTo(s * 0.49, s * 1.12, s * 0.41, s * 1.105, s * 0.32, s * 1.07);
+    ctx.bezierCurveTo(s * 0.22, s * 1.035, s * 0.12, s * 1.08, s * 0.035, s * 1.02);
+    ctx.bezierCurveTo(-s * 0.055, s * 0.95, -s * 0.055, s * 0.85, -s * 0.025, s * 0.75);
+    ctx.bezierCurveTo(s * 0.005, s * 0.65, -s * 0.07, s * 0.57, -s * 0.04, s * 0.47);
+    ctx.bezierCurveTo(-s * 0.005, s * 0.35, -s * 0.06, s * 0.27, -s * 0.035, s * 0.17);
+    ctx.bezierCurveTo(-s * 0.01, s * 0.075, -s * 0.035, s * 0.01, s * 0.07, -s * 0.06);
+    ctx.closePath();
+  }
+
+  function drawOcean(view, world) {
+    const halfW = vw / (2 * view.zoom * view.horizontalScale);
+    const halfH = vh / (2 * view.zoom);
+    const x = view.x - halfW - 260;
+    const y = view.y - halfH - 260;
+    const w = halfW * 2 + 520;
+    const h = halfH * 2 + 520;
+    const sea = ctx.createRadialGradient(
+      world.size * 0.52, world.size * 0.48, world.size * 0.16,
+      world.size * 0.52, world.size * 0.48, world.size * 1.7
+    );
+    sea.addColorStop(0, "#38B9C1");
+    sea.addColorStop(0.38, "#188DAA");
+    sea.addColorStop(1, "#105B83");
+    ctx.fillStyle = sea;
+    ctx.fillRect(x, y, w, h);
+
+    const step = 210;
+    const left = Math.floor(x / step);
+    const right = Math.ceil((x + w) / step);
+    const top = Math.floor(y / step);
+    const bottom = Math.ceil((y + h) / step);
+    ctx.lineWidth = 3;
+    for (let row = top; row <= bottom; row++) {
+      for (let col = left; col <= right; col++) {
+        const seed = hash(81, col, row);
+        if (seed < 0.62) continue;
+        const px = col * step + 24 + seed * 92;
+        const py = row * step + 30 + hash(19, row, col) * 110;
+        ctx.strokeStyle = `rgba(197,248,230,${0.13 + seed * 0.12})`;
+        ctx.beginPath();
+        ctx.moveTo(px - 24, py);
+        ctx.quadraticCurveTo(px, py - 8, px + 26, py);
+        ctx.stroke();
+      }
+    }
+  }
+
+  function drawCoast(world) {
+    traceIsland(world.size);
+    ctx.fillStyle = "#338E63";
+    ctx.fill();
+
+    /* Arena clara, espuma menta y un filo turquesa recorren toda la costa. */
+    ctx.strokeStyle = "#E9C37D";
+    ctx.lineWidth = 138;
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(189,250,228,0.92)";
+    ctx.lineWidth = 17;
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(0,229,255,0.44)";
+    ctx.lineWidth = 5;
+    ctx.setLineDash([34, 46]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  function drawLighthouse(x, y, time) {
+    const pulse = reduced ? 0.7 : 0.48 + Math.sin(time * 2.1) * 0.12;
+    const beam = ctx.createRadialGradient(x, y - 18, 0, x, y - 18, 135);
+    beam.addColorStop(0, `rgba(255,246,196,${pulse})`);
+    beam.addColorStop(1, "rgba(255,246,196,0)");
+    ctx.fillStyle = beam;
+    ctx.fillRect(x - 140, y - 155, 280, 280);
+
+    ctx.fillStyle = "rgba(9,35,49,0.32)";
+    ctx.fillRect(x - 32, y + 35, 64, 11);
+    ctx.fillStyle = "#F6E3C1";
+    ctx.beginPath();
+    ctx.moveTo(x - 22, y + 28);
+    ctx.lineTo(x - 15, y - 23);
+    ctx.lineTo(x + 15, y - 23);
+    ctx.lineTo(x + 22, y + 28);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = PALETTE.pink;
+    ctx.fillRect(x - 17, y - 2, 34, 8);
+    ctx.fillStyle = "#25314A";
+    ctx.fillRect(x - 17, y - 25, 34, 10);
+    ctx.fillStyle = "#FFE9A9";
+    ctx.fillRect(x - 12, y - 21, 24, 4);
+    ctx.fillStyle = "#FFF6D5";
+    ctx.fillRect(x - 4, y + 7, 8, 14);
+  }
+
+  function drawPier(x, y) {
+    ctx.fillStyle = "rgba(8,39,51,0.38)";
+    ctx.fillRect(x + 12, y + 14, 390, 24);
+    ctx.fillStyle = "#A9784E";
+    ctx.fillRect(x, y, 390, 18);
+    ctx.fillStyle = "#F0C77B";
+    ctx.fillRect(x, y, 390, 4);
+    ctx.fillStyle = "#654B3A";
+    for (const post of [18, 104, 190, 276, 362]) {
+      ctx.fillRect(x + post, y - 10, 8, 42);
+    }
+    ctx.fillStyle = "#EAF9D4";
+    ctx.fillRect(x + 356, y - 20, 18, 16);
+    ctx.fillStyle = PALETTE.pink;
+    ctx.fillRect(x + 359, y - 17, 12, 7);
+  }
+
+  function drawCoastalLandmarks(world, view, time) {
+    const s = world.size;
+    drawLighthouse(-s * 0.015, s * 0.53, time);
+    drawPier(s * 1.005, s * 0.43);
+
+    const px = art();
+    if (!px || !px.palmera) return;
+    const palms = [
+      [s * 0.19, -s * 0.035],
+      [s * 0.36, -s * 0.05],
+      [s * 0.66, -s * 0.045],
+      [s * 0.89, s * 0.17],
+      [s * 1.015, s * 0.31],
+      [s * 1.02, s * 0.75],
+      [s * 0.78, s * 1.015],
+      [s * 0.55, s * 1.04],
+      [s * 0.27, s * 1.02],
+      [-s * 0.02, s * 0.82],
+      [-s * 0.025, s * 0.26]
+    ];
+    for (const [x, y] of palms) {
+      if (!visible(view, x - 70, y - 80, 140, 160, 60)) continue;
+      px.draw(ctx, px.palmera, x, y + 42, 76, 86);
+    }
+  }
+
+  function drawExpansionIslands(world, view) {
+    const spots = [
+      { x: -world.size * 0.12, y: world.size * 0.5, rx: 120, ry: 205 },
+      { x: world.size * 1.12, y: world.size * 0.58, rx: 172, ry: 115 }
+    ];
+    spots.forEach((island, index) => {
+      if (!visible(view, island.x - island.rx, island.y - island.ry, island.rx * 2, island.ry * 2, 30)) return;
+      ctx.fillStyle = "rgba(4,46,67,0.2)";
+      ctx.beginPath();
+      ctx.ellipse(island.x + 18, island.y + 18, island.rx, island.ry, -0.16, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#D9B775";
+      ctx.beginPath();
+      ctx.ellipse(island.x, island.y, island.rx, island.ry, -0.16, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#398A61";
+      ctx.beginPath();
+      ctx.ellipse(island.x - 7, island.y - 7, island.rx * 0.7, island.ry * 0.64, -0.16, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = alpha(PALETTE.cyan, 0.62);
+      ctx.lineWidth = 5;
+      ctx.setLineDash([18, 15]);
+      ctx.beginPath();
+      ctx.ellipse(island.x, island.y, island.rx * 0.88, island.ry * 0.86, -0.16, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      const beacon = island.y - island.ry * 0.72;
+      ctx.fillStyle = "rgba(10,31,49,0.88)";
+      roundRect(ctx, island.x - 28, beacon - 25, 56, 48, 12);
+      ctx.fill();
+      ctx.strokeStyle = alpha(PALETTE.orange, 0.8);
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.fillStyle = PALETTE.orange;
+      ctx.font = "700 22px system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(index === 0 ? "02" : "03", island.x, beacon - 1);
+      ctx.textAlign = "start";
+      ctx.textBaseline = "alphabetic";
+    });
   }
 
   /* ------------------------------- piezas ---------------------------------- */
@@ -842,13 +1034,28 @@ export function createRenderer(canvas) {
     }
 
     const state = camera.state;
-    const view = { zoom: state.zoom, x: state.x, y: state.y };
+    const view = {
+      zoom: state.zoom,
+      x: state.x,
+      y: state.y,
+      horizontalScale: state.horizontalScale || 1
+    };
     ctx.save();
     ctx.translate(vw / 2, vh / 2);
-    ctx.scale(state.zoom, state.zoom);
+    ctx.scale(state.zoom * view.horizontalScale, state.zoom);
     ctx.translate(-state.x, -state.y);
 
-    /* Base de la ciudad. */
+    drawOcean(view, world);
+    drawCoast(world);
+    drawCoastalLandmarks(world, view, time);
+    drawExpansionIslands(world, view);
+
+    /* Todo el damero vive dentro de la costa; las zonas futuras siguen libres. */
+    ctx.save();
+    traceIsland(world.size);
+    ctx.clip();
+
+    /* Base verde de Costa Neón bajo las avenidas y las manzanas. */
     if (visible(view, 0, 0, world.size, world.size, 300)) {
       ctx.fillStyle = C.base;
       ctx.fillRect(0, 0, world.size, world.size);
@@ -909,6 +1116,7 @@ export function createRenderer(canvas) {
     }
 
     ctx.restore();
+    ctx.restore();
 
     /* Tinte de ambiente: sobre el mundo y DEBAJO de los rótulos, para que los
        nombres sigan legibles de noche. */
@@ -962,6 +1170,25 @@ export function createRenderer(canvas) {
       ctx.globalAlpha = 0.94;
       drawSprite(sprite, p.x, p.y, labelScale);
       ctx.globalAlpha = 1;
+    }
+
+    if (z < 0.34) {
+      const futureZones = [
+        { x: -world.size * 0.12, y: world.size * 0.5, id: "02" },
+        { x: world.size * 1.12, y: world.size * 0.58, id: "03" }
+      ];
+      for (const zone of futureZones) {
+        const p = camera.worldToScreen(zone.x, zone.y);
+        if (p.x < -130 || p.x > vw + 130 || p.y < -50 || p.y > vh + 50) continue;
+        const sprite = labelSprite(`expansion:${zone.id}`, `EXPANSIÓN ${zone.id}`, {
+          color: PALETTE.orange,
+          size: 14,
+          sub: "Terreno reservado",
+          weight: 800,
+          letter: 0.8
+        });
+        drawSprite(sprite, p.x, p.y + 78, 0.92);
+      }
     }
 
     /* Crédito permanente junto al monumento. */
