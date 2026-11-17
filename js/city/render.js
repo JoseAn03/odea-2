@@ -12,12 +12,12 @@ import { createPixelArt } from "./pixel.js";
 const FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
 const C = {
-  base: "#318760",
-  ground: "#28553F",
+  base: "#3E9B67",
+  ground: "#3A7A4C",
   sidewalk: "#B7875B",
-  road: "#25283C",
-  roof: "#47516F",
-  side: "#172332",
+  road: "#2E3248",
+  roof: "#55628A",
+  side: "#2A3550",
   text: "#F3ECFF",
   muted: "#B6A9CC"
 };
@@ -174,7 +174,7 @@ export function createRenderer(canvas) {
 
     const vignette = ctx.createRadialGradient(vw / 2, vh / 2, Math.min(vw, vh) * 0.32, vw / 2, vh / 2, Math.max(vw, vh) * 0.78);
     vignette.addColorStop(0, "rgba(5,2,10,0)");
-    vignette.addColorStop(1, "rgba(5,2,10,0.62)");
+    vignette.addColorStop(1, "rgba(5,2,10,0.30)");
 
     const pinkGlow = ctx.createRadialGradient(vw * 0.14, vh * 0.05, 0, vw * 0.14, vh * 0.05, Math.max(vw, vh) * 0.42);
     pinkGlow.addColorStop(0, "rgba(255,46,147,0.16)");
@@ -259,7 +259,7 @@ export function createRenderer(canvas) {
 
   function drawCoast(world) {
     traceIsland(world.size);
-    ctx.fillStyle = "#338E63";
+    ctx.fillStyle = "#3E9B67";
     ctx.fill();
 
     /* Arena clara, espuma menta y un filo turquesa recorren toda la costa. */
@@ -411,7 +411,7 @@ export function createRenderer(canvas) {
     for (const b of bands) {
       if (!visible(view, b.x, b.y, b.w, b.h)) continue;
       if (pxRoads) pxRoads.fill(ctx, "asfalto", b.x, b.y, b.w, b.h);
-      ctx.fillStyle = alpha(C.road, pxRoads ? 0.38 : 1);
+      ctx.fillStyle = alpha(C.road, pxRoads ? 0.30 : 1);
       ctx.fillRect(b.x, b.y, b.w, b.h);
     }
 
@@ -457,13 +457,13 @@ export function createRenderer(canvas) {
       const r = block.rect;
       if (!visible(view, r.x, r.y, r.w, r.h)) continue;
       if (pxBlocks) pxBlocks.fill(ctx, "acera", r.x, r.y, r.w, r.h);
-      ctx.fillStyle = pxBlocks ? alpha(C.sidewalk, 0.38) : C.sidewalk;
+      ctx.fillStyle = pxBlocks ? alpha(C.sidewalk, 0.30) : C.sidewalk;
       ctx.fillRect(r.x, r.y, r.w, r.h);
       if (pxBlocks) {
-        pxBlocks.fill(ctx, block.districtId === "vida" ? "grama" : "plaza",
+        pxBlocks.fill(ctx, block.districtId === "vida" ? "grama" : "piso",
           r.x + 22, r.y + 22, r.w - 44, r.h - 44);
       }
-      ctx.fillStyle = pxBlocks ? alpha(C.ground, 0.62) : C.ground;
+      ctx.fillStyle = pxBlocks ? alpha(C.ground, 0.30) : C.ground;
       ctx.fillRect(r.x + 22, r.y + 22, r.w - 44, r.h - 44);
       ctx.fillStyle = alpha(block.accent, 0.075);
       ctx.fillRect(r.x + 22, r.y + 22, r.w - 44, r.h - 44);
@@ -661,7 +661,7 @@ export function createRenderer(canvas) {
 
     /* Capa pixel: textura de techo con detalles e ícono del distrito. */
     const pxB = art();
-    if (pxB && view.zoom > 0.4) pxB.roof(ctx, b);
+    if (pxB && view.zoom > 0.4) pxB.roof(ctx, b, { lit });
 
     /* Ventanas iluminadas en la cara visible (derecha y abajo). */
     if (view.zoom > 0.55) {

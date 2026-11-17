@@ -113,9 +113,9 @@ export function ambienceFor(bundle, options = {}) {
   /* El tinte se aplica encima del mundo con alfa bajo: la guía pide emoción
      sin castigo, y apagar la ciudad de golpe rompe la lectura del mapa. */
   const tint = night
-    ? { color: "#070312", alpha: 0.28 }
+    ? { color: "#160A24", alpha: 0.15 }
     : dusk
-      ? { color: "#2A1030", alpha: 0.16 }
+      ? { color: "#3A1430", alpha: 0.10 }
       : { color: "#000000", alpha: 0 };
 
   return {
