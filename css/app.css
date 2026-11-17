@@ -1224,129 +1224,96 @@ body.no-city #city-canvas { display: none; }
   .chips { padding-left: 24px; padding-right: 24px; }
 }
 
-/* ------------------------------- mochila ---------------------------------
- * Recursos e inventario son de CONSULTA: no hay acciones, así que no hay
- * botones. Los estados se distinguen con texto, no solo con color.
- */
-
-.resources {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 10px;
-  margin-top: 10px;
+/* ------------------------------- teléfono ------------------------------ */
+.phone-backdrop {
+  position: fixed; inset: 0; z-index: 60;
+  background: rgba(6, 2, 14, 0.55);
+  display: flex; align-items: flex-end; justify-content: center;
+  padding: 12px;
 }
-
-.resource {
-  display: grid;
-  gap: 2px;
-  padding: 10px 12px;
-  border: 1px solid var(--line-strong);
-  border-radius: 12px;
-  background: rgba(18, 8, 31, 0.55);
+.phone-backdrop[hidden] { display: none; }
+.phone {
+  position: relative;
+  width: min(88vw, 330px);
+  aspect-ratio: 330 / 672;
+  max-height: min(88dvh, 672px);
+  background: #0B0B10;
+  border: 3px solid #2C2C34;
+  border-radius: 46px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 0 2px #000, 0 0 44px rgba(255, 46, 147, 0.18);
+  padding: 46px 9px 58px;
+  transform: translateY(26px); opacity: 0;
+  transition: transform 0.28s ease, opacity 0.28s ease;
 }
-
-.resource-label {
-  font-size: 0.68rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--muted);
+.phone-backdrop.is-open .phone { transform: translateY(0); opacity: 1; }
+.phone-camera {
+  position: absolute; top: 17px; left: 50%; margin-left: -56px;
+  width: 9px; height: 9px; border-radius: 50%;
+  background: #1E2A3A; box-shadow: inset 0 0 2px #4A6A8A;
 }
-
-.resource-value {
-  font-size: 1.05rem;
-  font-variant-numeric: tabular-nums;
-  color: var(--text);
+.phone-speaker {
+  position: absolute; top: 19px; left: 50%; transform: translateX(-50%);
+  width: 52px; height: 6px; border-radius: 3px; background: #23232B;
 }
-
-.item-list {
-  display: grid;
-  gap: 6px;
-  margin-top: 6px;
+.phone-screen {
+  height: 100%; display: flex; flex-direction: column;
+  background: linear-gradient(160deg, #1B0F2E 0%, #12081F 55%, #0A1428 100%);
+  border-radius: 4px; overflow: hidden;
+  color: #F3ECFF; font-size: 0.82rem;
 }
-
-.item-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: rgba(18, 8, 31, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+.phone-status {
+  display: flex; justify-content: space-between;
+  padding: 6px 12px 2px; font-size: 0.7rem; font-weight: 700;
+  letter-spacing: 0.04em; opacity: 0.9;
 }
-
-.item-main {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
+.phone-home {
+  padding: 18px 14px; display: grid;
+  grid-template-columns: repeat(4, 1fr); gap: 14px 8px; align-content: start;
 }
-
-.item-name {
-  font-size: 0.86rem;
-  color: var(--text);
-  overflow-wrap: anywhere;
+.phone-home[hidden] { display: none; }
+.phone-app {
+  appearance: none; background: none; border: none; color: inherit;
+  font: inherit; font-size: 0.62rem;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  cursor: pointer; padding: 0; text-align: center;
 }
-
-.item-flag {
-  flex: none;
-  font-size: 0.66rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  padding: 3px 8px;
-  border-radius: 999px;
-  color: var(--muted);
-  border: 1px solid var(--line-strong);
+.phone-app-icon {
+  width: 46px; height: 46px; border-radius: 11px;
+  background: linear-gradient(145deg, #2A1B45, #1A2B4A);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
-
-.item-flag.is-on {
-  color: var(--cyan);
-  border-color: rgba(0, 229, 255, 0.45);
-  background: rgba(0, 229, 255, 0.08);
+.phone-soon {
+  font-size: 0.52rem; color: var(--cyan);
+  text-transform: uppercase; letter-spacing: 0.08em;
 }
-
-/* ---------------------------------- hoy ----------------------------------
- * Cada misión de la ruta: datos a la izquierda, estado y acciones a la derecha.
- * El estado se dice con texto («Hecha» / «Pendiente»), no solo con color.
- */
-
-.today-list { gap: 8px; }
-
-.today-mission {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  flex-wrap: wrap;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: rgba(18, 8, 31, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+.phone-missions { padding: 12px; overflow-y: auto; }
+.phone-missions[hidden] { display: none; }
+.phone-screen-title { margin: 2px 0 0; font-size: 1.05rem; }
+.phone-screen-sub { margin: 2px 0 10px; opacity: 0.75; font-size: 0.72rem; }
+.phone-screen-group { margin: 16px 0 6px; font-size: 0.78rem; color: var(--pink); }
+.phone-list { display: flex; flex-direction: column; gap: 6px; }
+.phone-mission {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px; padding: 8px 10px;
 }
-
-.today-actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
+.phone-mission-id { font-weight: 700; flex: 1; }
+.phone-mission-xp { opacity: 0.8; font-size: 0.7rem; white-space: nowrap; }
+.phone-mission-state { font-size: 0.68rem; color: var(--orange); white-space: nowrap; }
+.phone-mission.is-done .phone-mission-state { color: #4CC36E; }
+.phone-mission.is-soon { opacity: 0.62; }
+.phone-empty { opacity: 0.75; }
+.phone-home-btn {
+  position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+  width: 42px; height: 42px; border-radius: 50%;
+  border: 2px solid #3A3A44;
+  background: radial-gradient(circle at 35% 30%, #1C1C22, #0B0B10);
+  cursor: pointer;
 }
-
-.today-btn {
-  width: auto;
-  padding: 6px 12px;
-  font-size: 0.76rem;
-  min-height: 36px;
-}
-
-.today-progress {
-  display: grid;
-  gap: 6px;
-  margin: 12px 0 4px;
-}
-
-.today-progress-text {
-  font-size: 0.72rem;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--muted);
+.phone-home-btn:active { border-color: var(--cyan); }
+@media (min-width: 760px) {
+  .phone-backdrop { align-items: center; }
+  .phone { width: 320px; }
 }
