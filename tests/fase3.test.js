@@ -467,35 +467,47 @@ test("16. concurrencia: escritura externa entre lectura y CAS produce CONCURRENT
 /* ========================================================================== */
 /* 17. Ruta determinista                                                      */
 /* ========================================================================== */
-test("17. ruta del día: determinista, 48A/48B/48C, filtra completadas y cicla a los 56 días", () => {
+test("17. ruta del día: determinista, sigue el día del plan del jugador (startDate) y se acota a 56", () => {
   const { bundle, catalog } = freshSave();
 
+  /* v0.19.0: la partida de prueba migró con startDate 2026-10-01, así que
+     el 2026-11-10 es SU día 41 del plan — no el 48 que daba el ciclo por
+     epoch, que caía en un día arbitrario del catálogo. */
   const a = routeForDay(bundle, catalog, "2026-11-10");
   const b = routeForDay(bundle, catalog, "2026-11-10");
   assert.deepEqual(a, b);
-  assert.equal(a.catalogDay, 48);
-  assert.deepEqual(a.missions.map((m) => m.id), ["48A", "48B", "48C"]);
-  assert.deepEqual(a.pending.map((m) => m.id), ["48A", "48B", "48C"]);
-  assert.deepEqual(a.missions.map((m) => m.xp), [60, 140, 50]);
+  assert.equal(a.catalogDay, 41);
+  assert.deepEqual(a.missions.map((m) => m.id), ["41A", "41B", "41C"]);
+  assert.deepEqual(a.pending.map((m) => m.id), ["41A", "41B", "41C"]);
+  assert.deepEqual(a.missions.map((m) => m.xp), [60, 160, 50]);
+  assert.ok(a.missions.every((m) => typeof m.title === "string" && m.title.length > 0));
 
   const done = clone(bundle);
   done.play = {
     version: 1,
-    completions: { "48A": { missionId: "48A", system: "hub", date: REFERENCE_DATE, at: AT } },
+    completions: { "41A": { missionId: "41A", system: "hub", date: REFERENCE_DATE, at: AT } },
     checkins: {}
   };
   const filtered = routeForDay(done, catalog, "2026-11-10");
-  assert.deepEqual(filtered.pending.map((m) => m.id), ["48B", "48C"]);
-  assert.equal(filtered.missions.find((m) => m.id === "48A").completed, true);
+  assert.deepEqual(filtered.pending.map((m) => m.id), ["41B", "41C"]);
+  assert.equal(filtered.missions.find((m) => m.id === "41A").completed, true);
 
-  /* 2026-11-19: epoch 20776 → 20776 mod 56 = 0 → día 1. */
-  assert.equal(routeForDay(bundle, catalog, "2026-11-19").catalogDay, 1);
+  /* El día avanza con SU calendario: 2026-11-19 → día 50. */
+  assert.equal(routeForDay(bundle, catalog, "2026-11-19").catalogDay, 50);
+
+  /* Pasado el plan, la ruta se queda en el día 56. */
+  assert.equal(routeForDay(bundle, catalog, "2026-12-15").catalogDay, 56);
+
+  /* Sin startDate se conserva el ciclo por epoch: 2026-11-10 → 48. */
+  const noStart = clone(bundle);
+  delete noStart.core.identity.startDate;
+  assert.equal(routeForDay(noStart, catalog, "2026-11-10").catalogDay, 48);
 
   /* Todo completado: la ruta queda vacía. */
   const allDone = clone(bundle);
   allDone.core.progress.completedDaily = Object.keys(catalog.daily);
   assert.deepEqual(routeForDay(allDone, catalog, "2026-11-10").pending, []);
-  assert.equal(isMissionDone(allDone, "48A"), true);
+  assert.equal(isMissionDone(allDone, "41A"), true);
 });
 
 /* ========================================================================== */
