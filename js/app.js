@@ -103,6 +103,10 @@ let toasts = null;
 let updateWatcher = null;
 let storageWatcher = null;
 let syncEngine = null;
+/* Marca del último intento automático de renovación al volver a la app:
+   como máximo uno cada 10 minutos, para que entrar y salir del juego
+   nunca se convierta en una ráfaga de intentos contra Google. */
+let lastForegroundSyncTry = 0;
 let overlayOpen = false;
 let overlayMode = null; /* "character" | "menu" | "flow" */
 let activeTab = TAB_CITY;
@@ -1453,9 +1457,16 @@ async function boot() {
     if (!document.hidden) {
       applyAmbience();
       /* Si la sesión de Google quedó esperando reconexión, al volver a la
-         app se intenta renovar en silencio una vez más: si la sesión del
-         navegador está viva, entra sola sin pedirle nada. */
-      if (syncEngine && syncEngine.getState().status === "needsReconnect") {
+         app se intenta renovar EN SILENCIO (prompt "none": sin ninguna
+         pantalla de inicio de sesión), como máximo una vez cada 10
+         minutos. Si Google no renueva solo, el juego se queda tranquilo:
+         la reconexión manual vive en el Menú, cuando José la quiera. */
+      if (
+        syncEngine &&
+        syncEngine.getState().status === "needsReconnect" &&
+        Date.now() - lastForegroundSyncTry > 10 * 60 * 1000
+      ) {
+        lastForegroundSyncTry = Date.now();
         syncEngine.syncNow();
       }
     }

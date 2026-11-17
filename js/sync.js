@@ -94,10 +94,17 @@ function loadGisScript(doc) {
   });
 }
 
-export function createDriveTransport({ clientId, fetchImpl, doc } = {}) {
+export function createDriveTransport({ clientId, fetchImpl, doc, tokenTimeoutMs = 12000 } = {}) {
   const doFetch = fetchImpl || ((...args) => fetch(...args));
   const theDoc = doc || (typeof document !== "undefined" ? document : null);
   let tokenClient = null;
+  /* El error_callback de GIS se registra UNA vez al crear el cliente: si
+     quedara amarrado al reject de esa primera llamada, los errores de las
+     llamadas siguientes caerían en una promesa ya cerrada y el pedido en
+     curso no se resolvería NUNCA (envenenando pendingToken y trabando
+     toda la sincronización de la sesión). Por eso el callback de error
+     pasa por este handler mutable, que cada pedido reemplaza. */
+  let tokenErrorHandler = null;
   let accessToken = "";
   let tokenExpiresAt = 0;
   let pendingToken = null;
@@ -112,35 +119,58 @@ export function createDriveTransport({ clientId, fetchImpl, doc } = {}) {
         if (!theDoc) throw new SyncError("no-dom", "Falta el documento para iniciar sesión.");
         await loadGisScript(theDoc);
         return await new Promise((resolve, reject) => {
+          let settled = false;
+          const finish = (fn, value) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timer);
+            tokenErrorHandler = null;
+            fn(value);
+          };
+          /* Si Google no responde (el popup de la app instalada que nunca
+             vuelve), el pedido vence solo y pendingToken se libera: la
+             sincronización puede reintentar en vez de quedar trabada. */
+          const timer = setTimeout(() => {
+            finish(reject, new SyncError("timeout", SYNC_TIMEOUT_MESSAGE));
+          }, tokenTimeoutMs);
           if (!tokenClient) {
             tokenClient = window.google.accounts.oauth2.initTokenClient({
               client_id: clientId,
               scope: DRIVE_SCOPE,
               callback: () => {},
               error_callback: (err) => {
-                reject(
-                  new SyncError(
-                    "needs-interaction",
-                    `Google pidió interacción (${(err && err.type) || "error"}).`
-                  )
-                );
+                if (tokenErrorHandler) tokenErrorHandler(err);
               }
             });
           }
+          tokenErrorHandler = (err) => {
+            finish(
+              reject,
+              new SyncError(
+                "needs-interaction",
+                `Google pidió interacción (${(err && err.type) || "error"}).`
+              )
+            );
+          };
           tokenClient.callback = (response) => {
             if (response && response.access_token) {
               accessToken = response.access_token;
               tokenExpiresAt = Date.now() + Number(response.expires_in || 3600) * 1000;
-              resolve(accessToken);
+              finish(resolve, accessToken);
             } else {
-              reject(new SyncError("needs-interaction", "Google no entregó un token de acceso."));
+              finish(reject, new SyncError("needs-interaction", "Google no entregó un token de acceso."));
             }
           };
-          /* prompt "" siempre: Google muestra el consentimiento SOLO la
-             primera vez (cuando hace falta de verdad). Forzar "consent" en
-             cada reconexión obligaba a José a pasar la pantalla completa
-             de permisos cada vez que la sesión vencía. */
-          tokenClient.requestAccessToken({ prompt: "" });
+          /* La distinción que faltaba (pedido de José: «me sigue pidiendo
+             iniciar sesión cada vez que entro»):
+             - interactive=true SOLO cuando José toca Conectar/Reconectar:
+               prompt "" deja que Google muestre su pantalla si hace falta.
+             - Todo lo automático (al abrir la app, al volver a ella, al
+               recuperar la red) va con prompt "none": Google entrega el
+               token EN SILENCIO o falla sin mostrar NINGUNA pantalla. Si
+               falla, el estado queda needsReconnect visible solo en el
+               Menú, y el juego nunca le pide iniciar sesión al entrar. */
+          tokenClient.requestAccessToken({ prompt: interactive ? "" : "none" });
         });
       } finally {
         pendingToken = null;
