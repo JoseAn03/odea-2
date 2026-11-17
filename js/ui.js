@@ -65,7 +65,65 @@ export function setVersion(node, version) {
   node.textContent = `v${version}`;
 }
 
-export function renderEmpty(root, actions) {
+/** Tarjeta de recuperación desde Drive en la pantalla sin partida (v0.20.0). */
+function emptySyncCard(sync, actions) {
+  if (!sync || !sync.configured) return null;
+  if (sync.status === "off") {
+    return h(
+      "section",
+      { class: "card" },
+      h("h2", {}, "¿Ya jugás en otro aparato?"),
+      h(
+        "p",
+        { class: "muted" },
+        "Si tu partida ya se sincroniza con Google Drive, recuperala aquí mismo: se baja validada y este aparato queda conectado."
+      ),
+      h(
+        "div",
+        { class: "btn-row" },
+        h("button", { class: "btn primary", onclick: () => actions.syncConnect() }, "Recuperar desde Google Drive")
+      )
+    );
+  }
+  if (sync.status === "connecting" || sync.status === "syncing") {
+    return h(
+      "section",
+      { class: "card" },
+      h("h2", {}, "Google Drive"),
+      h("p", { class: "muted" }, "Conectando con Google…")
+    );
+  }
+  if (sync.status === "error" || sync.status === "needsReconnect") {
+    return h(
+      "section",
+      { class: "card" },
+      h("h2", {}, "Google Drive"),
+      h("p", { class: "muted" }, sync.message || "La conexión con Google falló."),
+      h(
+        "div",
+        { class: "btn-row" },
+        h("button", { class: "btn primary", onclick: () => actions.syncConnect() }, "Reintentar")
+      )
+    );
+  }
+  if (sync.status === "ready") {
+    return h(
+      "section",
+      { class: "card" },
+      h("h2", {}, "Google Drive"),
+      h(
+        "p",
+        { class: "muted" },
+        sync.email
+          ? `Conectado como ${sync.email}. Todavía no hay partida en Drive: empezá o importá aquí y se subirá sola.`
+          : "Conectado. Todavía no hay partida en Drive: empezá o importá aquí y se subirá sola."
+      )
+    );
+  }
+  return null;
+}
+
+export function renderEmpty(root, actions, sync) {
   const newName = h("input", { id: "new-player-name", type: "text", maxlength: "60", placeholder: "Tu nombre en Costa Neón", class: "campaign-input" });
   root.replaceChildren(
     h(
@@ -90,6 +148,7 @@ export function renderEmpty(root, actions) {
       newName,
       h("button", { class: "btn primary", type: "button", onclick: () => actions.startFresh && actions.startFresh(newName.value) }, "Empezar desde cero")
     ),
+    emptySyncCard(sync, actions),
     notice(
       "Tu progreso y tus notas se guardan sólo en este navegador. Exportá un respaldo desde Menú para conservarlos o cambiar de dispositivo."
     )
@@ -347,7 +406,8 @@ export function renderToday(root, today, actions) {
 }
 
 /** Pantalla «Menú»: respaldo, importación y datos de la aplicación. */
-export function renderMenu(root, { version, actions } = {}) {
+export function renderMenu(root, { version, actions, sync } = {}) {
+  const syncOn = !!(sync && sync.enabled);
   root.replaceChildren(
     card(
       h("h2", {}, "Respaldo y datos"),
@@ -366,11 +426,110 @@ export function renderMenu(root, { version, actions } = {}) {
       h(
         "p",
         { class: "muted small" },
-        `Versión ${version} · progreso local · sin servidor`
+        syncOn
+          ? `Versión ${version} · progreso local + copia en tu Google Drive`
+          : `Versión ${version} · progreso local · sin servidor`
       )
     ),
-    notice("Nada se envía a ningún servidor. Las capturas y diagnósticos nunca incluyen tus datos personales.")
+    syncSection(sync, actions),
+    notice(
+      syncOn
+        ? "Con la sincronización activa, tu partida también se guarda en la carpeta privada de esta app en tu Google Drive (solo esta app puede verla). Nada más se comparte."
+        : "Nada se envía a ningún servidor. Las capturas y diagnósticos nunca incluyen tus datos personales."
+    )
   );
+}
+
+/** Sección de sincronización con Google Drive del Menú (v0.20.0). */
+function syncSection(sync, actions) {
+  const title = h("h2", {}, "Sincronización · Google Drive");
+  if (!sync || !sync.configured) {
+    return card(
+      title,
+      h("p", { class: "muted" }, "La sincronización no está configurada en esta versión.")
+    );
+  }
+  const lastSync = sync.lastSyncAt
+    ? new Date(sync.lastSyncAt).toLocaleString()
+    : "todavía no";
+  switch (sync.status) {
+    case "off":
+      return card(
+        title,
+        h(
+          "p",
+          { class: "muted" },
+          "Guardá tu partida en tu Google Drive y seguí en cualquier aparato: el teléfono y la computadora quedan al día solos. La partida vive en una carpeta privada que solo esta app puede ver."
+        ),
+        h(
+          "div",
+          { class: "btn-row" },
+          h("button", { class: "btn primary", onclick: () => actions.syncConnect() }, "Conectar con Google")
+        )
+      );
+    case "connecting":
+      return card(
+        title,
+        h("p", { class: "muted" }, sync.message || "Abriendo el inicio de sesión de Google…"),
+        h(
+          "div",
+          { class: "btn-row" },
+          h("button", { class: "btn primary", disabled: true }, "Conectando…")
+        )
+      );
+    case "syncing":
+      return card(
+        title,
+        h("p", { class: "muted" }, "Sincronizando…"),
+        h("p", { class: "muted small" }, sync.email ? `Cuenta: ${sync.email}` : "")
+      );
+    case "choice":
+      return card(
+        title,
+        h("p", { class: "muted" }, sync.message),
+        h(
+          "div",
+          { class: "btn-row" },
+          h("button", { class: "btn primary", onclick: () => actions.syncUseLocal() }, "Usar la de este aparato"),
+          h("button", { class: "btn ghost", onclick: () => actions.syncUseCloud() }, "Usar la de Drive")
+        )
+      );
+    case "needsReconnect":
+      return card(
+        title,
+        h("p", { class: "muted" }, sync.message),
+        h(
+          "div",
+          { class: "btn-row" },
+          h("button", { class: "btn primary", onclick: () => actions.syncConnect() }, "Reconectar con Google"),
+          h("button", { class: "btn ghost", onclick: () => actions.syncDisconnect() }, "Desconectar")
+        )
+      );
+    case "error":
+      return card(
+        title,
+        h("p", { class: "muted" }, sync.message || "La sincronización falló."),
+        h(
+          "div",
+          { class: "btn-row" },
+          h("button", { class: "btn primary", onclick: () => actions.syncNow() }, "Reintentar"),
+          h("button", { class: "btn ghost", onclick: () => actions.syncDisconnect() }, "Desconectar")
+        )
+      );
+    default: // ready
+      return card(
+        title,
+        h("p", { class: "muted" }, sync.email ? `Conectada como ${sync.email}.` : "Conectada."),
+        h("p", { class: "muted small" }, `Última sincronización: ${lastSync}.`),
+        sync.message ? h("p", { class: "muted small" }, sync.message) : null,
+        h(
+          "div",
+          { class: "btn-row" },
+          h("button", { class: "btn primary", onclick: () => actions.syncNow() }, "Sincronizar ahora"),
+          h("button", { class: "btn ghost", onclick: () => actions.syncDisconnect() }, "Desconectar")
+        )
+      );
+  }
 }
 
 /** Tarjeta compartida por «Personaje» y «Mi progreso». Sin acciones si `actions` es null. */
