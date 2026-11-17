@@ -41,9 +41,11 @@ test("partida nueva: cero XP, cero monedas, perfil vacío y campañas listas sin
 });
 
 test("campañas: 96 misiones únicas, 8 capítulos de 6 por ruta y entregables completos", () => {
-  assert.equal(CAMPAIGN_MISSIONS.length, 96);
-  assert.equal(new Set(CAMPAIGN_MISSIONS.map((m) => m.id)).size, 96);
-  for (const [id, c] of Object.entries(CAMPAIGNS)) {
+  const rutas = Object.entries(CAMPAIGNS).filter(([id]) => id !== "eventos");
+  const misiones = rutas.flatMap(([, c]) => c.chapters.flatMap((ch) => ch.missions));
+  assert.equal(misiones.length, 96);
+  assert.equal(new Set(misiones.map((m) => m.id)).size, 96);
+  for (const [id, c] of rutas) {
     assert.equal(c.chapters.length, 8);
     for (const chapter of c.chapters) {
       assert.equal(chapter.missions.length, 6);
@@ -60,6 +62,37 @@ test("campañas: 96 misiones únicas, 8 capítulos de 6 por ruta y entregables c
     }
     assert.ok(fs.existsSync(new URL(`../${c.image}`, import.meta.url)));
   }
+});
+
+test("evento Decision Lab: las 14 misiones de ODEA 1, en sus 5 fases y con su XP", () => {
+  const c = CAMPAIGNS.eventos;
+  assert.ok(c, "la campaña del evento existe");
+  assert.equal(c.chapters.length, 5);
+  assert.deepEqual(c.chapters.map((ch) => ch.missions.length), [3, 3, 3, 2, 3]);
+  const ms = c.chapters.flatMap((ch) => ch.missions);
+  assert.equal(ms.length, 14);
+  assert.equal(ms.reduce((a, m) => a + m.xp, 0), 1020, "el XP total es el de ODEA 1");
+  assert.equal(ms[0].id, "eventos-01");
+  assert.equal(ms[0].title, "Diseñar la operación");
+  assert.equal(ms[13].id, "eventos-14");
+  assert.equal(ms[13].title, "Frase para las cartas");
+  for (const m of ms) {
+    assert.equal(m.campaignId, "eventos");
+    assert.ok(m.title && m.brief && m.deliverable && m.criterion);
+    assert.ok(m.steps.length >= 2);
+    assert.ok(Number.isSafeInteger(m.xp) && m.xp >= 40);
+    assert.ok(Number.isSafeInteger(m.coins) && m.coins > 0);
+  }
+  assert.ok(fs.existsSync(new URL(`../${c.image}`, import.meta.url)), "la escena del estadio existe");
+  const s = fresh();
+  const view = campaignView(saved(s), "eventos");
+  assert.equal(view.total, 14);
+  assert.equal(view.next.id, "eventos-01");
+  assert.equal(complete(s, "eventos-02").error.code, "MISSION_LOCKED", "el proyecto avanza en orden");
+  assert.equal(complete(s, "eventos-01").status, "applied");
+  const after = campaignView(saved(s), "eventos");
+  assert.equal(after.done, 1);
+  assert.equal(after.chapters[0].missions[1].unlocked, true);
 });
 
 test("campañas: un save anterior empieza en cero y conserva su progreso migrado", () => {
