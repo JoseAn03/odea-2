@@ -9,7 +9,8 @@
     "check:write-path": "node tools/check-write-path.mjs",
     "extract-catalog": "node tools/extract-catalog.mjs",
     "extract-assets": "node tools/extract-assets.mjs",
-    "make-fixture": "node tools/make-fixture.mjs"
+    "make-fixture": "node tools/make-fixture.mjs",
+    "check:ui": "node tools/dom-smoke.mjs"
   },
   "engines": {
     "node": ">=20"

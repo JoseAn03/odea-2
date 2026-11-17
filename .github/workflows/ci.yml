@@ -40,3 +40,8 @@ jobs:
 
       - name: Ruta única de escritura
         run: npm run check:write-path
+
+      # Renderiza TODA la interfaz (HUD, Hoy, Mochila, Menú y los 9 distritos)
+      # con el fixture sintético, y verifica que renderizar no escriba el save.
+      - name: Interfaz completa
+        run: npm run check:ui
