@@ -1,48 +1,36 @@
 # ODEA 2 — Costa Neón
 
-**Fase 3: la ciudad 2D cenital y el Hub, Empleo y Vida jugables sobre tu progreso real.**
-La ciudad se ve, se recorre y muestra el estado real de cada sistema importado
-desde ODEA 1. El **Hub** (ruta del día, check-in y racha), **Empleo** (trabajos,
-B2B y puente) y **Vida** (diarias, semanales y únicas) ya se juegan desde la hoja
-del distrito con completaciones idempotentes; el resto de distritos sigue en
-**solo lectura** hasta las próximas fases.
+**v0.27.1-fase7 · la ciudad, el día y las campañas sobre tu progreso real de ODEA 1.**
 
-No hay frameworks ni assets externos: toda la ciudad se dibuja por código con
-Canvas 2D, sobre la paleta oficial (`#12081F`, `#FF2E93`, `#00E5FF`, `#FF8A3D`).
+La app es estática (sin frameworks, sin dependencias, sin build): toda la ciudad
+se dibuja por código con Canvas 2D sobre la paleta oficial (`#12081F`,
+`#FF2E93`, `#00E5FF`, `#FF8A3D`) y el progreso vive en el `localStorage` del
+navegador, en una sola clave. Sobre esa base se juegan el **Hub**, **Empleo**,
+**Vida**, **La Torre**, **Mirador de Sagas**, **Distrito IA**, las **campañas
+profesionales** (El Brete y Zona Gamer), la **Tienda** y las **Misiones
+Diarias**; **El Garaje** y **Rincón Anomalía** siguen en solo lectura porque su
+catálogo no está extraído (ver `docs/FASE4_DOMINIOS.md`).
 
-## Campañas profesionales · 0.18.0-fase4
-
-La actualización actual incluye 48 misiones de analista de datos en El Brete
-y 48 de clipping/IA/servicio profesional en Zona Gamer. Ambas se abren desde
-el mapa o el teléfono y comparten `play.campaigns`, respaldos y premios.
-El registro repetible de postulaciones da 25 XP y 2 monedas ficticias por
-acción deliberada sin un límite diario. No envía solicitudes externas.
-También se puede iniciar una partida vacía sin usar el fixture de pruebas.
-
-Leé **LEEME-PRIMERO.md** para instalación, conservación del guardado y uso.
-Esta es una entrega de código ZIP; no implica que GitHub Pages esté actualizado.
-
-## Costa Neón en isla · actualización anterior 0.13.0-fase4
-
-El mapa ahora presenta la ciudad como una isla tropical: mar turquesa, borde de
-arena y espuma, palmeras, faro, muelle y dos terrenos reservados para expansiones.
-La vista inicial muestra el conjunto panorámico en escritorio; en móvil conserva
-el recorrido táctil y ajusta el encuadre. Los terrenos marcados **02** y **03**
-son decorativos por ahora: no se pueden visitar ni desbloquear todavía.
-
-La actualización mantiene los nueve distritos, sus ubicaciones, las misiones, el
-importador y el formato del progreso. Los cambios visuales no requieren volver
-a importar una partida.
+- Versión publicada: **0.27.1-fase7** (insignia de la esquina inferior).
+- PWA instalable y offline después de la primera carga.
+- 268 pruebas automatizadas, sin dependencias, más tres comprobaciones de
+  contrato que corren en CI (ver [Probar el proyecto](#probar-el-proyecto)).
 
 ## Estado de las fases
 
 | Fase | Estado | Contenido |
 |---|---|---|
-| **Fase 0** | ✅ completa | Especificación de la migración (36 campos + 11 claves), decisiones D1–D5, código de validación y 33 tests. |
-| **Fase 1** | ✅ completa | PWA instalable, importación con validación/cuarentena/aborto, respaldo y restauración. |
-| **Fase 2** | ✅ completa | Ciudad 2D cenital con HUD, distritos y paneles de datos reales. Sin misiones. |
-| **Fase 3** | ✅ completa | Hub, Empleo, Vida, La Torre y Mirador de Sagas jugables: sección `play`, escritura única por `applyGameplayMutation`, ruta del día, idempotencia por frecuencia real y racha derivada. El resto de distritos sigue de solo lectura. |
-| Fase 4 | en curso | Resto de distritos. Fichas en `docs/FASE4_DOMINIOS.md`; solo Capital era activable ya. |
+| **0** | ✅ completa | Especificación de la migración (36 campos + 11 claves), decisiones D1–D5, validación y 33 tests. |
+| **1** | ✅ completa | PWA instalable, importación con validación/cuarentena/aborto, respaldo y restauración verificada. |
+| **2** | ✅ completa | Ciudad 2D cenital con HUD, distritos y paneles de datos reales. |
+| **3** | ✅ completa | Hub, Empleo, Vida, La Torre y Sagas jugables: sección `play`, escritura única, ruta del día, idempotencia por frecuencia y racha derivada. |
+| **4** | ✅ completa salvo dos distritos | Academia, Capital, Sagas y Empleo con paridad. **Garaje** y **Anomalía** quedan bloqueados: su catálogo no está en el catálogo que juega la app. |
+| **5** | ✅ completa | Rendimiento de la ciudad (caché estático del lienzo, 30 FPS, pausa por cobertura) e identidad Vice City con la economía ₡. |
+| **6** | ✅ completa y luego **retirada** | Sincronización opcional con Google Drive (v0.20–v0.26). Se **eliminó en v0.27.0** a pedido del jugador: el respaldo es manual, por archivo. |
+| **7** | ✅ completa | La Tienda (Palí pixel art, atuendos y vehículos), el panel de Diarias en **Hoy**, caminar con flechas/WASD en PC y la salida de Google Drive. |
+
+Las fases 4–7 llegaron por PRs con su verificación en el cuerpo del PR; las
+decisiones que las cierran están registradas en `RISK_LIST.md` §3.4.
 
 ## Correr la app en local
 
@@ -50,109 +38,48 @@ Los módulos ES y el service worker **no funcionan con `file://`**: hace falta u
 servidor HTTP.
 
 ```bash
-# opción 1
-npx serve .
-
-# opción 2 (Python)
-python -m http.server 8080
+python -m http.server 8080    # o: npx serve .
 ```
 
-Abrí la URL que indique el servidor (por ejemplo `http://localhost:3000`) y
-seguí estos pasos:
-
-1. Importá un export de ODEA 1 (`odea_bundle_v2`) con «Importar mi progreso».
+1. Importá un export de ODEA 1 (`odea_bundle_v2`) con «Importar mi progreso», o
+   empezá una partida vacía desde ese mismo panel.
 2. La ciudad se enciende y el HUD queda visible con tus datos reales.
 3. Arrastrá con el mouse/dedo para recorrer, pellizcá o usá la rueda para zoom.
-4. Tocá un distrito en el mapa (o su chip abajo) para abrir su panel.
+4. Tocá un distrito en el mapa (o abrí el **Teléfono** y usá su **Mapa**) para
+   entrar a su panel.
 
-Sin save, la ciudad se muestra atenuada y la pantalla de importación de la
-Fase 1 queda al frente. No hay datos de ejemplo: el progreso siempre es el real.
+La app funciona sin conexión después de la primera carga: el service worker
+**precachea el cascarón completo, incluido el catálogo** (`sw.js`), y sirve el
+catálogo con estrategia *network-first* con tiempo límite, cayendo a la caché si
+no hay red.
 
-La app funciona sin conexión después de la primera carga (service worker
-`odea2-v0.18.0-fase4`). El catálogo de juego se sirve con estrategia
-*network-first* y cae a la caché si no hay red.
-
-## Correr los tests
+## Probar el proyecto
 
 ```bash
-npm test
-npm run check:write-path   # una sola ruta de escritura
-npm run check:ui           # interfaz completa: HUD, Hoy, Mochila, Menú y 9 distritos
+npm test                  # 268 pruebas + guarda contra "verde con 0 tests"
+npm run check:write-path  # una sola ruta de escritura del save
+npm run check:ui          # renderiza TODA la interfaz y comprueba que no escribe
 ```
 
-**216 tests** (Node ≥ 20):
+Los tres pasos son obligatorios en CI (`.github/workflows/ci.yml`), en Node 20,
+22 y 24.
 
-- **33 de Fase 0**: no-pérdida, paridad de los 10 componentes de XP, monedas,
-  `eventRL`/`farm`/`canje`, cuarentena, aborto, reimportación, huella, ida y
-  vuelta y los tests negativos de los tres críticos.
-- **15 de Fase 1**: ida y vuelta en almacenamiento, forma exacta del bundle
-  (36 + 11), rechazo sin críticos, restauración de `odea2_bundle_v1`,
-  rechazo del segundo import de ODEA 1, respaldo previo, detección de formato
-  y rotación de backups a los últimos 3.
-- **15 de Fase 2**: mapeo completo y sin duplicados de los 10 componentes de XP
-  y las 11 claves; celdas de distrito únicas y sin solapes; paridad del HUD con
-  `src/derive.js`; crédito permanente = evento + farm; paneles con cifras del
-  save; watchers de versión nueva y multi-pestaña con eventos simulados; la capa
-  visual no escribe el bundle (byte a byte); versión de app/SW/paquete
-  sincronizada, aislamiento de caché por release y cobertura del `SHELL` del SW.
-- **15 de R1 (recompensas inmutables)**: la completación nueva fija recompensa y
-  versión de reglas; cambiar el catálogo no reescribe el historial; lo no
-  congelado conserva la ruta de compatibilidad; doble toque, diaria por fecha,
-  migrada que no repaga, crédito permanente intacto, id y recompensa inválidos,
-  fallo de backup byte a byte, fallo de relectura sin éxito falso,
-  export/restauración, versión futura y Vida con XP congelado.
-- **9 de Academia jugable**: 28 misiones reales (el paso meta no se completa), xp 0 y monedas 0 por completación, sin efecto en el saldo del núcleo, sinergia +3 con tope de 3 al día, +15 por ruta una sola vez, el saldo del Tesoro se deriva de un delta y worlds queda intacto.\n- **7 del catálogo vivo**: invariantes del artefacto extraído de ODEA 1 v6.00
-  (Academia 28/29, las dos tiendas de Tesoro, Garaje, jefes y cartas sin id).
-- **3 de T24 (historial grande)**: 14.700 ocurrencias sintéticas sin recorte, sin
-  fallo de parseo y con derivación por debajo del umbral.
-- **5 de regresión de vistas**: XP y saldo coinciden en HUD, Hoy y Mochila y
-  salen de la misma derivación; abrir las tres pantallas no escribe el bundle
-  y el Tesoro no se reinterpreta como moneda del núcleo.
-- **9 de la clase every:Nd**: catálogo con clase e intervalo, entrada sin días
-  válidos cae en one, clave por fecha, rechazo dentro del ciclo, mismo día
-  duplicado, vuelve a estar debida al vencer, dueDate informado y registro que
-  valida sin romper el bundle.
-- **8 de Hoy**: usa la MISMA proyección del HUD y la MISMA ruta del Hub; cada
-  misión declara su distrito, completar actualiza la ruta, no paga dos veces, no
-  hay premio por reclamar y construir el centro no escribe el bundle.
-- **7 de Mochila**: catálogo de equipo de la fuente, equipo con nombres y estado,
-  objeto sin catálogo no inventado, cosméticos como tienda aparte, recursos sin
-  mezclar, apertura sin escritura y solo consulta declarado.
-- **25 de Fase 3**: `play` perezoso, forma migrada intacta, idempotencia por
-  ocurrencia (`one`/`daily`/`weekly`), fail-closed de schema y de derivación,
-  backup exacto byte a byte, cuota, concurrencia (CAS), ruta del día
-  determinista, cámara que no sobrevive a recargar y racha derivada.
-- **5 de exclusión entre pestañas**: el lock se pide con nombre de origen y modo
-  exclusivo, serializa dos mutaciones concurrentes (una aplica, otra duplica y
-  solo la aplicada respalda), el fallback sin Web Locks informa `locked: false`
-  y conserva la idempotencia, y un error libera el lock.
-- **6 de navegación**: los 4 destinos en orden, ids y etiquetas únicos, la barra
-  solo con save activo, un id desconocido cae en Ciudad y cerrar vuelve siempre
-  a Ciudad.
-- **10 de dominios (Empleo y Vida)**: inventario completo (80 y 192 misiones),
-  frecuencia real por misión (Vida: 49 diarias, 60 semanales, 83 únicas), una
-  diaria vuelve a estar pendiente mañana, una semanal cambia de periodo, una
-  única queda hecha para siempre, escritura por la ruta única y sin colisiones
-  entre sistemas.
-- **8 de ambiente**: las 24 horas tienen fase, el clima del día es determinista
-  y estable, los niveles de distrito respetan sus umbrales, derivar el perfil no
-  muta el bundle y el movimiento reducido baja el tráfico sin apagar la luz.
-- **9 de Capital y paridad**: 101 misiones en tres submódulos, lo migrado se
-  marca completado y no se ofrece, completar una migrada es `duplicate` sin
-  escribir, el XP migrado nunca se cuenta dos veces y —para Empleo, Hub y
-  Vida— las misiones que ODEA 1 ya tenía hechas tampoco se ofrecen.
-- **7 de Academia**: el denominador real de ODEA 1 es 29, llegar a 28 marca el
-  100%, por encima no desborda, los datos inválidos no rompen la vista y el
-  fixture produce el avance esperado.
-- **8 de Sagas**: 12 capítulos y 16 jefes, lo migrado no se ofrece, completar un
-  capítulo reparte el XP entre sus dos categorías, completar un jefe suma el
-  componente de jefes, nada se duplica y la mecánica semanal queda intacta.
-- **2 de Sagas con R1**: cambiar el XP de un capítulo o de un jefe en el
-  catálogo no reescribe el historial ya reconocido.
-- **7 del catálogo vivo**: invariantes del artefacto extraído de ODEA 1 v6.00
-  (Academia 28/29, las dos tiendas de Tesoro, Garaje, jefes y cartas sin id).
-- **2 de ruta de escritura**: `js/` y `src/` no tocan la clave del save fuera de
-  `src/storage.js`, y un módulo que la escriba es detectado.
+Qué cubre cada barrera:
+
+- **Suite** (27 archivos): migración sin pérdida, paridad de XP y monedas,
+  cuarentena y aborto, escritura única con backup verificado byte a byte,
+  idempotencia por frecuencia real, recompensas congeladas (R1), racha derivada,
+  rendimiento con 14.700 ocurrencias, campañas, Tienda, Diarias, Academia,
+  Sagas, Capital, Empleo, Vida, extras de interfaz y accesibilidad de los
+  componentes.
+- **Ruta de escritura**: análisis real, no un grep de una línea. Quita
+  comentarios respetando cadenas, busca la clave por sus partes (constante,
+  concatenación, plantilla), prohíbe `STORAGE_KEYS`, las llamadas al escritor y
+  `localStorage` fuera de sus dueños, y recorre también la raíz y los `.mjs`.
+  Sus 16 tests son las diez evasiones que el gate viejo dejaba pasar.
+- **Interfaz completa**: monta un DOM mínimo y renderiza HUD, Hoy, Mochila,
+  Menú, los 9 distritos, las campañas, el teléfono y la Tienda; verifica que
+  renderizar no escriba el save y que ninguna pantalla invente misiones.
 
 ## La ciudad: distritos y mapeo cerrado
 
@@ -162,14 +89,14 @@ verdad y está cubierta por tests.
 | Distrito | Zona | Claves legacy | Componentes de XP | Qué muestra el panel |
 |---|---|---|---|---|
 | **El Hub** | Plaza Central | `hub`, `events`, `juice` | `ach`, `evento`, `farm` | Jugador, nivel, XP total, racha, campaña/diarias/semanales/logros, recompensas pendientes, **Monumento al Crédito Permanente** (`evento + farm`), eventos archivados y preferencias. |
-| **Distrito IA** | Zona Franca de Heredia | `academia` | — | Actividades de Academia completadas y rutas avisadas. |
+| **Distrito IA** | Zona Franca de Heredia | `academia` | — | Actividades de Academia completadas, rutas y sinergia del Tesoro. |
 | **Distrito Empleo** | Centro Financiero | `empleo` | `career`, `hunt` | XP de carrera y cacería, postulaciones, vacantes, seguimientos, racha de cacería, trabajos/B2B/puente. |
 | **Barrio Vida** | Zona residencial | — | `vida`, `diary`, `focus` | XP de vida, registros, racha, entradas de diario y sesiones de enfoque. |
 | **La Torre** | Capital | — | `capital` | XP de capital y módulos completados de ahorro, inglés e IA. |
 | **El Mercado** | Tesoro y tienda | `tesoro` | — | Balance (ganadas − gastadas), objetos comprados/equipados, monedas/racha/escudos del tesoro y canjes reales. |
-| **El Garaje** | Zona Industrial | `garaje` | — | Kilómetros de carro y moto, misiones de vehículo y accesorios. |
+| **El Garaje** | Zona Industrial | `garaje` | — | Kilómetros de carro y moto, misiones de vehículo y accesorios (solo lectura). |
 | **Mirador de Sagas** | Sagas y jefes | `sagas`, `jefe` | `bosses` | Capítulos de sagas (5 + 7 del catálogo), saga semanal, jefes derrotados y victorias semanales. |
-| **Rincón Anomalía** | Esquina con glitch | `anomalia`, `quiz` | — | Anomalía activa y el archivo legacy del quiz, siempre marcado como **archivado** (no cuenta como progreso activo). |
+| **Rincón Anomalía** | Esquina con glitch | `anomalia`, `quiz` | — | Anomalía activa y el archivo legacy del quiz, siempre marcado como **archivado**. |
 
 Notas de mapeo:
 
@@ -183,27 +110,33 @@ Notas de mapeo:
 
 ## Navegación: cuatro destinos
 
-Barra inferior fija con cuatro destinos (decisión F3-5). La barra queda siempre
-alcanzable: la hoja y el overlay se elevan por encima de ella, así se cambia de
-destino sin cerrar lo que está abierto.
+Barra inferior fija con cuatro destinos (decisión F3-5), más **Teléfono** y
+**Caminar**, que viven en la misma barra: cinco botones en total, en un carril
+del mismo ancho cada uno.
 
 | Destino | Qué hace |
 |---|---|
-| **Ciudad** | El mapa. Aquí vive la fila de los 9 distritos. |
-| **Hoy** | Abre el Hub directamente: es un acceso directo, no una pantalla nueva con lógica diaria duplicada. |
-| **Personaje** | Nivel, XP por componente, racha y monedas. Solo lectura. |
-| **Menú** | Exportar respaldo, restaurar o importar archivo y versión de la app. |
+| **Ciudad** | El mapa. Aquí se elige distrito tocándolo, o desde el mapa del teléfono. |
+| **Hoy** | Abre el panel de Diarias: misma interfaz y misma ruta que el teléfono. |
+| **Mochila** | Nivel, XP por componente, equipo, racha y monedas. Solo lectura. |
+| **Menú** | Exportar respaldo, restaurar o importar archivo y versión. |
+| **Teléfono** | La misma ciudad en formato móvil: misiones, El Brete, Zona Gamer, Tienda, mapa, inventario y ajustes. |
+| **Caminar** | Modo paseo: el avatar recorre la ciudad con arrastre, palanca o flechas/WASD en PC. |
 
 Sin save la barra no existe: la pantalla de importación de la Fase 1 sigue siendo
-la única entrada. Cerrar cualquier capa vuelve a Ciudad, y el foco regresa al
+la única entrada. Cerrar cualquier capa vuelve a Ciudad y el foco regresa al
 control que la abrió.
+
+> La fila de los 9 chips bajo el HUD (propuesta F3-5) está **implementada y
+> probada en `renderChips`, pero todavía no montada**: hoy se llega a los
+> distritos por el mapa o por el mapa del teléfono. Montarla cambia el encaje
+> visual del mapa y es una decisión pendiente, no un olvido.
 
 ## La ciudad responde
 
-`js/ambience.js` produce un **perfil visual de solo lectura** a partir de la hora,
-la fecha y el progreso. El renderizador lo consume; nada de eso toca el save
-(guía, pág. 13: *«ningún vehículo, reflejo o cambio de luz puede llamar a la
-función de mutación»*).
+`js/ambience.js` produce un **perfil visual de solo lectura** a partir de la
+hora, la fecha y el progreso. El renderizador lo consume; nada de eso toca el
+save.
 
 | Señal | Efecto | Límite |
 |---|---|---|
@@ -214,33 +147,40 @@ función de mutación»*).
 
 Es determinista: la misma fecha y hora dan el mismo perfil, también tras recargar.
 
+## Rendimiento
+
+- El lienzo se dibuja a **30 FPS** con caché estático del mundo: la ciudad se
+  pre-renderiza a un canvas fuera de pantalla y solo se repintan las capas vivas
+  mientras la cámara no cambie de detalle.
+- El rAF se pausa con la pestaña oculta y cuando el mapa queda cubierto por el
+  teléfono, la hoja o un panel.
+- El catálogo (100 KB, 16 KB gzip) entra en el precache y se revalida con
+  `network-first` y 4 s de tiempo límite: un `fetch` colgado ya no puede dejar
+  el arranque en la pantalla fatal.
+
 ## HUD e interacción
 
 - **HUD superior**: nombre, nivel de campaña, nivel ODEA, barra de XP con
   `XP actual / próximo umbral` según `odeLadder`, balance de monedas
-  (ganadas − gastadas) y racha. Sin acciones: exportar e importar viven en Menú
-  y el progreso detallado en Personaje.
-- **Fila de distritos**: acceso directo a los 9 distritos dentro de Ciudad, para
-  no depender de acertar un edificio del mapa.
+  (ganadas − gastadas) y racha. Sin acciones: exportar e importar viven en Menú.
 - **Panel de distrito**: hoja inferior en móvil (panel lateral en pantallas
-  anchas) con descripción, cifras reales y la leyenda:
-  «Las misiones de este distrito se juegan aquí a partir de la Fase 3».
-- **Cámara**: arrastre con touch/mouse, pellizco y rueda, con límites suaves.
-  El marcador del jugador aparece en El Hub al abrir.
+  anchas) con descripción, cifras reales y las misiones jugables del sistema.
+- **Cámara**: arrastre con touch/mouse, pellizco, rueda y —en PC— flechas/WASD
+  en modo caminar (v0.26.0).
 - **Animación**: `requestAnimationFrame`, pausada con la pestaña oculta y sin
   parpadeos ni tráfico en movimiento si el sistema pide
   `prefers-reduced-motion`.
 - **Aviso de versión nueva**: el SW espera; la actualización se aplica solo al
-  tocar «Recargar» (nunca `skipWaiting` silencioso). El service worker instala
-  la versión nueva pero no toma el control hasta esa acción.
-- **Multi-pestaña**: un listener del evento `storage` sobre
-  `odea2_bundle_v1` avisa «Tu progreso cambió en otra pestaña» y recarga el
-  estado desde `localStorage`.
+  tocar «Recargar» (nunca `skipWaiting` silencioso).
+- **Multi-pestaña**: un listener del evento `storage` sobre la clave del save
+  avisa y recarga el estado desde `localStorage`.
 - **Exclusión de escritura**: cada mutación corre dentro de un **Web Lock**
-  exclusivo de origen (`odea2:gameplay-write`), así que dos pestañas no
-  intercalan lectura y escritura. Si el navegador no expone Web Locks, el CAS
-  sigue fallando cerrado por operación (`CONCURRENT_CHANGE`) y el resultado
-  informa `locked: false`.
+  exclusivo de origen (`odea2:gameplay-write`). Si el navegador no expone Web
+  Locks, el CAS sigue fallando cerrado por operación (`CONCURRENT_CHANGE`) y el
+  resultado informa `locked: false`.
+- **Capas accesibles**: hoja y overlay son diálogos (`role`, `aria-modal`,
+  `tabindex`), el foco está atrapado dentro y vuelve a la capa tras cada
+  repintado, y el skip link solo existe cuando hay HUD.
 
 ## Qué hace la app
 
@@ -248,15 +188,18 @@ Es determinista: la misma fecha y hora dan el mismo perfil, también tras recarg
    de juego y aplica D1–D5.
    - Totales que no reconcilian → **aborta sin escribir**.
    - Estructura incompleta → **cuarentena** con reporte y confirmación explícita.
-   - Se guarda en **una sola clave**: `odea2_bundle_v1`.
+   - Se guarda en **una sola clave**.
    - Un segundo import se rechaza; solo «reset + reimportar» con backup previo.
-2. **Ver la ciudad y los paneles**: derivación con `src/derive.js` (sin lógica
-   duplicada). Ningún módulo visual escribe el save; los tests lo verifican
-   comparando el bundle byte a byte antes y después de abrir todos los paneles.
-3. **Exportar respaldo**: descarga el `odea2_bundle_v1` actual desde **Menú**.
-4. **Restaurar respaldo** (`odea2_bundle_v1`): ruta distinta de la migración,
-   con backup automático del save actual y confirmación explícita. Vive en
-   **Menú** junto al estado de la Fase 1.
+2. **Jugar**: Hub (diarias, check-in, racha), Empleo, Vida, Capital, Sagas,
+   Academia y las dos campañas profesionales. Toda escritura pasa por
+   `applyGameplayMutation` (`src/storage.js`): backup exacto verificado byte a
+   byte, validación fail-closed, relectura y rollback.
+3. **Exportar respaldo** desde **Menú** (descarga el save actual, con evidencia
+   y notas incluidas). Desde v0.27.0 es la **única** forma de sacar la partida
+   del dispositivo.
+4. **Restaurar respaldo** (`odea2_bundle_v1`): valida el archivo, respalda el
+   save actual **y verifica ese backup byte a byte** antes de reemplazarlo
+   (v0.27.1); si la relectura no coincide, revierte.
 
 ### Retención de respaldos
 
@@ -265,91 +208,88 @@ Los respaldos automáticos del save (`odea2_backup_save_*`) se rotan a los
 archivo de ODEA 1 importado (`odea2_backup_source_*`) **nunca** se rota. Para
 conservar una copia puntual, usá «Exportar respaldo» antes.
 
-Todo ocurre en el dispositivo. Nada se envía a ningún servidor.
+## Privacidad
+
+- **La partida no sale del dispositivo.** Vive en el `localStorage` de ese
+  navegador y ese origen; `Exportar respaldo` la escribe en un archivo que
+  elegís vos.
+- **La app no hace peticiones de red para guardar ni para jugar.** No hay
+  cuentas, ni analítica, ni telemetría, ni publicidad, ni scripts de terceros.
+  Solo carga sus propios archivos desde el mismo origen.
+- **Desde v0.27.0 no hay sincronización con Google Drive.** Se retiró a pedido
+  del jugador; al abrir la app se borra la metadata (`odea2_sync_v1`) que esa
+  función pudo dejar en el aparato. La partida nunca se tocó en esa limpieza.
+- El respaldo exportado **incluye** tu nombre de jugador, las notas de
+  evidencia de las campañas y las postulaciones que registres: tratalo como un
+  archivo personal y no lo subas a ningún repo.
+- `.gitignore` bloquea `odea-progreso-*.json` y `*progreso-real*`, con excepción
+  del fixture sintético (`fixtures/odea-progreso-sintetico.json`).
 
 ## Estructura
 
 ```
-index.html              cascarón: canvas, HUD, barra de destinos, chips, hoja, overlay y toasts
+index.html              cascarón: canvas, HUD, barra de destinos, hoja, overlay, teléfono y toasts
 manifest.webmanifest    PWA (ODEA 2 — Costa Neón)
-sw.js                   service worker versionado (odea2-v0.18.0-fase4)
-css/app.css             tema neón + capa de ciudad (HUD, hoja, overlay, toasts)
-js/app.js               orquestador: ciudad, HUD, importación, watchers
-js/city/                layout, world, cámara, renderer, entrada y motor rAF
+sw.js                   service worker versionado (odea2-v0.27.1-fase7)
+css/app.css             tema neón + capa de ciudad (HUD, hoja, overlay, teléfono, toasts)
+css/campaign.css        capa de campañas, diarias y tienda
+js/app.js               orquestador: ciudad, HUD, importación, campañas, watchers
+js/city/                layout, world, cámara, renderer, pixel art, entrada y motor rAF
 js/districts.js         los 9 distritos, paleta y mapeo XP/claves → distrito
-js/hud.js               modelo del HUD derivado del save (sin DOM)
+js/hud.js               modelo del HUD, Hoy y Mochila derivados del save (sin DOM)
+js/hud-ui.js            HUD, barra de destinos, chips, hoja y misiones del día (DOM)
+js/ui.js                pantallas de estado, importación, Menú, Personaje y respaldos
+js/campaign-ui.js       El Brete, Zona Gamer y Diarias (DOM)
+js/shop-ui.js           la Tienda (DOM)
+js/ambience.js          perfil visual por hora/clima/progreso (solo lectura)
 js/tabs.js              contrato de los 4 destinos (puro, sin DOM)
-js/hud-ui.js            HUD, barra de destinos, chips y hoja (DOM)
-js/district-figures.js  cifras reales de cada panel (sin DOM)
 js/toast.js             avisos efímeros y aviso de versión nueva
 js/update-watcher.js    versión nueva: aviso + SKIP_WAITING a pedido
 js/storage-watch.js     listener multi-pestaña
-js/ui.js                pantallas de estado/importación de Fase 1 (overlay)
-js/importer.js          puente de solo lectura/escritura hacia src/storage.js
-js/browser-storage.js   adaptador de localStorage
-src/                    lógica de migración/validación de Fase 0 (reutilizada)
+js/importer.js          puente hacia src/storage.js (la única capa que escribe)
+js/browser-storage.js   adaptador de localStorage (y limpieza de metadata vieja)
+src/                    migración, validación, derivación, gameplay, tienda, campañas
 data/xp-catalog.json    catálogo estático de juego (sin progreso de usuario)
 fixtures/               bundle sintético (36 campos + 11 claves, valores falsos)
-tests/                  Fase 0 + Fase 1 + Fase 2 + Fase 3
+tests/                  27 archivos, 268 pruebas
+tools/                  gates (ruta de escritura, tests, smoke), extractores y fixture
 ```
 
 `js/` no reimplementa la validación: importa `src/shape.js`, `src/migrate.js`,
 `src/derive.js`, `src/validate.js` y `src/storage.js` directamente. La única
-capa que escribe el save es `src/storage.js`, a través de `js/importer.js`.
+capa que escribe el save es `src/storage.js`, y `check:write-path` lo verifica
+en cada push.
 
 ## Documentos
 
 | Archivo | Contenido |
 |---|---|
 | `MIGRATION_SPEC.md` | Mapa de los 36 campos + 11 claves, decisiones D1–D5 y contrato de validación. |
-| `SCHEMA_ODEA2_V1.md` | Schema `odea2_bundle_v1` con secciones `core` / `worlds` / `legacy`. |
-| `RISK_LIST.md` | Campos en riesgo, decisiones cerradas/abiertas, versionado y caché PWA. |
-| `docs/FASE3_SPEC.md` | Spec de Fase 3: sección `play`, función única de escritura, ruta del día, racha derivada y cámara. Revisión del orquestador aprobada con precisiones (2026-11-15) e **implementación del Hub mergeada y publicada** (PRs #5 y #4). |
+| `SCHEMA_ODEA2_V1.md` | Schema `odea2_bundle_v1` con secciones `core` / `worlds` / `legacy` y la sección aditiva `play`. |
+| `RISK_LIST.md` | Campos en riesgo, decisiones cerradas (§3.1–§3.4), versionado y caché PWA. |
+| `docs/FASE3_SPEC.md` | Spec de Fase 3: sección `play`, escritura única, ruta del día, racha y cámara. |
+| `docs/FASE4_DOMINIOS.md` | Fichas de los seis dominios restantes y por qué Garaje y Anomalía siguen bloqueados. |
+| `docs/FASE4_EXTRACCION.md` | Extracción de catálogos de ODEA 1 y su procedencia. |
+| `docs/R1_RECOMPENSAS.md` | Recompensas congeladas y compatibilidad de `play` v1/v2/v3. |
+| `LEEME-PRIMERO.md` | Guía de instalación de la entrega **0.18.0** (documento histórico). |
+| `VERIFICACION.md` | Verificación de la entrega **0.18.0** (documento histórico). |
 
 ## Decisiones registradas
 
 | Ámbito | Decisión |
 |---|---|
-| Service worker | **Fase 2, implementada**: aviso «Hay una versión nueva» con botón **Recargar**. La actualización se aplica solo cuando el usuario la toca; nunca recarga forzada ni silenciosa a mitad de uso. |
-| Backups | **Fase 1, implementada**: rotación a los últimos 3 respaldos de save; el backup del origen nunca se rota. |
-| Multi-pestaña | **Fase 2 + Fase 3**: listener del evento `storage` para avisar y recargar el estado. **Exclusión de escritura con Web Locks** (`applyGameplayMutationLocked`): la mutación entera corre bajo un lock exclusivo de origen. Fallback a CAS (`CONCURRENT_CHANGE`) en navegadores sin Web Locks, informado como `locked: false`. |
-| GitHub Pages | Publicado desde `main` tras verificación externa. Las Fases 2 y 3 se mergearon en cadena (#5 → #4 → #3) y se publicaron tras 88/88 tests y `npm run check:write-path` en un clon limpio. |
-| Solo lectura | **Fase 2**: la ciudad, el HUD y los paneles leen el save y derivan con `src/derive.js`. **Fase 3**: Hub, Empleo y Vida escriben únicamente por `applyGameplayMutation` (`src/storage.js`); los demás distritos siguen de lectura. |
-| Navegación | **Fase 3, implementada**: barra de cuatro destinos (Ciudad · Hoy · Personaje · Menú) definida en `js/tabs.js`. «Hoy» es un acceso directo al Hub, no una pantalla con lógica duplicada; los 9 distritos viven dentro de Ciudad. Sin save no hay barra. Registrada como F3-5 en `RISK_LIST.md`. |
-| Gameplay | **Fase 3, completa**: ruta del día derivada, completaciones idempotentes, check-in y racha derivada en el Hub. Empleo y Vida juegan por el mismo contrato, con la frecuencia REAL de cada misión: diaria, semanal o única. Empleo son 80 misiones de una sola vez; Vida mezcla 49 diarias, 60 semanales y 83 únicas en el mismo mapa. |
-
-### Fase 3 (Hub, Empleo y Vida implementados y publicados)
-
-Registrada en `RISK_LIST.md` §3.2 y especificada en `docs/FASE3_SPEC.md`.
-
-- **Navegación**: las misiones se abren **desde la hoja del distrito**; la hoja
-  se expande a una vista completa del sistema sobre la ciudad, que queda visible
-  y atenuada detrás. Un solo mundo continuo: al cerrar, se vuelve al mapa en el
-  mismo lugar (cámara y selección preservadas).
-- **Orden**: primero **El Hub** (tutorial y bucle diario), que probó la escritura
-  de punta a punta; después **Empleo** y **Vida**. Los demás distritos siguen de
-  solo lectura hasta la Fase 4.
-- **Frecuencia real**: la clave de idempotencia sale de la clase de cada misión,
-  no del sistema. En Vida conviven diarias (`id@fecha`), semanales
-  (`id@semana ISO`) y únicas (`id`), así que una diaria vuelve a estar pendiente
-  mañana mientras una única queda hecha para siempre.
-- **Presentación**: Empleo agrupa por mapa (Trabajos, B2B, Puente) y Vida por
-  frecuencia. Cada grupo es un `<details>` nativo: con 192 misiones, volcarlas
-  todas abiertas convertiría la hoja en una pared de botones donde es fácil
-  completar por error algo que no hiciste. Solo se listan las pendientes; las
-  completadas se resumen en el conteo.
-- **Escritura**: todo pasa por `applyGameplayMutation` (`src/storage.js`), con
-  backup exacto verificado y rotación de los últimos 3. XP y monedas siempre
-  derivados (nunca se editan totales); validación fail-closed; completaciones
-  idempotentes por ID; racha derivada de fechas, nunca un contador. La cuarentena
-  sigue siendo exclusiva de importación/restauración.
-- **Cumplimiento**: `npm run check:write-path` falla si otro módulo toca la clave
-  del save.
+| Service worker | Aviso «Hay una versión nueva» con botón **Recargar**. La actualización se aplica solo cuando el usuario la toca; nunca recarga forzada. `CACHE_VERSION` sube en cada release y `activate` borra los cachés viejos. |
+| Catálogo | Entra en el precache (v0.27.1) y se revalida en línea con `network-first` y 4 s de límite: primer arranque offline cubierto. |
+| Backups | Rotación a los últimos 3 respaldos de save; el del origen nunca se rota. Restaurar exige backup exacto y relectura (v0.27.1). |
+| Multi-pestaña | Listener del evento `storage` + **Web Locks** sobre toda la mutación, con CAS de fallback. |
+| GitHub Pages | Publicado desde `main`; cada push dispara CI y despliegue. |
+| Respaldo | **Manual por archivo** (v0.27.0): exportar/restaurar desde Menú. Sin nube, sin cuentas. |
+| Navegación | Cuatro destinos + Teléfono + Caminar, en una sola barra de cinco botones. |
+| Gameplay | Ruta del día, completaciones idempotentes por frecuencia real, XP y monedas derivados, racha derivada. |
 
 ## Datos personales
 
-El bundle real del usuario **nunca** se publica ni se sube a ningún servidor.
-`.gitignore` bloquea `odea-progreso-*.json` y `*progreso-real*`, con excepción
-del fixture sintético (`fixtures/odea-progreso-sintetico.json`).
-
-
+El bundle real del usuario **nunca** se publica ni se sube a ningún servidor:
+solo se escribe en un archivo cuando el jugador lo exporta. `.gitignore` bloquea
+`odea-progreso-*.json` y `*progreso-real*`, con excepción del fixture sintético
+(`fixtures/odea-progreso-sintetico.json`).

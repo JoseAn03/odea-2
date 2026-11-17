@@ -1,5 +1,12 @@
 # ODEA 2 · Costa Neón — Campañas profesionales
 
+> **Documento histórico — entrega 0.18.0-fase4 (17 nov 2026).**
+> La versión publicada hoy es **0.27.1-fase7**: la navegación, el teléfono, la
+> Tienda, las Diarias y los respaldos cambiaron después de esta guía, y la
+> sincronización con Drive se retiró en v0.27.0. El estado actual y la política
+> de privacidad vigente están en `README.md`. Se conserva este texto porque
+> describe cómo se instalaba esta entrega concreta y qué límites tenía.
+
 Versión: **0.18.0-fase4**.
 
 Este ZIP contiene el proyecto completo, no sólo un parche. Incluye el mapa de

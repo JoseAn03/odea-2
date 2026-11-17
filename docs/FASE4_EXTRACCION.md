@@ -6,7 +6,7 @@
 
 Cada sección valida contra la fuente y **falla con error** si una declaración no existe o si un id se repite. Nada se completa «a ojo».
 
-> **Nota de estado.** Esta pasada se pidió como «spec + extracción, con el Hub sin implementar, versión `0.3.0-fase2` y 61 tests». El repositorio está bastante más adelante: **0.9.0-fase3**, 143 tests, y Hub, Empleo, Vida, La Torre y Sagas ya jugables en producción. Se hizo la extracción pedida; no se revirtió nada. Las decisiones R1–R7 se evalúan contra el código real, no contra el estado descrito.
+> **Nota de estado (actualizada en v0.27.1).** Esta pasada se pidió como «spec + extracción, con el Hub sin implementar, versión `0.3.0-fase2` y 61 tests». El repositorio está bastante más adelante: **0.27.1-fase7**, **268 tests**, y Hub, Empleo, Vida, La Torre, Sagas, Academia, campañas, Tienda y Diarias ya jugables. Se hizo la extracción pedida; no se revirtió nada. Las decisiones R1–R7 se evalúan contra el código real, no contra el estado descrito.
 
 ---
 
@@ -101,17 +101,17 @@ Reglas del módulo: `PRECIO_ESCUDO = 20`, `MAX_ESCUDOS = 2`, `XP_POR_MONEDA = 10
 
 ## (c) Cobertura de la matriz T01–T24
 
-Con la suite actual (**143 tests**), cruzada con la matriz de la guía:
+Con la suite actual (**268 tests**), cruzada con la matriz de la guía:
 
 | Estado | Casos |
 |---|---|
-| ✅ Cubiertos | **T01–T15, T18–T22** (20 casos) |
+| ✅ Cubiertos | **T01–T15, T18–T22, T24** (21 casos) |
 | ⚠️ Parcial | **T17** actualización pendiente: hay tests unitarios del watcher, no end-to-end |
-| ❌ Sin cobertura | **T16** offline real · **T23** teclado/lector/zoom · **T24** historial grande y sesión larga |
+| ❌ Sin cobertura | **T16** offline real · **T23** teclado/lector/zoom |
 
-**Resultado: 20/24 completos, 21/24 contando T17 como parcial.**
+**Resultado: 21/24 completos, 22/24 contando T17 como parcial.**
 
-Los cuatro faltantes comparten una causa: son pruebas de **navegador o dispositivo**, y la suite corre en Node sin DOM.
+Los tres faltantes comparten una causa: son pruebas de **navegador o dispositivo**, y la suite corre en Node sin DOM. T24 se cubrió en Node con 14.700 ocurrencias sintéticas (`tests/t24-historial-grande.test.js`).
 
 ---
 
@@ -148,6 +148,6 @@ Solo estas cuatro no se responden ni con el código ni con las decisiones aproba
 
 ## Hallazgos colaterales
 
-- **`tools/extract-catalog.mjs` mentía sobre su procedencia:** tenía `appVersion: "5.99"` hardcodeado. Un catálogo regenerado desde v6.00 seguía declarándose 5.99. **Corregido**: ahora lee `APP_VERSION` de `odea.html` y reporta `6.00`.
-- **El catálogo existente sigue siendo correcto:** regenerado desde `ebb0fce`, su contenido es **idéntico** al de `data/xp-catalog.json`. v6.00 no cambió campaña, diarias, vida, trabajos, capital, jefes ni sagas.
+- **`tools/extract-catalog.mjs` mentía sobre su procedencia:** tenía `appVersion: "5.99"` hardcodeado. Un catálogo regenerado desde v6.00 seguía declarándose 5.99. **Corregido**: ahora lee `APP_VERSION` de `odea.html`. El `data/xp-catalog.json` entregado declara `5.99` porque se generó desde esa fuente: es correcto, no un residuo.
+- **El catálogo no era reproducible con el extractor (corregido en v0.27.1).** `extract-catalog.mjs` solo emite las secciones que lee de `odea.html`/`flujos_odea.js`: al reescribir el archivo borraba `academia` (29), `shop` (25) y `cosmetics` (4), que vinieron de `extract-assets.mjs` y se fusionaron a mano — dejando el juego sin rutas de Academia ni precios de la Mochila. Desde v0.27.1 el extractor **fusiona con la copia anterior**, conserva esas tres secciones, lo declara en `meta.preservedSections` y avisa (exit 3) si faltan. `tests/extractor.test.js` lo fija. Sobre «idéntico»: el contenido extraído coincide, pero `meta.generatedAt`, `meta.sourceFiles` y las secciones preservadas cambian en cada regeneración, así que el archivo **no** es byte-reproducible.
 - **`assets/` no está en `Downloads`.** Las fuentes se obtuvieron del commit `ebb0fce` del repositorio, no de archivos locales.

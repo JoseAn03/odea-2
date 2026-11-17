@@ -94,6 +94,27 @@ desarrollo técnico está en `docs/FASE3_SPEC.md`.
 | A2 | `stats` | recalcular siempre / conservar snapshot. | Recalcular al cargar; conservar el snapshot solo para auditoría. |
 | A3 | Retención de `odea_events` | archivar todo / recortar a 500 / descartar. | Archivar (máx. 500 ya viene recortado). No es estado de juego; sirve para auditar. |
 | A4 | Normalización de `hunt` | crudo / normalizar en migración. | Crudo (ya implementado); normalizar al cargar con el núcleo portado. |
+| A5 | **Economía de las postulaciones** | tope diario / tope total / sin tope (hoy). | Decidir: hoy `application.record` paga 25 XP + 2 ₡ sin límite (solo un debounce de 650 ms), y el ítem más caro de la Tienda cuesta 380 ₡. Se puede comprar todo en una tarde. Acotar o asumir que la bitácora es honesta. |
+| A6 | **Techo del plan del Hub** | ciclar el plan / contenido nuevo al día 56 / dejarlo terminar. | `DAILY_TOTAL_DAYS = 56` y `planDayFor` acota: desde el día 56 la ruta del día queda sin misiones pendientes para siempre. Si el Hub es el bucle diario, decidir qué lo reemplaza. |
+
+### 3.4 Decisiones de Fase 4–7 (cerradas e implementadas)
+
+Las fases 4 a 7 se entregaron por PRs con su verificación en el cuerpo del PR
+(#37 a #52). Acá se registran las decisiones que las cierran, para que el repo
+—y no la memoria de quien las hizo— sea la fuente de verdad.
+
+| # | Decisión | Resolución |
+|---|---|---|
+| F4-1 | Catálogos que se activan | **Academia, Capital y Sagas** se juegan con el catálogo extraído de ODEA 1. **Garaje y Anomalía** quedan en solo lectura: su catálogo existe en `data/xp-catalog-live.json` pero no en el catálogo que juega la app, y Anomalía no tiene ids estables en la fuente. |
+| F5-1 | Rendimiento de la ciudad | Caché estático del mundo en un canvas fuera de pantalla, 30 FPS de dibujo y rAF pausado con la pestaña oculta y con la ciudad cubierta. |
+| F5-2 | Identidad y economía ₡ | El saldo se presenta como **₡ ODEA virtuales**; los valores no cambian (son los mismos derivados) y la UI dice explícitamente que no es dinero real. |
+| F6-1 | Sincronización (v0.20.0) | Opcional, con `drive.appdata` (carpeta privada de la app), token en memoria, bajada **solo** por `restoreBundle` y conflicto a favor de Drive conservando la copia local como archivo aparte. |
+| F6-2 | Sesión (v0.25.x) | Renovación silenciosa al volver a la app con **tiempo límite** y estado `needsReconnect` accionable; nunca se queda «Conectando…» para siempre. |
+| F6-3 | **Retiro de Drive (v0.27.0)** | Se elimina el motor, su sección del Menú y la tarjeta de recuperación. El respaldo pasa a ser **manual por archivo**. Al abrir, la app borra la metadata `odea2_sync_v1` que pudo quedar; la partida no se toca. Motivo: lo pidió el jugador y saca una dependencia externa (OAuth, cuota y terceros) que la auditoría del 17-nov marcó como **nunca probada contra Google real**. |
+| F7-1 | La Tienda | Capa aditiva `play.tienda` (comprados, atuendo, vehículo y gasto). El gasto se **suma** al libro mayor de siempre en la derivación: `spent = core.shop.spent + play.tienda.spent`. Comprar equipa; bajar del vehículo es explícito. |
+| F7-2 | Diarias en Hoy | **El mismo panel, la misma ruta y el mismo registro** que el teléfono (`paintDaily` compartido). «Hoy» no duplica lógica: es otra casa del mismo bloque. |
+| F7-3 | `PLAY_VERSION` | **3**: v1 (sin recompensa), v2 (R1 congelado) y v3 (+ Tienda y Academia) se leen; al escribir se sube a 3. Una versión mayor deja el save en solo lectura y exportación. |
+| F7-4 | Documentación | Las decisiones de cada fase se registran **acá**, y el README se actualiza en el mismo PR que cambia el producto. Los documentos de entrega (`LEEME-PRIMERO.md`, `VERIFICACION.md`) se marcan como históricos en vez de reescribirlos. |
 
 ---
 
@@ -130,6 +151,10 @@ desarrollo técnico está en `docs/FASE3_SPEC.md`.
   literal y el borrado de cachés ajenas en `activate`.
 - El HTML de ODEA 2 debe servirse network-first para que un deploy de
   emergencia no quede atrapado en caché.
+- El **catálogo** (`data/xp-catalog.json`) entra en el `SHELL` desde v0.27.1 y se
+  sirve `network-first` con 4 s de límite: sin él la app no arranca, y antes un
+  primer arranque offline caía en la pantalla fatal. `tests/fase2.test.js` exige
+  que todo módulo de `js/` y `src/` esté en el `SHELL`.
 - **Riesgo de convivencia:** ODEA 1 y ODEA 2 pueden compartir origen (GitHub
   Pages) y por tanto `localStorage` y Cache Storage. Usar claves
   `odea2_*` y prefijos de caché `odea2-` evita colisiones; no tocar

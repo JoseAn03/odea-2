@@ -23,8 +23,8 @@ es activable o no.
 |---|---|---|---|---|---|
 | **Capital** | La Torre | ✅ `capital.done` (40) · `capital.eng` (30) · `capital.ai` (31) | `core.capital.done/eng/ai` | **Bajo** | **Activable ya** |
 | Sagas | Mirador | ✅ `sagas` (12 capítulos) · `bosses` (16) | `worlds.sagas`, `core.gods` | Medio | **Implementado** (capítulos y jefes) |
-| Tesoro | El Mercado | ❌ | `worlds.tesoro` | **Alto** | No activar sin reglas de precio y tests de no duplicación |
-| Academia | Distrito IA | ❌ (live en `odea-academia.js`) | `worlds.academia.hechas` | — | Avance con paridad (29) · juego bloqueado |
+| Tesoro | El Mercado | ❌ misiones | `worlds.tesoro` | **Alto** | El Mercado sigue sin misiones; la **Tienda** vive aparte en `play.tienda` (v0.23.0) |
+| Academia | Distrito IA | ✅ `academia` (29: 28 reales + `meta-final`) | `worlds.academia.hechas` | Bajo | **Implementado** (v0.18.0): jugable, 0 XP por completación, sinergia del Tesoro |
 | Garaje | El Garaje | ❌ | `worlds.garaje` | — | **Bloqueado**: falta catálogo |
 | Anomalía | Rincón Anomalía | ❌ | `worlds.anomalia` | — | **Bloqueado**: el quiz es archivo, no progreso |
 
@@ -126,16 +126,17 @@ escribir tests de **no duplicación** y de **no doble cargo** antes de tocar la 
 
 ## 4. Academia — Distrito IA
 
-**Veredicto: avance con paridad, juego bloqueado.** Ya no es «no sabemos nada»:
-con el fuente de ODEA 1 en mano se pudieron verificar tres cosas.
+**Veredicto (actualizado en v0.27.1): implementado y jugable.** El catálogo se
+extrajo de `assets/odea-academia.js` y vive en `data/xp-catalog.json`; la ficha
+de abajo se conserva como registro de lo que se verificó **antes** de tenerlo.
 
 | Campo | Valor |
 |---|---|
 | **Entradas** | `worlds.academia.data.hechas` (id → fecha), `rutasAvisadas` (array) |
-| **Catálogo** | ❌ **Ninguno en el export** |
-| **Componente de XP** | ❌ Academia no aparece en `xpBreakdown` |
+| **Catálogo** | ✅ `academia`: 29 entradas (28 reales + `meta-final`, que no se completa) |
+| **Componente de XP** | ❌ Academia no aparece en `xpBreakdown`: su XP es 0 por diseño |
 | **Denominador real** | **29** (regla de ODEA 1, verificada) |
-| **Moneda propia** | No |
+| **Moneda propia** | Sí, en el libro del Tesoro: +3 por misión (tope 3/día) y +15 al cerrar una ruta |
 
 ### Lo que se verificó contra `odea.html`
 
@@ -156,25 +157,24 @@ con el fuente de ODEA 1 en mano se pudieron verificar tres cosas.
    acPct = Math.round((n / 29) * 100);
    ```
 
-### Lo que se implementó
+### Lo que se implementó (v0.18.0-fase4)
 
-`academiaProgress()` en `src/derive.js` reproduce **exactamente** esa regla, y el
-panel de Distrito IA muestra `N de 29` con su porcentaje. Antes era un contador
-suelto sin denominador — justo lo que la guía prohíbe (pág. 29: los porcentajes
-solo se calculan cuando hay un denominador real). Ahora el denominador es una
-regla del juego, no una invención.
+- El catálogo `academia` con sus **29 entradas** (28 reales + `meta-final`) y sus
+  rutas; `missionOf` ya resuelve cada id.
+- `academiaProgress()` en `src/derive.js` reproduce **exactamente** la regla de
+  ODEA 1 (`n = min(28, count); si n ≥ 28 → 29; pct = round(n/29*100)`), así que
+  el panel muestra `N de 29` con el denominador real del juego.
+- La completación **no paga XP** (Academia no aporta a `xpBreakdown`): paga
+  **sinergia del Tesoro** (+3 con tope diario de 3, +15 al cerrar una ruta),
+  guardada como delta en `play.academia` porque `worlds` es inmutable.
+- `tests/academia-jugable.test.js` (9) y `tests/academia.test.js` (7) lo cubren.
 
 ### Lo que sigue bloqueado
 
-Registrar una actividad nueva exige validar su id contra un catálogo, y ese
-catálogo está en `odea-academia.js`. Sin él, `missionOf` no puede resolver nada
-y una completación se rechazaría con `UNKNOWN_MISSION`.
-
-**Para desbloquearlo hace falta `assets/odea-academia.js`.** Con ese archivo se
-extraen las 29 actividades, su XP y su equivalencia en `xpBreakdown`, y el
-dominio se vuelve activable igual que Capital.
-
-**Hasta entonces:** solo lectura, con avance fiel al original.
+Nada de Academia. **Garaje** y **Anomalía** sí: sus catálogos
+(`assets/odea-garaje.js`, `assets/odea-anomalias.js`) están extraídos en
+`data/xp-catalog-live.json` pero **no** en el catálogo que juega la app, y
+Anomalía no tiene ids estables en la fuente (se identifican por índice).
 
 ---
 

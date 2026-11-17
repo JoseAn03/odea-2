@@ -1,5 +1,9 @@
 # Verificación de la entrega — v0.18.0-fase4
 
+> **Documento histórico.** Describe la verificación de la entrega 0.18.0-fase4.
+> La versión publicada hoy es **0.27.1-fase7** (ver `README.md`); los números de
+> pruebas de este archivo (237) corresponden a esa entrega, no a la actual.
+
 ## Base
 
 Código público de `JoseAn03/odea-2`, commit
