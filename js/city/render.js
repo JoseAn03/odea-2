@@ -8,6 +8,7 @@
 import { PALETTE, DISTRICTS, alpha, mix } from "../districts.js";
 import { fmt } from "../format.js";
 import { createPixelArt } from "./pixel.js";
+import { clipsRect } from "./layout.js";
 
 const FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
@@ -461,10 +462,10 @@ export function createRenderer(canvas) {
       ctx.fillStyle = pxBlocks ? alpha(C.sidewalk, 0.30) : C.sidewalk;
       ctx.fillRect(r.x, r.y, r.w, r.h);
       if (pxBlocks) {
-        pxBlocks.fill(ctx, block.districtId === "vida" ? "grama" : "piso",
+        pxBlocks.fill(ctx, block.zone === "clips" ? "plaza" : block.districtId === "vida" ? "grama" : "piso",
           r.x + 22, r.y + 22, r.w - 44, r.h - 44);
       }
-      ctx.fillStyle = pxBlocks ? alpha(C.ground, 0.30) : C.ground;
+      ctx.fillStyle = pxBlocks ? alpha(block.zone === "clips" ? PALETTE.pink : C.ground, 0.30) : C.ground;
       ctx.fillRect(r.x + 22, r.y + 22, r.w - 44, r.h - 44);
       ctx.fillStyle = alpha(block.accent, 0.075);
       ctx.fillRect(r.x + 22, r.y + 22, r.w - 44, r.h - 44);
@@ -877,6 +878,26 @@ export function createRenderer(canvas) {
   /* Vida pixel: postes con halo en los cruces, vecinos caminando por las
      aceras y un carro pixel por la avenida sur. Todo determinista desde
      `time` (con reduced, time llega en 0 y la escena queda quieta). */
+  /* La Zona CLIPS: el cuadro gamer de la ciudad (tienda de videojuegos,
+     pantalla grande, sillas gamer, arcades y el mando en el suelo). */
+  function drawClipsZone(view, world, time) {
+    const px = art();
+    if (!px) return;
+    const R = clipsRect();
+    if (!visible(view, R.x - 60, R.y - 60, R.w + 120, R.h + 120)) return;
+    const cx = R.x + R.w / 2;
+    if (px.mando) px.draw(ctx, px.mando, cx, R.y + R.h * 0.80, 150, 104);
+    if (px.pantalla) px.draw(ctx, px.pantalla, cx, R.y + 128, 132, 92);
+    if (px.sillaRosa) px.draw(ctx, px.sillaRosa, cx - 62, R.y + 252, 46, 60);
+    if (px.sillaCian) px.draw(ctx, px.sillaCian, cx + 62, R.y + 252, 46, 60);
+    if (px.arcade) {
+      px.draw(ctx, px.arcade, R.x + 58, R.y + 176, 46, 60);
+      px.draw(ctx, px.arcade, R.x + 58, R.y + 268, 46, 60);
+      px.draw(ctx, px.arcade, R.x + 58, R.y + 360, 46, 60);
+    }
+    if (px.tienda) px.draw(ctx, px.tienda, R.x + R.w - 66, R.y + 246, 118, 80);
+  }
+
   function drawPixelLife(view, world, time) {
     const px = art();
     if (!px) return;
@@ -1102,27 +1123,11 @@ export function createRenderer(canvas) {
       drawBuilding(b, view, time);
     }
 
-    /* Rótulos de edificios (escala con el mapa). */
-    if (state.zoom > 0.62) {
-      for (const s of world.signs) {
-        if (s.districtLabel) continue;
-        if (!visible(view, s.x - 80, s.y - 20, 160, 40, 40)) continue;
-        const sprite = labelSprite(`b:${s.text}:${s.color}:${s.size}`, s.text, {
-          color: s.color,
-          size: s.size,
-          weight: 800,
-          letter: 1
-        });
-        ctx.globalAlpha = flicker(s.x + s.y, time, reduced);
-        ctx.drawImage(sprite.canvas, s.x - sprite.w / 2, s.y - sprite.h / 2, sprite.w, sprite.h);
-        ctx.globalAlpha = 1;
-      }
-    }
-
     drawGlitch(view, world, time);
     drawPixelPark(view, world, time);
     drawMonument(view, world, time);
     drawTraffic(view, world, time);
+    drawClipsZone(view, world, time);
     drawPixelLife(view, world, time);
     drawSelection(view);
 
@@ -1159,76 +1164,20 @@ export function createRenderer(canvas) {
   }
 
   function drawScreenLabels(camera, world, time) {
-    const z = camera.state.zoom;
-
-    /* Rótulos de avenidas: solo con zoom suficiente. */
-    if (z > 0.46) {
-      for (const road of world.roadNames) {
-        const t = road.labelAt;
-        const wx = road.axis === "h" ? t * world.size : road.at;
-        const wy = road.axis === "h" ? road.at : t * world.size;
-        const p = camera.worldToScreen(wx, wy);
-        if (p.x < -160 || p.x > vw + 160 || p.y < -60 || p.y > vh + 60) continue;
-        const sprite = labelSprite(`road:${road.text}`, road.text, {
-          color: PALETTE.cyan,
-          size: 11,
-          weight: 700,
-          letter: 1.1
-        });
-        ctx.globalAlpha = Math.min(0.85, 0.5 + z * 0.3);
-        drawSprite(sprite, p.x, p.y, 0.9, road.axis === "v" ? -Math.PI / 2 : 0);
-        ctx.globalAlpha = 1;
-      }
-    }
-
-    /* Rótulos de distrito. */
-    const labelScale = Math.max(0.66, Math.min(1.0, z * 0.95));
-    for (const d of DISTRICTS) {
-      const p = camera.worldToScreen(d.label.x, d.label.y);
-      if (p.x < -140 || p.x > vw + 140 || p.y < -60 || p.y > vh + 60) continue;
-      const sprite = labelSprite(`d:${d.id}`, d.name.toUpperCase(), {
-        color: d.accent,
-        size: d.id === "rincon" ? 14 : 16,
-        sub: d.subtitle,
-        weight: 800
-      });
-      ctx.globalAlpha = 0.94;
-      drawSprite(sprite, p.x, p.y, labelScale);
-      ctx.globalAlpha = 1;
-    }
-
-    if (z < 0.34) {
-      const futureZones = [
-        { x: -world.size * 0.12, y: world.size * 0.5, id: "02" },
-        { x: world.size * 1.12, y: world.size * 0.58, id: "03" }
-      ];
-      for (const zone of futureZones) {
-        const p = camera.worldToScreen(zone.x, zone.y);
-        if (p.x < -130 || p.x > vw + 130 || p.y < -50 || p.y > vh + 50) continue;
-        const sprite = labelSprite(`expansion:${zone.id}`, `EXPANSIÓN ${zone.id}`, {
-          color: PALETTE.orange,
-          size: 11,
-          sub: "Terreno reservado",
-          weight: 800,
-          letter: 0.8
-        });
-        drawSprite(sprite, p.x, p.y + 78, 0.92);
-      }
-    }
-
-    /* Crédito permanente junto al monumento. */
-    if (creditXP != null && z > 0.42) {
-      const m = world.monument;
-      const p = camera.worldToScreen(m.x, m.y + m.r + 34);
-      const sprite = labelSprite(`credit:${creditXP}`, `CRÉDITO · ${fmt(creditXP)} XP`, {
-        color: PALETTE.cyan,
-        size: 10,
-        weight: 700,
-        letter: 1
-      });
-      drawSprite(sprite, p.x, p.y, Math.max(0.8, Math.min(1.05, z)));
-    }
-
+    /* El mapa va SIN nombres (decisión de José, 2026-11-16): el único
+       rótulo de toda la ciudad es el de la Zona CLIPS. */
+    const R = clipsRect();
+    const p = camera.worldToScreen(R.x + R.w / 2, R.y + 46);
+    if (p.x < -140 || p.x > vw + 140 || p.y < -60 || p.y > vh + 60) return;
+    const sprite = labelSprite("clips", "CLIPS", {
+      color: PALETTE.pink,
+      size: 20,
+      sub: "Zona gamer",
+      weight: 800
+    });
+    ctx.globalAlpha = 0.95;
+    drawSprite(sprite, p.x, p.y, 1);
+    ctx.globalAlpha = 1;
   }
 
   /* ---------------------------------- API ---------------------------------- */
