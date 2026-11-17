@@ -551,7 +551,7 @@ function paint(root, state) {
   const footer = node("footer", "campaign-footer");
   footer.append(
     node("span", "campaign-footer-mark", "✦ HECHO PARA AVANZAR"),
-    node("p", "", "XP y ₡ ODEA son recompensas virtuales: no son dinero real. Todavía no hay tienda ni canje activos en ODEA 2."),
+    node("p", "", "XP y ₡ ODEA son recompensas virtuales: no son dinero real. Los ₡ se gastan en la Tienda del Mercado."),
     node("p", "", "Las misiones de IA son actividades educativas. Esta pantalla no conecta una IA en vivo.")
   );
   interior.append(footer);
@@ -849,7 +849,7 @@ function paintDaily(root, state) {
   const footer = node("footer", "campaign-footer");
   footer.append(
     node("span", "campaign-footer-mark", "✦ HECHO PARA AVANZAR"),
-    node("p", "", "XP y ₡ ODEA son recompensas virtuales: no son dinero real. Todavía no hay tienda ni canje activos en ODEA 2.")
+    node("p", "", "XP y ₡ ODEA son recompensas virtuales: no son dinero real. Los ₡ se gastan en la Tienda del Mercado.")
   );
   interior.append(footer);
   shell.append(interior);

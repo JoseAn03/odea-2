@@ -253,7 +253,12 @@ export function sourcesFromMigrated(bundle2, catalog = null) {
       eventRL: clone(s.credits && s.credits.eventRL || { log: [] }),
       farm: clone(s.credits && s.credits.farm || { log: [] })
     },
-    shop: clone(s.shop || { spent: 0 }),
+    /* El gasto suma dos libros: el migrado de ODEA 1 (core.shop.spent) y el
+       de la Tienda de ODEA 2 (play.tienda.spent, vía mergePlaySources). */
+    shop: {
+      ...clone(s.shop || { spent: 0 }),
+      spent: (Number(s.shop && s.shop.spent) || 0) + (extra.tiendaSpent || 0)
+    },
     /* Sagas: los capítulos migrados llevan fecha; los nuevos se registran con
        `true` porque `sagaAreaXP` solo mira la presencia de la clave. */
     sagas: (() => {
@@ -301,9 +306,14 @@ function mergePlaySources(bundle2, catalog) {
        esas ocurrencias; el resto sigue leyendo el catálogo (compatibilidad). */
     frozenXP: {},
     frozenVida: {},
-    frozenVidaById: {}
+    frozenVidaById: {},
+    /* Gasto de la Tienda (play.tienda): se lee aunque no haya completaciones. */
+    tiendaSpent: 0
   };
   const play = bundle2 && bundle2.play;
+  if (play && play.tienda && typeof play.tienda === "object") {
+    out.tiendaSpent = Number(play.tienda.spent) || 0;
+  }
   if (!play || !play.completions) return out;
 
   for (const record of Object.values(play.completions)) {

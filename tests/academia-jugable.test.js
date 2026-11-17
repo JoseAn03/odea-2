@@ -189,7 +189,7 @@ test("academia: lo migrado no se ofrece y la validación sigue intacta", () => {
   const saved = currentBundle(storage);
 
   assert.equal(validatePlayState(saved, catalog, {}).ok, true);
-  assert.equal(saved.play.version, 2);
+  assert.equal(saved.play.version, 3);
 });
 
 test("academia: una sección aditiva corrupta se rechaza", () => {

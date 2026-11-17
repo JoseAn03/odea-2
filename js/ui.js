@@ -2,6 +2,7 @@
  *  Construye DOM con textContent (sin innerHTML con datos del usuario).
  */
 import { XP_ORDER, XP_LABELS, fmt, pct } from "./format.js";
+import { tiendaState, shopItem } from "../src/shop.js";
 
 /* ----------------------------- helpers DOM ------------------------------ */
 
@@ -260,7 +261,7 @@ export function renderMochila(root, bundle, inventory, flash) {
       ...mochilaSection("Capa de recompensas", inv.rewards.map((item) => itemRow(item)))
     ),
     notice(
-      "Tus ₡ ODEA son progreso virtual, no dinero real. Comprar, gastar y equipar todavía no están activos. " +
+      "Tus ₡ ODEA son progreso virtual, no dinero real. Podés gastarlos en la Tienda del Mercado (también está en el teléfono). " +
         "El nivel, el XP y la racha se derivan del historial y no se editan a mano."
     )
   );
@@ -589,7 +590,9 @@ function characterCard(bundle, flash, actions) {
         stat("Nivel", fmt(derived.campaignLevel), "pink"),
         stat("XP total", fmt(total), "cyan"),
         stat("Racha", `${fmt(identity.streak)} días`, "orange"),
-        stat("Saldo ODEA", `₡${fmt(coins.balance)}`, "")
+        stat("Saldo ODEA", `₡${fmt(coins.balance)}`, ""),
+        stat("Atuendo", (shopItem(tiendaState(bundle).outfit) || {}).name || "Clásico", ""),
+        stat("Vehículo", (shopItem(tiendaState(bundle).vehicle) || {}).name || "A pie", "")
       ),
       h("h3", {}, "Desglose de XP por componente"),
       h(

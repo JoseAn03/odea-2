@@ -22,7 +22,7 @@
 
 export const MIGRATION_SCHEMA_VERSION = 1;
 export const ODEA2_BUNDLE_FORMAT = "odea2_bundle_v1";
-export const ODEA2_APP_VERSION = "0.22.1-fase6";
+export const ODEA2_APP_VERSION = "0.23.0-fase7";
 
 /** Secciones internas del bundle único (decisión D1 de Fase 0). */
 export const BUNDLE_SECTIONS = ["core", "worlds", "legacy"];
@@ -46,7 +46,7 @@ export const PLAY_SECTION = "play";
  * esta constante deja el bundle en solo lectura/exportación: un cliente viejo
  * nunca debe sobrescribir datos que no entiende.
  */
-export const PLAY_VERSION = 2;
+export const PLAY_VERSION = 3;
 
 /**
  * Versión de reglas con la que se congeló una recompensa.

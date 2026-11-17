@@ -28,6 +28,8 @@ import { renderHud, renderSheet, renderTabs } from "./hud-ui.js";
 import { routeForDay } from "../src/gameplay.js";
 import { campaignView } from "../src/campaign-state.js";
 import { renderCampaign, renderDaily } from "./campaign-ui.js";
+import { renderShop } from "./shop-ui.js";
+import { equippedLook, shopItem } from "../src/shop.js";
 import { DISTRICTS } from "./districts.js";
 import { clipsRect } from "./city/layout.js";
 import { newPlayerBundle } from "../src/new-player.js";
@@ -197,7 +199,9 @@ function initCity() {
               Math.max(-s * 0.04, Math.min(s * 1.04, st.y + steerDir.uy * STEER_LOOKAHEAD))
             );
           }
-          city.setPlayer(player.update(dt, cityWorld ? cityWorld.buildings : []));
+          const pst = player.update(dt, cityWorld ? cityWorld.buildings : []);
+          pst.look = bundle ? equippedLook(bundle) : null;
+          city.setPlayer(pst);
         }
       },
       onSteer: (dir) => {
@@ -336,6 +340,67 @@ function checkin() {
   return applyGameplayMutationLocked(storage, catalog, { type: "hub.checkin" }, gameplayDate()).then(
     (result) => afterGameplay(result, "Día registrado. Racha actualizada.", "El día ya estaba registrado.")
   );
+}
+
+/* --------------------------------- Tienda -------------------------------- */
+
+function afterShop(result, okMessage, duplicateMessage) {
+  if (result.status === "rejected") {
+    const code = result.error && result.error.code;
+    const friendly =
+      code === "INSUFFICIENT_FUNDS" ? "Te faltan ₡ para eso."
+      : code === "NOT_OWNED" ? "Todavía no tenés ese ítem."
+      : `No se pudo guardar: ${code}`;
+    if (toasts) toasts.show(friendly, { tone: "error" });
+    return;
+  }
+  if (result.status === "duplicate") {
+    if (toasts) toasts.show(duplicateMessage, { tone: "info" });
+  } else if (toasts) {
+    toasts.show(okMessage, { tone: "ok" });
+  }
+  refresh();
+  if (phoneView === "tienda" && !els.phoneBackdrop.hidden) showPhoneShop();
+}
+
+function buyShopItem(itemId) {
+  if (!storage || !catalog) return;
+  const item = shopItem(itemId);
+  return applyGameplayMutationLocked(
+    storage, catalog, { type: "shop.buy", itemId }, gameplayDate()
+  ).then((result) =>
+    afterShop(result, `Comprado: ${item ? item.name : "ítem"}. Ya quedó equipado.`, "Ya tenías ese ítem.")
+  );
+}
+
+function equipShopItem(itemId) {
+  if (!storage || !catalog) return;
+  const item = itemId ? shopItem(itemId) : null;
+  return applyGameplayMutationLocked(
+    storage, catalog, { type: "shop.equip", itemId }, gameplayDate()
+  ).then((result) =>
+    afterShop(
+      result,
+      itemId === null ? "A pie, como siempre." : `Equipado: ${item ? item.name : "ítem"}.`,
+      "Eso ya estaba equipado."
+    )
+  );
+}
+
+function showPhoneShop() {
+  if (!els.phoneMissions || !bundle || !catalog) return;
+  phoneView = "tienda";
+  els.phoneMissions.classList.remove("is-campaign");
+  if (els.phoneHome) els.phoneHome.hidden = true;
+  els.phoneMissions.hidden = false;
+  renderShop(els.phoneMissions, {
+    bundle,
+    actions: {
+      buy: (itemId) => buyShopItem(itemId),
+      equip: (itemId) => equipShopItem(itemId),
+      onBack: () => showPhoneHome()
+    }
+  });
 }
 
 function afterGameplay(result, okMessage, duplicateMessage) {
@@ -1232,6 +1297,7 @@ async function boot() {
         const app = appBtn.dataset.app;
         if (app === "missions") showPhoneMissions();
         else if (app === "brete" || app === "gamer") openCampaign(app, true);
+        else if (app === "tienda") showPhoneShop();
         else if (app === "map") showPhoneMap();
         else if (app === "bag") { closePhone(); selectTab(TAB_MOCHILA); }
         else if (app === "gear") { closePhone(); selectTab(TAB_MENU); }

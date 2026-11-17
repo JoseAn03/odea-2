@@ -507,6 +507,27 @@ export function validatePlaySection(bundle2, catalog) {
     }
   }
 
+  /* Tienda: estado aditivo opcional (ítems, atuendo/vehículo, gasto). */
+  if (play.tienda != null) {
+    const t = play.tienda;
+    if (!t || typeof t !== "object" || Array.isArray(t)) {
+      problems.push("tienda: debe ser un objeto");
+    } else {
+      if (t.owned != null && (!Array.isArray(t.owned) || t.owned.some((id) => typeof id !== "string"))) {
+        problems.push("tienda.owned: lista de ids");
+      }
+      if (t.outfit != null && typeof t.outfit !== "string") {
+        problems.push("tienda.outfit: id de atuendo");
+      }
+      if (t.vehicle != null && typeof t.vehicle !== "string") {
+        problems.push("tienda.vehicle: id de vehículo o null");
+      }
+      if (t.spent != null && (!Number.isInteger(Number(t.spent)) || Number(t.spent) < 0)) {
+        problems.push("tienda.spent: entero >= 0");
+      }
+    }
+  }
+
   problems.push(...campaignProblems(bundle2));
   checks.push(
     check(

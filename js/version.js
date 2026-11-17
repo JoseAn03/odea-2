@@ -1,2 +1,2 @@
 /** version.js — versión visible de la app (Fase 4 · Costa Neón Isla). */
-export const APP_VERSION = "0.22.1-fase6";
+export const APP_VERSION = "0.23.0-fase7";
