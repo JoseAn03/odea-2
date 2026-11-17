@@ -47,7 +47,7 @@ function fakeTransport() {
   };
 }
 
-function makeEngine({ localRaw = null, transport = fakeTransport() } = {}) {
+function makeEngine({ localRaw = null, transport = fakeTransport(), engineOpts = {} } = {}) {
   const storage = createMemoryStorage();
   const holder = { raw: localRaw };
   const engine = createSyncEngine({
@@ -58,7 +58,8 @@ function makeEngine({ localRaw = null, transport = fakeTransport() } = {}) {
       if (String(text).includes("CORRUPT")) throw new Error("copia inválida");
       holder.raw = `${text}|restaurado`;
     },
-    debounceMs: 10
+    debounceMs: 10,
+    ...engineOpts
   });
   return { engine, holder, transport, storage };
 }
@@ -182,6 +183,27 @@ test("sync: conectar sin nada en ningún lado deja el auto-envío listo para el 
   engine.notifyChanged();
   await wait(80);
   assert.equal(transport.files.get(SYNC_FILE_NAME).text, "SAVE-NUEVO");
+});
+
+test("sync: si la ventana de Google nunca vuelve, conectar vence con guía en vez de colgarse", async () => {
+  const transport = fakeTransport();
+  transport.requestToken = () => new Promise(() => {}); // la ventana jamás responde
+  const { engine } = makeEngine({ localRaw: "SAVE-1", transport, engineOpts: { connectTimeoutMs: 40 } });
+  await engine.connect();
+  assert.equal(engine.getState().status, "error");
+  assert.match(engine.getState().message, /Chrome/);
+  assert.equal(engine.getState().enabled, false);
+});
+
+test("sync: una sesión silenciosa colgada vence en needsReconnect, no en syncing eterno", async () => {
+  const transport = fakeTransport();
+  const { engine } = makeEngine({ localRaw: "SAVE-1", transport, engineOpts: { sessionTimeoutMs: 40 } });
+  await engine.connect();
+  assert.equal(engine.getState().status, "ready");
+  transport.ensureSession = () => new Promise(() => {});
+  await engine.syncNow();
+  assert.equal(engine.getState().status, "needsReconnect");
+  assert.match(engine.getState().message, /Chrome/);
 });
 
 test("sync: desconectar limpia la metadata y no toca la partida", async () => {
