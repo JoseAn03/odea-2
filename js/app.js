@@ -82,6 +82,12 @@ let city = null;
 let player = null;
 let cityWorld = null;
 let walkOn = false;
+/* Palanca invisible: dirección de mundo activa mientras el dedo arrastra
+   en modo caminar (null = sin dirigir). El destino se renueva cada cuadro
+   un tramo por delante del avatar, así camina continuo hasta soltar. */
+let steerDir = null;
+let steerActive = false;
+const STEER_LOOKAHEAD = 600;
 let toasts = null;
 let updateWatcher = null;
 let storageWatcher = null;
@@ -136,7 +142,25 @@ function initCity() {
       onSelectDistrict: openDistrict,
       onFrame: (dt) => {
         if (player && city) {
+          if (walkOn && steerDir && cityWorld) {
+            const st = player.state();
+            const s = cityWorld.size;
+            player.setTarget(
+              Math.max(-s * 0.04, Math.min(s * 1.04, st.x + steerDir.ux * STEER_LOOKAHEAD)),
+              Math.max(-s * 0.04, Math.min(s * 1.04, st.y + steerDir.uy * STEER_LOOKAHEAD))
+            );
+          }
           city.setPlayer(player.update(dt, cityWorld ? cityWorld.buildings : []));
+        }
+      },
+      onSteer: (dir) => {
+        if (dir) {
+          steerActive = true;
+          steerDir = dir;
+        } else if (steerActive) {
+          steerActive = false;
+          steerDir = null;
+          if (player) player.clearTarget();
         }
       },
       onTapWorld: (pt) => {
@@ -157,6 +181,12 @@ function initCity() {
 
 function setWalk(on) {
   walkOn = !!on;
+  if (!walkOn) {
+    /* Al salir del modo caminar el avatar se detiene donde quedó. */
+    steerDir = null;
+    steerActive = false;
+    if (player) player.clearTarget();
+  }
   if (city) city.setWalkMode(walkOn);
   if (els.walkBtn) {
     els.walkBtn.textContent = walkOn ? "⏹ Dejar de caminar" : "🚶 Caminar";

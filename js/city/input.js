@@ -4,8 +4,9 @@
  */
 
 import { districtAt } from "../districts.js";
+import { steerVector } from "./joystick.js";
 
-export function createInput({ canvas, camera, onSelectDistrict, onInteract, onTapWorld, walkModeActive }) {
+export function createInput({ canvas, camera, onSelectDistrict, onInteract, onTapWorld, onSteer, walkModeActive }) {
   const pointers = new Map();
   let dragging = false;
   let moved = 0;
@@ -13,6 +14,19 @@ export function createInput({ canvas, camera, onSelectDistrict, onInteract, onTa
   let lastX = 0;
   let lastY = 0;
   let pinch = null;
+  let downX = 0;
+  let downY = 0;
+  let steering = false;
+
+  function inWalkMode() {
+    return typeof walkModeActive === "function" && walkModeActive();
+  }
+
+  function cancelSteer() {
+    if (!steering) return;
+    steering = false;
+    if (typeof onSteer === "function") onSteer(null);
+  }
 
   function localPoint(event) {
     const rect = canvas.getBoundingClientRect();
@@ -35,8 +49,11 @@ export function createInput({ canvas, camera, onSelectDistrict, onInteract, onTa
       startedAt = performance.now();
       lastX = p.x;
       lastY = p.y;
+      downX = p.x;
+      downY = p.y;
       canvas.classList.add("grabbing");
     } else if (pointers.size === 2) {
+      cancelSteer();
       const [a, b] = [...pointers.values()];
       pinch = {
         dist: Math.hypot(a.x - b.x, a.y - b.y),
@@ -59,6 +76,28 @@ export function createInput({ canvas, camera, onSelectDistrict, onInteract, onTa
       lastX = p.x;
       lastY = p.y;
       moved += Math.abs(dx) + Math.abs(dy);
+
+      /* En modo caminar el arrastre NO mueve la cámara: dirige al avatar
+         (palanca invisible). La dirección de pantalla se convierte a
+         dirección de mundo con dos puntos por la cámara, exacto aunque
+         haya escala horizontal. Al volver a la zona muerta, se detiene. */
+      if (inWalkMode()) {
+        const v = steerVector(p.x - downX, p.y - downY);
+        if (v) {
+          const w0 = camera.screenToWorld(downX, downY);
+          const w1 = camera.screenToWorld(downX + v.ux * 100, downY + v.uy * 100);
+          const wx = w1.x - w0.x;
+          const wy = w1.y - w0.y;
+          const wl = Math.hypot(wx, wy) || 1;
+          steering = true;
+          if (typeof onSteer === "function") onSteer({ ux: wx / wl, uy: wy / wl });
+        } else {
+          cancelSteer();
+        }
+        notifyInteract();
+        return;
+      }
+
       camera.panBy(dx, dy);
       notifyInteract();
       return;
@@ -88,11 +127,12 @@ export function createInput({ canvas, camera, onSelectDistrict, onInteract, onTa
       moved = 999;
     }
     if (pointers.size === 0) {
+      cancelSteer();
       canvas.classList.remove("grabbing");
       const elapsed = performance.now() - startedAt;
       if (p && moved < 9 && elapsed < 480) {
         const world = camera.screenToWorld(p.x, p.y);
-        if (typeof walkModeActive === "function" && walkModeActive()) {
+        if (inWalkMode()) {
           if (typeof onTapWorld === "function") onTapWorld(world);
         } else {
           const district = districtAt(world.x, world.y);
