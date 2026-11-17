@@ -167,6 +167,16 @@ function setCityActive(active) {
   document.body.dataset.hasSave = active ? "true" : "false";
 }
 
+/** Si el teléfono o un panel de pantalla completa tapa la ciudad, el bucle
+ *  de dibujo se pausa: dibujarla detrás es quemar CPU y batería (v0.21.0).
+ *  La hoja de distrito NO cuenta: es parcial y la ciudad se sigue viendo. */
+function syncCityCover() {
+  if (!city) return;
+  const covered =
+    (els.phoneBackdrop && !els.phoneBackdrop.hidden) || overlayOpen;
+  city.setCovered(covered);
+}
+
 function initCity() {
   if (!els.canvas) return;
   try {
@@ -614,6 +624,7 @@ function openPhone() {
   requestAnimationFrame(() => els.phoneBackdrop.classList.add("is-open"));
   showPhoneHome();
   updatePhoneClock();
+  syncCityCover();
   const first = els.phoneHome.querySelector("button");
   if (first) first.focus({ preventScroll: true });
 }
@@ -624,6 +635,7 @@ function closePhone() {
   els.phoneBackdrop.classList.remove("is-open");
   els.phoneBackdrop.hidden = true;
   phoneView = "home";
+  syncCityCover();
   if (wasOpen && viewSession) viewSession.restore();
   if (wasOpen && phoneReturnFocus && document.contains(phoneReturnFocus)) phoneReturnFocus.focus({ preventScroll: true });
   phoneReturnFocus = null;
@@ -723,6 +735,7 @@ function showOverlay() {
   overlayOpen = true;
   els.overlay.hidden = false;
   document.body.classList.add("overlay-open");
+  syncCityCover();
   const first = focusablesIn(els.overlay)[0];
   if (first) first.focus({ preventScroll: true });
 }
@@ -733,6 +746,7 @@ function hideOverlayRaw() {
   overlayMode = null;
   els.overlay.hidden = true;
   document.body.classList.remove("overlay-open");
+  syncCityCover();
 }
 
 /** Pantalla «Personaje»: solo lectura del progreso. */

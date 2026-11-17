@@ -103,8 +103,15 @@ export function createCityView({ canvas, world, onSelectDistrict, onFrame, onTap
     rafId = requestAnimationFrame(frame);
   }
 
+  /* Pausa por cobertura (v0.21.0): si el lienzo no se está viendo —otra
+     pestaña de la app, el teléfono abierto encima, un panel o una hoja—,
+     dibujar la ciudad es quemar batería y CPU. La app avisa con
+     setCovered() y un IntersectionObserver cubre los cambios de pestaña. */
+  let covered = false;
+  let onScreen = true;
+
   function start() {
-    if (running || document.hidden) return;
+    if (running || document.hidden || covered || !onScreen) return;
     running = true;
     lastTs = 0;
     rafId = requestAnimationFrame(frame);
@@ -119,6 +126,17 @@ export function createCityView({ canvas, world, onSelectDistrict, onFrame, onTap
   function onVisibility() {
     if (document.hidden) stop();
     else start();
+  }
+
+  if (typeof IntersectionObserver !== "undefined" && canvas) {
+    new IntersectionObserver(
+      (entries) => {
+        onScreen = entries[0] ? entries[0].isIntersecting : true;
+        if (!onScreen) stop();
+        else start();
+      },
+      { threshold: 0.02 }
+    ).observe(canvas);
   }
 
   function onMotionChange() {
@@ -144,6 +162,12 @@ export function createCityView({ canvas, world, onSelectDistrict, onFrame, onTap
   return {
     camera,
     renderer,
+    /* La app cubre la ciudad (teléfono, panel, hoja): pausa el bucle. */
+    setCovered(value) {
+      covered = !!value;
+      if (covered) stop();
+      else start();
+    },
     focusDistrict(id, { offsetY = 0, animate = true } = {}) {
       const d = getDistrict(id);
       if (!d) return;
