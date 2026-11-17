@@ -40,6 +40,7 @@ const SHELL = [
   "./js/city/world.js",
   "./js/city/camera.js",
   "./js/city/render.js",
+  "./js/city/pixel.js",
   "./js/city/input.js",
   "./js/city/engine.js",
   "./js/city/view-session.js",
