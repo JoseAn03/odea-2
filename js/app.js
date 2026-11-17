@@ -56,6 +56,8 @@ import {
   restoreBundle,
   applyGameplayMutationLocked
 } from "./importer.js";
+import { createSyncEngine, createDriveTransport } from "./sync.js";
+import { DRIVE_CLIENT_ID } from "./sync-config.js";
 
 const MAX_FILE_BYTES = 25 * 1024 * 1024;
 
@@ -98,6 +100,7 @@ const STEER_LOOKAHEAD = 600;
 let toasts = null;
 let updateWatcher = null;
 let storageWatcher = null;
+let syncEngine = null;
 let overlayOpen = false;
 let overlayMode = null; /* "character" | "menu" | "flow" */
 let activeTab = TAB_CITY;
@@ -131,6 +134,11 @@ const actions = {
   rejectQuarantine: handleRejectQuarantine,
   resetReimport: handleResetReimport,
   restoreConfirm: handleRestore,
+  syncConnect: () => syncEngine && syncEngine.connect(),
+  syncNow: () => syncEngine && syncEngine.syncNow(),
+  syncDisconnect: () => syncEngine && syncEngine.disconnect(),
+  syncUseCloud: () => syncEngine && syncEngine.useCloud(),
+  syncUseLocal: () => syncEngine && syncEngine.useLocal(),
   cancel: () => {
     flash = null;
     refresh();
@@ -739,7 +747,11 @@ function openCharacter() {
 function openMenu() {
   overlayMode = "menu";
   els.overlayTitle.textContent = "Menú";
-  ui.renderMenu(els.overlayContent, { version: APP_VERSION, actions });
+  ui.renderMenu(els.overlayContent, {
+    version: APP_VERSION,
+    actions,
+    sync: syncEngine ? syncEngine.getState() : null
+  });
   showOverlay();
 }
 
@@ -817,7 +829,11 @@ function refresh() {
       flash = null;
       ui.renderCharacter(els.overlayContent, bundle, message);
     } else if (overlayMode === "menu") {
-      ui.renderMenu(els.overlayContent, { version: APP_VERSION, actions });
+      ui.renderMenu(els.overlayContent, {
+        version: APP_VERSION,
+        actions,
+        sync: syncEngine ? syncEngine.getState() : null
+      });
     }
     return;
   }
@@ -843,7 +859,7 @@ function refresh() {
     ui.renderQuarantine(els.overlayContent, quarantine, actions);
   } else {
     els.overlayTitle.textContent = "Importá tu progreso";
-    ui.renderEmpty(els.overlayContent, actions);
+    ui.renderEmpty(els.overlayContent, actions, syncEngine ? syncEngine.getState() : null);
   }
 
   if (!overlayOpen && !autoOpened) {
@@ -1098,6 +1114,63 @@ function setupStorageWatcher() {
   });
 }
 
+/* --------------------------- sincronización Drive -------------------------- */
+
+/**
+ * La sincronización es opcional y nunca bloquea el arranque: el motor se
+ * crea con el storage y el catálogo ya listos, intenta conciliar en segundo
+ * plano si estaba activada, y observa cambios del save cada 5 s para subir.
+ * Bajar una copia pasa por restoreBundle (valida y respalda antes de
+ * escribir), la misma ruta que restaurar un respaldo a mano.
+ */
+function setupSync() {
+  const transport = DRIVE_CLIENT_ID ? createDriveTransport({ clientId: DRIVE_CLIENT_ID }) : null;
+  syncEngine = createSyncEngine({
+    storage,
+    transport,
+    readRawSave: () => {
+      const current = currentBundle(storage);
+      return current ? JSON.stringify(current) : null;
+    },
+    applySave: (text) => {
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (error) {
+        throw new Error("La copia de Drive no es un respaldo válido.");
+      }
+      restoreBundle(data, { catalog, storage });
+    },
+    onState: () => {
+      if (overlayOpen && overlayMode === "menu") {
+        ui.renderMenu(els.overlayContent, {
+          version: APP_VERSION,
+          actions,
+          sync: syncEngine.getState()
+        });
+      } else if (!bundle && overlayOpen) {
+        /* La pantalla sin partida muestra el estado de la recuperación. */
+        refresh();
+      }
+    },
+    onPulled: ({ conflict }) => {
+      closeSheet();
+      refresh();
+      if (toasts) {
+        toasts.show(
+          conflict
+            ? "Conflicto resuelto: se aplicó la copia de Drive y la de este aparato quedó guardada en Drive."
+            : "Progreso sincronizado desde Drive.",
+          { tone: "ok" }
+        );
+      }
+    }
+  });
+  syncEngine.init();
+  setInterval(() => syncEngine.notifyChanged(), 5000);
+  window.addEventListener("online", () => syncEngine.syncNow());
+}
+
 /* --------------------------------- arranque ------------------------------- */
 
 async function boot() {
@@ -1181,6 +1254,7 @@ async function boot() {
   }
 
   refresh();
+  setupSync();
   setupServiceWorker();
 
   /* La luz depende de la hora: se revisa cada 5 minutos y al volver a la app,
