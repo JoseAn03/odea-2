@@ -439,6 +439,94 @@ const gamerChapters = [
   },
 ];
 
+/* EVENTO ESPECIAL — SJO Decision Lab, portado TAL CUAL de ODEA 1 (v6.00):
+   las 14 misiones son los pasos reales del proyecto estrella de José, en
+   sus 5 fases y con su XP original (1.020 en total). La regla del evento
+   es la de ODEA 1: cada misión se completa cuando el entregable real
+   existe. Las monedas bajan a la escala de ODEA 2 (las de ODEA 1 eran de
+   su tienda de evento). La zona de la ciudad se llama EVENTOS porque el
+   evento rota; esta campaña es el evento vigente. */
+const DL_CRITERION = 'Se completa cuando el entregable real existe: la regla del evento desde ODEA 1, sin XP por nada.';
+const eventosChapters = [
+  {
+    id: 'eventos-operacion',
+    title: '01 · La operación y los datos',
+    subtitle: 'La rentadora simulada y las fuentes que la calibran.',
+    missions: [
+      mission('Diseñar la operación', 'Documento de diseño: sucursales, categorías de auto, canales de reserva.',
+        ['Definí las sucursales de la operación simulada.', 'Definí las categorías de auto de la flota.', 'Definí los canales de reserva.'],
+        'Documento de diseño de la operación.', DL_CRITERION, 45, 40, 3),
+      mission('Generador de reservas', 'Script que genera el dataset sintético realista (temporadas, canales, anticipación).',
+        ['Modelá las temporadas y su efecto en la demanda.', 'Modelá los canales de reserva y la anticipación de compra.', 'Generá el dataset sintético de reservas con semilla reproducible.'],
+        'Script generador + dataset sintético de reservas.', DL_CRITERION, 90, 80, 5),
+      mission('Datos públicos reales', 'Fuentes abiertas registradas (turismo ICT, feriados, tipo de cambio) para calibrar la simulación.',
+        ['Registrá las fuentes abiertas: turismo ICT, feriados y tipo de cambio.', 'Documentá cómo calibra cada fuente la simulación.'],
+        'Registro de fuentes públicas con su uso de calibración.', DL_CRITERION, 60, 50, 3),
+    ],
+  },
+  {
+    id: 'eventos-pipeline',
+    title: '02 · El pipeline',
+    subtitle: 'Del dato crudo al dato confiable y auditado.',
+    missions: [
+      mission('Esquema estrella en SQL', 'Modelo dimensional: hechos de reservas, dimensiones de fecha, auto y canal.',
+        ['Diseñá la tabla de hechos de reservas.', 'Diseñá las dimensiones de fecha, auto y canal.', 'Creá el esquema en SQL y cargá los datos.'],
+        'Esquema estrella en SQL, creado y cargado.', DL_CRITERION, 90, 70, 5),
+      mission('Pipeline de limpieza', 'ETL en Python con reglas documentadas: duplicados, dobles conteos, nulos.',
+        ['Escribí el ETL en Python sobre los datos crudos.', 'Aplicá y documentá las reglas: duplicados, dobles conteos y nulos.'],
+        'Pipeline de limpieza en Python con reglas documentadas.', DL_CRITERION, 90, 80, 5),
+      mission('Controles de calidad', 'Chequeos automáticos + bitácora de corridas: el pipeline se audita solo.',
+        ['Agregá chequeos automáticos de calidad al pipeline.', 'Registrá cada corrida en una bitácora.'],
+        'Chequeos automáticos + bitácora de corridas.', DL_CRITERION, 90, 70, 5),
+    ],
+  },
+  {
+    id: 'eventos-motores',
+    title: '03 · Los motores de decisión',
+    subtitle: 'Pronóstico, riesgo de no-show y regla de sobreventa.',
+    missions: [
+      mission('Pronóstico de demanda', 'Modelo por semana y categoría, con backtest honesto (walk-forward).',
+        ['Entrená el modelo de demanda por semana y categoría.', 'Evaluá con backtest walk-forward, sin mirar el futuro.'],
+        'Modelo de pronóstico con su backtest walk-forward.', DL_CRITERION, 120, 100, 7),
+      mission('Radar de no-show', 'Score de riesgo por reserva, evaluado con honestidad (matriz de confusión, calibración).',
+        ['Construí el score de riesgo de no-show por reserva.', 'Evaluá con matriz de confusión y calibración, con honestidad.'],
+        'Score de no-show evaluado (matriz de confusión y calibración).', DL_CRITERION, 120, 100, 7),
+      mission('Regla de sobreventa', 'Política que combina pronóstico + riesgo: cuánto sobrevender sin pasarse.',
+        ['Combiná el pronóstico de demanda con el score de riesgo.', 'Definí cuánto sobrevender por semana y categoría, sin pasarse.'],
+        'Política de sobreventa documentada.', DL_CRITERION, 105, 90, 6),
+    ],
+  },
+  {
+    id: 'eventos-decisiones',
+    title: '04 · Decisiones y plata',
+    subtitle: 'El tablero y el memo que convierte análisis en decisiones.',
+    missions: [
+      mission('Tablero comercial', 'Dashboard: utilización, ingreso por auto, tarifa vs. ocupación.',
+        ['Armá el tablero con utilización e ingreso por auto.', 'Agregá la vista de tarifa vs. ocupación.'],
+        'Dashboard comercial publicado.', DL_CRITERION, 90, 80, 5),
+      mission('Memo de decisiones', 'El documento estrella: 3 decisiones concretas y su impacto en $ al mes.',
+        ['Elegí las 3 decisiones concretas que salen del análisis.', 'Calculá el impacto en $ al mes de cada una.'],
+        'Memo de decisiones con impacto en $ al mes.', DL_CRITERION, 105, 90, 6),
+    ],
+  },
+  {
+    id: 'eventos-publicacion',
+    title: '05 · Publicación e impacto',
+    subtitle: 'El proyecto en público, listo para tus cartas.',
+    missions: [
+      mission('Repo público profesional', 'README de analista senior: problema, método, decisiones, límites.',
+        ['Escribí el README: problema, método, decisiones y límites.', 'Dejá el repo público y ordenado.'],
+        'Repo público con README profesional.', DL_CRITERION, 75, 60, 4),
+      mission('Estreno público', 'Página en vivo + post de LinkedIn del proyecto.',
+        ['Publicá la página del proyecto en vivo.', 'Publicá el post de LinkedIn del proyecto.'],
+        'Página en vivo + post de LinkedIn publicados.', DL_CRITERION, 75, 60, 4),
+      mission('Frase para las cartas', 'La prueba del proyecto integrada a la plantilla de cover letters.',
+        ['Redactá la frase del proyecto para las cartas.', 'Integrala a la plantilla de cover letters.'],
+        'Frase del proyecto integrada a la plantilla de cartas.', DL_CRITERION, 60, 50, 3),
+    ],
+  },
+];
+
 function buildCampaign(config, chapterDefinitions) {
   let sequence = 0;
   return {
@@ -474,6 +562,15 @@ export const CAMPAIGNS = {
     districtId: 'gamer',
     image: 'assets/slots/gamer.webp',
   }, gamerChapters),
+  eventos: buildCampaign({
+    id: 'eventos',
+    name: 'SJO Decision Lab',
+    subtitle: 'Evento especial en la Zona de Eventos: tu proyecto estrella, paso a paso.',
+    goal: 'Construir el SJO Decision Lab, un sistema de decisiones para una rentadora (operación simulada 100% sintética, calibrada con datos públicos de turismo de Costa Rica). Cada misión se completa cuando el entregable real existe. Sin fecha límite: el crédito queda para siempre. Al completar las 14 misiones ganás la insignia «Analista de Decisiones».',
+    accent: '#ffd166',
+    districtId: 'eventos',
+    image: 'assets/slots/eventos.webp',
+  }, eventosChapters),
 };
 
 export const CAMPAIGN_MISSIONS = Object.values(CAMPAIGNS)
