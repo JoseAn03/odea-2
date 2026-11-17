@@ -99,6 +99,70 @@ let walkTabBtn = null;
 let steerDir = null;
 let steerActive = false;
 const STEER_LOOKAHEAD = 600;
+/* La dirección efectiva combina dos fuentes: la palanca táctil (touchDir)
+   y el teclado de la PC (keyDir, flechas y WASD — pedido de José). El
+   teclado manda mientras haya una tecla apretada; al soltarla, vuelve la
+   palanca si sigue activa. En el teléfono no hay eventos de teclado, así
+   que la versión móvil queda intacta. */
+let touchDir = null;
+let keyDir = null;
+const keysDown = new Set();
+const KEY_DIRS = {
+  ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0],
+  KeyW: [0, -1], KeyS: [0, 1], KeyA: [-1, 0], KeyD: [1, 0]
+};
+
+function applySteer() {
+  const next = keyDir || touchDir;
+  if (next) {
+    steerActive = true;
+    steerDir = next;
+  } else if (steerActive) {
+    steerActive = false;
+    steerDir = null;
+    if (player) player.clearTarget();
+  }
+}
+
+function keyboardDir() {
+  let x = 0;
+  let y = 0;
+  for (const code of keysDown) {
+    const d = KEY_DIRS[code];
+    if (d) { x += d[0]; y += d[1]; }
+  }
+  if (!x && !y) return null;
+  const len = Math.hypot(x, y);
+  return { ux: x / len, uy: y / len };
+}
+
+function setupKeyboardWalk() {
+  window.addEventListener("keydown", (event) => {
+    if (!walkOn || !KEY_DIRS[event.code]) return;
+    const t = event.target;
+    if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+    /* Con el modo caminar activo, las flechas mueven al avatar y no la página. */
+    if (event.code.startsWith("Arrow")) event.preventDefault();
+    if (!keysDown.has(event.code)) {
+      keysDown.add(event.code);
+      keyDir = keyboardDir();
+      applySteer();
+    }
+  });
+  window.addEventListener("keyup", (event) => {
+    if (!KEY_DIRS[event.code]) return;
+    if (keysDown.delete(event.code)) {
+      keyDir = keyboardDir();
+      if (walkOn) applySteer();
+    }
+  });
+  /* Si la ventana pierde el foco a mitad de tecla, no dejar al avatar caminando solo. */
+  window.addEventListener("blur", () => {
+    keysDown.clear();
+    keyDir = null;
+    if (walkOn) applySteer();
+  });
+}
 let toasts = null;
 let updateWatcher = null;
 let storageWatcher = null;
@@ -213,14 +277,8 @@ function initCity() {
         }
       },
       onSteer: (dir) => {
-        if (dir) {
-          steerActive = true;
-          steerDir = dir;
-        } else if (steerActive) {
-          steerActive = false;
-          steerDir = null;
-          if (player) player.clearTarget();
-        }
+        touchDir = dir;
+        applySteer();
       },
       onTapWorld: (pt) => {
         if (!walkOn || !player || !cityWorld) return;
@@ -232,6 +290,7 @@ function initCity() {
       }
     });
     viewSession = createViewSession(city.camera);
+    setupKeyboardWalk();
   } catch (error) {
     document.body.classList.add("no-city");
     if (els.canvas) els.canvas.hidden = true;
@@ -244,6 +303,9 @@ function setWalk(on) {
     /* Al salir del modo caminar el avatar se detiene donde quedó. */
     steerDir = null;
     steerActive = false;
+    touchDir = null;
+    keyDir = null;
+    keysDown.clear();
     if (player) player.clearTarget();
   }
   if (city) city.setWalkMode(walkOn);
