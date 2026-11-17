@@ -10,7 +10,19 @@ del distrito con completaciones idempotentes; el resto de distritos sigue en
 No hay frameworks ni assets externos: toda la ciudad se dibuja por código con
 Canvas 2D, sobre la paleta oficial (`#12081F`, `#FF2E93`, `#00E5FF`, `#FF8A3D`).
 
-## Costa Neón en isla · 0.13.0-fase4
+## Campañas profesionales · 0.18.0-fase4
+
+La actualización actual incluye 48 misiones de analista de datos en El Brete
+y 48 de clipping/IA/servicio profesional en Zona Gamer. Ambas se abren desde
+el mapa o el teléfono y comparten `play.campaigns`, respaldos y premios.
+El registro repetible de postulaciones da 25 XP y 2 monedas ficticias por
+acción deliberada sin un límite diario. No envía solicitudes externas.
+También se puede iniciar una partida vacía sin usar el fixture de pruebas.
+
+Leé **LEEME-PRIMERO.md** para instalación, conservación del guardado y uso.
+Esta es una entrega de código ZIP; no implica que GitHub Pages esté actualizado.
+
+## Costa Neón en isla · actualización anterior 0.13.0-fase4
 
 El mapa ahora presenta la ciudad como una isla tropical: mar turquesa, borde de
 arena y espuma, palmeras, faro, muelle y dos terrenos reservados para expansiones.
@@ -57,7 +69,7 @@ Sin save, la ciudad se muestra atenuada y la pantalla de importación de la
 Fase 1 queda al frente. No hay datos de ejemplo: el progreso siempre es el real.
 
 La app funciona sin conexión después de la primera carga (service worker
-`odea2-v0.15.0-fase4`). El catálogo de juego se sirve con estrategia
+`odea2-v0.18.0-fase4`). El catálogo de juego se sirve con estrategia
 *network-first* y cae a la caché si no hay red.
 
 ## Correr los tests
@@ -260,7 +272,7 @@ Todo ocurre en el dispositivo. Nada se envía a ningún servidor.
 ```
 index.html              cascarón: canvas, HUD, barra de destinos, chips, hoja, overlay y toasts
 manifest.webmanifest    PWA (ODEA 2 — Costa Neón)
-sw.js                   service worker versionado (odea2-v0.15.0-fase4)
+sw.js                   service worker versionado (odea2-v0.18.0-fase4)
 css/app.css             tema neón + capa de ciudad (HUD, hoja, overlay, toasts)
 js/app.js               orquestador: ciudad, HUD, importación, watchers
 js/city/                layout, world, cámara, renderer, entrada y motor rAF
@@ -339,6 +351,5 @@ Registrada en `RISK_LIST.md` §3.2 y especificada en `docs/FASE3_SPEC.md`.
 El bundle real del usuario **nunca** se publica ni se sube a ningún servidor.
 `.gitignore` bloquea `odea-progreso-*.json` y `*progreso-real*`, con excepción
 del fixture sintético (`fixtures/odea-progreso-sintetico.json`).
-
 
 
