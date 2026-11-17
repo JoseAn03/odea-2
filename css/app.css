@@ -1268,7 +1268,7 @@ body.no-city #city-canvas { display: none; }
 }
 .phone-home {
   padding: 18px 14px; display: grid;
-  grid-template-columns: repeat(4, 1fr); gap: 14px 8px; align-content: start;
+  grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px 10px; align-content: start;
 }
 .phone-home[hidden] { display: none; }
 .phone-app {
@@ -1287,14 +1287,15 @@ body.no-city #city-canvas { display: none; }
   font-size: 0.52rem; color: var(--cyan);
   text-transform: uppercase; letter-spacing: 0.08em;
 }
-.phone-missions { padding: 12px; overflow-y: auto; }
+.phone-missions { padding: 12px; overflow-y: auto; flex: 1; min-height: 0; overscroll-behavior: contain; }
+.phone-missions.is-campaign { padding: 0; }
 .phone-missions[hidden] { display: none; }
 .phone-screen-title { margin: 2px 0 0; font-size: 1.05rem; }
 .phone-screen-sub { margin: 2px 0 10px; opacity: 0.75; font-size: 0.72rem; }
 .phone-screen-group { margin: 16px 0 6px; font-size: 0.78rem; color: var(--pink); }
 .phone-list { display: flex; flex-direction: column; gap: 6px; }
 .phone-mission {
-  display: flex; align-items: center; gap: 8px;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px; padding: 8px 10px;

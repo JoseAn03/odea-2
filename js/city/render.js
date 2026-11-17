@@ -60,6 +60,14 @@ export function createRenderer(canvas) {
   let selectedAccent = PALETTE.pink;
   let reduced = false;
   let glow = null;
+  const venuePictures = {};
+  if (typeof Image !== "undefined") {
+    for (const id of ["brete", "gamer"]) {
+      const image = new Image();
+      image.src = new URL(`../../assets/slots/${id}.webp`, import.meta.url).href;
+      venuePictures[id] = image;
+    }
+  }
 
   /* Capa de arte pixel (rama arte-pixel-main): se crea una sola vez y
      puede ser null sin DOM; si es null, el render es exactamente el previo. */
@@ -886,6 +894,7 @@ export function createRenderer(canvas) {
     const R = clipsRect();
     if (!visible(view, R.x - 60, R.y - 60, R.w + 120, R.h + 120)) return;
     const cx = R.x + R.w / 2;
+    drawVenueBillboard("gamer", R.x + 75, R.y + 85, 390, PALETTE.pink);
     if (px.mando) px.draw(ctx, px.mando, cx, R.y + R.h * 0.80, 150, 104);
     if (px.pantalla) px.draw(ctx, px.pantalla, cx, R.y + 128, 132, 92);
     if (px.sillaRosa) px.draw(ctx, px.sillaRosa, cx - 62, R.y + 252, 46, 60);
@@ -896,6 +905,22 @@ export function createRenderer(canvas) {
       px.draw(ctx, px.arcade, R.x + 58, R.y + 360, 46, 60);
     }
     if (px.tienda) px.draw(ctx, px.tienda, R.x + R.w - 66, R.y + 246, 118, 80);
+  }
+
+  /** Generated interior artwork becomes an illuminated venue display on the map. */
+  function drawVenueBillboard(id, x, y, w, color) {
+    const image = venuePictures[id];
+    if (!image || !image.complete || !image.naturalWidth) return;
+    const h = w * 9 / 16;
+    ctx.fillStyle = "#090f27";
+    ctx.fillRect(x - 12, y - 12, w + 24, h + 32);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 6;
+    ctx.strokeRect(x - 7, y - 7, w + 14, h + 14);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(image, x, y, w, h);
+    ctx.fillStyle = color;
+    ctx.fillRect(x + 16, y + h + 17, w - 32, 4);
   }
 
   function drawPixelLife(view, world, time) {
@@ -1128,6 +1153,10 @@ export function createRenderer(canvas) {
     drawMonument(view, world, time);
     drawTraffic(view, world, time);
     drawClipsZone(view, world, time);
+    const breteVenue = DISTRICTS.find((d) => d.id === "empleo").rect;
+    if (visible(view, breteVenue.x, breteVenue.y, breteVenue.w, breteVenue.h)) {
+      drawVenueBillboard("brete", breteVenue.x + 78, breteVenue.y + 130, 385, PALETTE.cyan);
+    }
     drawPixelLife(view, world, time);
     drawSelection(view);
 
@@ -1164,19 +1193,17 @@ export function createRenderer(canvas) {
   }
 
   function drawScreenLabels(camera, world, time) {
-    /* El mapa va SIN nombres (decisión de José, 2026-11-16): el único
-       rótulo de toda la ciudad es el de la Zona CLIPS. */
-    const R = clipsRect();
-    const p = camera.worldToScreen(R.x + R.w / 2, R.y + 46);
-    if (p.x < -140 || p.x > vw + 140 || p.y < -60 || p.y > vh + 60) return;
-    const sprite = labelSprite("clips", "CLIPS", {
-      color: PALETTE.pink,
-      size: 20,
-      sub: "Zona gamer",
-      weight: 800
-    });
-    ctx.globalAlpha = 0.95;
-    drawSprite(sprite, p.x, p.y, 1);
+    // Keep the quiet map; only the two requested playable venues get signage.
+    for (const venue of [
+      { key: "gamer-campaign", title: "ZONA GAMER", sub: "Clips · IA · Primer ingreso", rect: clipsRect(), color: PALETTE.pink },
+      { key: "brete-campaign", title: "EL BRETE", sub: "Analista de datos · Postulaciones", rect: DISTRICTS.find((d) => d.id === "empleo").rect, color: PALETTE.cyan }
+    ]) {
+      const p = camera.worldToScreen(venue.rect.x + venue.rect.w / 2, venue.rect.y + 46);
+      if (p.x < -180 || p.x > vw + 180 || p.y < -60 || p.y > vh + 60) continue;
+      const sprite = labelSprite(venue.key, venue.title, { color: venue.color, size: 20, sub: venue.sub, weight: 800 });
+      ctx.globalAlpha = 0.98;
+      drawSprite(sprite, p.x, p.y, 1);
+    }
     ctx.globalAlpha = 1;
   }
 

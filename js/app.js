@@ -26,6 +26,11 @@ import { buildHud } from "./hud.js";
 import { buildDistrictPanel } from "./district-figures.js";
 import { renderHud, renderSheet, renderTabs } from "./hud-ui.js";
 import { routeForDay } from "../src/gameplay.js";
+import { campaignView } from "../src/campaign-state.js";
+import { renderCampaign } from "./campaign-ui.js";
+import { DISTRICTS } from "./districts.js";
+import { clipsRect } from "./city/layout.js";
+import { newPlayerBundle } from "../src/new-player.js";
 import {
   TAB_MOCHILA,
   TAB_CITY,
@@ -66,6 +71,8 @@ const els = {
   phoneMissions: document.getElementById("phone-missions"),
   phoneClock: document.getElementById("phone-clock"),
   phoneHomeBtn: document.getElementById("phone-home-btn"),
+  careerBackdrop: document.getElementById("career-backdrop"),
+  careerDialog: document.getElementById("career-dialog"),
   backdrop: document.getElementById("sheet-backdrop"),
   sheet: document.getElementById("sheet"),
   tabbar: document.getElementById("tabbar"),
@@ -102,6 +109,11 @@ let viewSession = null;
 let flash = null;
 let lastOdea1 = null;
 let fileInput = null;
+let careerId = null;
+let phoneView = "home";
+let careerReturnFocus = null;
+let phoneReturnFocus = null;
+let campaignWritePending = false;
 
 if (els.version) {
   els.version.textContent = `v${APP_VERSION}`;
@@ -111,6 +123,7 @@ if (els.version) {
 /* -------------------------------- acciones -------------------------------- */
 
 const actions = {
+  startFresh,
   pickFile,
   exportBackup,
   openProgress: () => openCharacter(),
@@ -123,6 +136,22 @@ const actions = {
     refresh();
   }
 };
+
+function startFresh(name) {
+  if (!storage || !catalog || bundle) return;
+  try {
+    if (currentBundle(storage) || pendingQuarantine(storage)) return;
+    const result = importBundle(newPlayerBundle(catalog, { name, date: localDateKey() }), {
+      storage, catalog, referenceDate: localDateKey()
+    });
+    if (result.status !== "active") throw new Error("No se pudo inicializar la partida vacía.");
+    hideOverlayRaw();
+    refresh();
+    openCampaign("brete");
+  } catch (error) {
+    if (toasts) toasts.show(`No se pudo iniciar: ${error.message}`, { tone: "error" });
+  }
+}
 
 /* --------------------------------- ciudad --------------------------------- */
 
@@ -199,6 +228,16 @@ function setWalk(on) {
 }
 
 function openDistrict(id) {
+  if (id === "gamer" || id === "empleo") {
+    closePhone();
+    openCampaign(id === "gamer" ? "gamer" : "brete");
+    return;
+  }
+  openDistrictArchive(id);
+}
+
+/** The migrated employment missions remain accessible as a separate archive. */
+function openDistrictArchive(id) {
   if (walkOn) setWalk(false);
   if (!bundle || !catalog) return;
   const panel = buildDistrictPanel(id, bundle, catalog);
@@ -291,7 +330,109 @@ function afterGameplay(result, okMessage, duplicateMessage) {
   }
   if (toasts) toasts.show(okMessage, { tone: "ok" });
   refresh();
-  if (sheetOpen && sheetDistrictId) openDistrict(sheetDistrictId);
+  if (sheetOpen && sheetDistrictId) openDistrictArchive(sheetDistrictId);
+  if (phoneView === "missions" && !els.phoneBackdrop.hidden) showPhoneMissions();
+}
+
+/* ------------------------ campañas: un solo estado ----------------------- */
+
+function openCampaign(id, inPhone = false) {
+  if (!bundle || !catalog || !campaignView(bundle, id)) return;
+  if (walkOn) setWalk(false);
+  if (viewSession) viewSession.capture();
+  hideSheetRaw();
+  hideOverlayRaw();
+  if (inPhone) {
+    careerId = null;
+    phoneView = id;
+    els.phoneHome.hidden = true;
+    els.phoneMissions.hidden = false;
+    els.phoneMissions.classList.add("is-campaign");
+  } else {
+    closePhone();
+    careerReturnFocus = document.activeElement;
+    careerId = id;
+    els.careerBackdrop.hidden = false;
+    els.careerDialog.focus({ preventScroll: true });
+  }
+  if (city) {
+    if (id === "brete") city.focusDistrict("empleo");
+    else {
+      const r = clipsRect();
+      city.camera.jumpTo(r.x + r.w / 2, r.y + r.h / 2, city.camera.clampZoom(0.8));
+    }
+  }
+  renderActiveCampaign();
+}
+
+function closeCampaign() {
+  if (!careerId) return;
+  careerId = null;
+  els.careerBackdrop.hidden = true;
+  if (viewSession) viewSession.restore();
+  setTab(TAB_CITY);
+  if (careerReturnFocus && document.contains(careerReturnFocus)) careerReturnFocus.focus({ preventScroll: true });
+  careerReturnFocus = null;
+}
+
+function renderActiveCampaign() {
+  const inPhone = !els.phoneBackdrop.hidden && ["brete", "gamer"].includes(phoneView);
+  const id = inPhone ? phoneView : careerId;
+  if (!id || !bundle) return;
+  const root = inPhone ? els.phoneMissions : els.careerDialog;
+  const view = campaignView(bundle, id);
+  renderCampaign(root, {
+    view, compact: inPhone,
+    onBack: () => inPhone ? showPhoneHome() : closeCampaign(),
+    onComplete: (missionId, evidence) => saveCampaignAction({ type: "campaign.complete", missionId, evidence }),
+    onApply: (details) => saveCampaignAction({
+      type: "application.record", ...details,
+      requestId: globalThis.crypto?.randomUUID?.() || `application_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+      expectedCount: view.applications.count
+    })
+  });
+  if (id === "brete") {
+    const archive = phoneEl("button", "campaign-archive", "Ver misiones de empleo heredadas de ODEA 1");
+    archive.type = "button";
+    archive.addEventListener("click", () => {
+      closeCampaign();
+      closePhone();
+      openDistrictArchive("empleo");
+    });
+    root.append(archive);
+  }
+}
+
+async function saveCampaignAction(mutation) {
+  if (campaignWritePending) return { ok: false, message: "Ya hay un registro en curso." };
+  campaignWritePending = true;
+  try {
+    const result = await applyGameplayMutationLocked(storage, catalog, mutation, gameplayDate());
+    if (result.status !== "applied") {
+      const messages = {
+        EVIDENCE_REQUIRED: "Contá qué hiciste o pegá el enlace de tu entregable (mínimo 12 caracteres).",
+        MISSION_LOCKED: "Primero completá la misión anterior.",
+        STALE_APPLICATION_COUNT: "El contador cambió en otra pantalla. Ya lo actualizamos; revisalo y volvé a registrar.",
+        TOO_FAST: "Esperá un instante antes de registrar otra postulación.",
+        QUOTA_EXCEEDED: "No hay espacio para guardar. Exportá un respaldo y liberá espacio antes de continuar.",
+        CONCURRENT_CHANGE: "Otra pestaña cambió el progreso. Revisá el contador antes de volver a registrar."
+      };
+      refresh();
+      setTimeout(renderActiveCampaign, 1100);
+      return { ok: false, message: messages[result.error?.code] ||
+        (result.status === "duplicate" ? "Ese registro ya estaba guardado; no se pagó otra vez." :
+          `No se pudo guardar (${result.error?.code || "error"}). No se otorgaron premios.`) };
+    }
+    refresh();
+    // Let the successful shot/reward animation finish before rebuilding the shared view.
+    setTimeout(renderActiveCampaign, mutation.type === "application.record" ? 950 : 500);
+    return { ok: true, message: mutation.type === "application.record" ?
+      "Postulación registrada: +25 XP y +2 monedas del juego." : "Misión guardada. Recompensa añadida al HUD." };
+  } catch (error) {
+    return { ok: false, message: "No se pudo guardar. Tu progreso anterior sigue intacto; exportá un respaldo y reintentá." };
+  } finally {
+    campaignWritePending = false;
+  }
 }
 
 /* ------------------------------- navegación ------------------------------- */
@@ -368,17 +509,6 @@ function mountPhoneTabButton() {
 
 /* ------------------------------- teléfono ------------------------------- */
 
-/* Las 14 misiones del evento CLIPS (diseño aprobado 2026-11-16): por ahora
- * el teléfono las muestra como avance de la Zona CLIPS. */
-const PHONE_CLIPS = [
-  ["Creador ancla elegido", 40], ["Mapa de campañas", 50], ["Canales creados", 40],
-  ["Descarga automática del VOD", 80], ["Detector de momentos v1", 90],
-  ["Corte vertical con subtítulos", 90], ["Primer clip publicado", 60],
-  ["Racha de 5 clips", 80], ["Clip transformativo", 70], ["Quince en el aire", 90],
-  ["Tablero de métricas", 60], ["Primer dólar", 100], ["Lecciones escritas", 50],
-  ["Tarjeta final", 60]
-];
-
 function phoneEl(tag, cls, text) {
   const n = document.createElement(tag);
   if (cls) n.className = cls;
@@ -396,20 +526,32 @@ function updatePhoneClock() {
 function openPhone() {
   if (!bundle || !catalog || !els.phoneBackdrop) return;
   if (walkOn) setWalk(false);
+  closeCampaign();
+  hideOverlayRaw();
+  phoneReturnFocus = document.activeElement;
   hideSheetRaw();
   els.phoneBackdrop.hidden = false;
   requestAnimationFrame(() => els.phoneBackdrop.classList.add("is-open"));
   showPhoneHome();
   updatePhoneClock();
+  const first = els.phoneHome.querySelector("button");
+  if (first) first.focus({ preventScroll: true });
 }
 
 function closePhone() {
   if (!els.phoneBackdrop) return;
+  const wasOpen = !els.phoneBackdrop.hidden;
   els.phoneBackdrop.classList.remove("is-open");
   els.phoneBackdrop.hidden = true;
+  phoneView = "home";
+  if (wasOpen && viewSession) viewSession.restore();
+  if (wasOpen && phoneReturnFocus && document.contains(phoneReturnFocus)) phoneReturnFocus.focus({ preventScroll: true });
+  phoneReturnFocus = null;
 }
 
 function showPhoneHome() {
+  phoneView = "home";
+  els.phoneMissions?.classList.remove("is-campaign");
   if (els.phoneHome) els.phoneHome.hidden = false;
   if (els.phoneMissions) els.phoneMissions.hidden = true;
 }
@@ -417,6 +559,8 @@ function showPhoneHome() {
 function showPhoneMissions() {
   if (!els.phoneMissions || !bundle || !catalog) return;
   const route = routeForDay(bundle, catalog);
+  phoneView = "missions";
+  els.phoneMissions.classList.remove("is-campaign");
   const root = els.phoneMissions;
   root.replaceChildren();
   root.append(phoneEl("h3", "phone-screen-title", "Misiones"));
@@ -427,23 +571,52 @@ function showPhoneMissions() {
     row.append(phoneEl("span", "phone-mission-id", `Misión ${m.id}`));
     row.append(phoneEl("span", "phone-mission-xp", `${m.xp} XP${m.slot ? ` · slot ${m.slot}` : ""}`));
     row.append(phoneEl("span", "phone-mission-state", m.completed ? "✓ Hecha" : "Pendiente"));
+    if (!m.completed) {
+      const complete = phoneEl("button", "campaign-archive", "Completar misión de hoy");
+      complete.type = "button";
+      complete.addEventListener("click", async () => {
+        complete.disabled = true;
+        try { await completeMission(m.id, "hub"); }
+        finally { complete.disabled = false; }
+      });
+      row.append(complete);
+    }
     list.append(row);
   }
   if (!route.missions.length) {
     list.append(phoneEl("p", "phone-empty", "No quedan misiones para hoy."));
   }
   root.append(list);
-  root.append(phoneEl("h4", "phone-screen-group", "Zona CLIPS · Evento (próximamente)"));
-  const clips = phoneEl("div", "phone-list");
-  for (const [name, xp] of PHONE_CLIPS) {
-    const row = phoneEl("div", "phone-mission is-soon");
-    row.append(phoneEl("span", "phone-mission-id", name));
-    row.append(phoneEl("span", "phone-mission-xp", `${xp} XP`));
-    clips.append(row);
+  root.append(phoneEl("h4", "phone-screen-group", "Tus campañas profesionales"));
+  for (const id of ["brete", "gamer"]) {
+    const view = campaignView(bundle, id);
+    const button = phoneEl("button", "campaign-phone-route", `${view.name} · ${view.done}/${view.total} · ${view.percent}%`);
+    button.type = "button";
+    button.addEventListener("click", () => openCampaign(id, true));
+    root.append(button);
   }
-  root.append(clips);
   if (els.phoneHome) els.phoneHome.hidden = true;
   root.hidden = false;
+}
+
+function showPhoneMap() {
+  phoneView = "map";
+  els.phoneMissions.classList.remove("is-campaign");
+  els.phoneHome.hidden = true;
+  const root = els.phoneMissions;
+  root.hidden = false;
+  root.replaceChildren(phoneEl("h3", "phone-screen-title", "Destinos de Costa Neón"),
+    phoneEl("p", "phone-screen-sub", "Elegí un destino. Se abre su localización en el mapa."));
+  for (const destination of [{ id: "gamer", name: "Zona Gamer · Estudio de clips" },
+    ...DISTRICTS.map((d) => ({ id: d.id, name: d.id === "empleo" ? "El Brete · Analista de datos" : d.name }))]) {
+    const button = phoneEl("button", "campaign-phone-route", destination.name);
+    button.type = "button";
+    button.addEventListener("click", () => {
+      closePhone();
+      openDistrict(destination.id);
+    });
+    root.append(button);
+  }
 }
 
 /** Destino seleccionado en la barra: abre la capa que le corresponde. */
@@ -854,6 +1027,8 @@ function setupStorageWatcher() {
     onRemoteChange: () => {
       closeSheet();
       refresh();
+      renderActiveCampaign();
+      if (phoneView === "missions" && !els.phoneBackdrop.hidden) showPhoneMissions();
       if (toasts) {
         toasts.show("Tu progreso cambió en otra pestaña", {
           tone: "info",
@@ -903,10 +1078,20 @@ async function boot() {
       if (event.target === els.phoneBackdrop) closePhone();
     });
   }
+  if (els.careerBackdrop) {
+    els.careerBackdrop.addEventListener("click", (event) => {
+      if (event.target === els.careerBackdrop) closeCampaign();
+    });
+  }
   if (els.phoneHome) {
     for (const appBtn of els.phoneHome.querySelectorAll(".phone-app")) {
       appBtn.addEventListener("click", () => {
-        if (appBtn.dataset.app === "missions") showPhoneMissions();
+        const app = appBtn.dataset.app;
+        if (app === "missions") showPhoneMissions();
+        else if (app === "brete" || app === "gamer") openCampaign(app, true);
+        else if (app === "map") showPhoneMap();
+        else if (app === "bag") { closePhone(); selectTab(TAB_MOCHILA); }
+        else if (app === "gear") { closePhone(); selectTab(TAB_MENU); }
       });
     }
   }
@@ -915,12 +1100,16 @@ async function boot() {
   }
   window.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
-      if (sheetOpen) closeSheet();
+      if (careerId) closeCampaign();
+      else if (!els.phoneBackdrop.hidden) closePhone();
+      else if (sheetOpen) closeSheet();
       else if (overlayOpen) closeOverlay();
       return;
     }
     /* El foco no se escapa de la capa superior mientras esté abierta. */
-    if (sheetOpen) trapTab(event, els.sheet);
+    if (careerId) trapTab(event, els.careerDialog);
+    else if (!els.phoneBackdrop.hidden) trapTab(event, els.phoneBackdrop);
+    else if (sheetOpen) trapTab(event, els.sheet);
     else if (overlayOpen) trapTab(event, els.overlay);
   });
 
