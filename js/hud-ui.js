@@ -123,6 +123,14 @@ export function renderTabs(root, { active, onSelect, exclude = [] } = {}) {
 
 /* --------------------------------- chips ---------------------------------- */
 
+/**
+ * Fila de los 9 distritos (propuesta F3-5).
+ *
+ * OJO: v0.27.1 **no la monta la app** —hoy se llega a los distritos por el
+ * mapa o por el mapa del teléfono—; el componente está listo y probado para
+ * cuando se decida el encaje visual bajo el HUD. Mientras tanto el README no
+ * debe prometerla.
+ */
 export function renderChips(root, { onDistrict, activeId = null } = {}) {
   const buttons = DISTRICTS.map((district) =>
     h(

@@ -15,10 +15,13 @@ import {
   applyGameplayMutation,
   applyGameplayMutationLocked
 } from "../src/storage.js";
+import { ODEA2_BUNDLE_FORMAT } from "../src/shape.js";
 
 export const FORMATS = {
   ODEA1: "odea_bundle_v2",
-  ODEA2: "odea2_bundle_v1",
+  /* El identificador del save se declara UNA sola vez, en src/shape.js: si
+     cambia, `check:write-path` obliga a actualizarlo en un único sitio. */
+  ODEA2: ODEA2_BUNDLE_FORMAT,
   UNKNOWN: "unknown"
 };
 

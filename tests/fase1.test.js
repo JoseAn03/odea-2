@@ -288,3 +288,80 @@ test("fase 1: restoreBundle también aplica la rotación de backups de save", ()
   const keys = storage._keys().filter((k) => k.startsWith(STORAGE_KEYS.backupPrefix + "save_"));
   assert.equal(keys.length, SAVE_BACKUP_RETENTION);
 });
+
+/* -------------------------------------------------------------------------- */
+/* v0.27.1: restaurar es la ruta más destructiva, así que exige la misma       */
+/* verificación que una mutación (backup exacto + relectura).                  */
+/* -------------------------------------------------------------------------- */
+
+function brokenStorage(inner, { tamperBackup = false, ignoreSaveWrite = false } = {}) {
+  return {
+    getItem: (k) => {
+      const value = inner.getItem(k);
+      if (tamperBackup && String(k).startsWith(STORAGE_KEYS.backupPrefix + "save_") && value != null) {
+        return value + " ";
+      }
+      return value;
+    },
+    setItem: (k, v) => {
+      if (ignoreSaveWrite && k === STORAGE_KEYS.bundle) return;
+      inner.setItem(k, v);
+    },
+    removeItem: (k) => inner.removeItem(k),
+    key: (i) => inner.key(i),
+    get length() {
+      return inner.length;
+    },
+    _keys: () => inner._keys()
+  };
+}
+
+function errorCode(fn) {
+  try {
+    fn();
+  } catch (error) {
+    return error.code || error.message;
+  }
+  return null;
+}
+
+test("fase 1: restaurar aborta si el backup no coincide byte a byte con el save previo", () => {
+  const catalog = loadCatalog();
+  const inner = createMemoryStorage();
+  importFixture(inner, loadFixture());
+  const exported = JSON.parse(JSON.stringify(readOdea2(inner)));
+  const rawBefore = inner.getItem(STORAGE_KEYS.bundle);
+
+  const storage = brokenStorage(inner, { tamperBackup: true });
+  const code = errorCode(() => restoreBundle(exported, { catalog, storage, at: "2026-11-17T10:00:00.000Z" }));
+
+  assert.match(String(code), /BACKUP_MISMATCH/);
+  assert.equal(inner.getItem(STORAGE_KEYS.bundle), rawBefore, "el save previo queda intacto");
+});
+
+test("fase 1: restaurar revierte cuando la escritura no se puede releer igual", () => {
+  const catalog = loadCatalog();
+  const inner = createMemoryStorage();
+  importFixture(inner, loadFixture());
+  const exported = JSON.parse(JSON.stringify(readOdea2(inner)));
+  const rawBefore = inner.getItem(STORAGE_KEYS.bundle);
+
+  const storage = brokenStorage(inner, { ignoreSaveWrite: true });
+  const code = errorCode(() => restoreBundle(exported, { catalog, storage, at: "2026-11-17T10:00:00.000Z" }));
+
+  assert.match(String(code), /WRITE_VERIFY_FAILED/);
+  assert.equal(inner.getItem(STORAGE_KEYS.bundle), rawBefore, "el save previo queda intacto");
+});
+
+test("fase 1: restaurar con éxito deja el save anterior en un backup idéntico", () => {
+  const catalog = loadCatalog();
+  const storage = createMemoryStorage();
+  importFixture(storage, loadFixture());
+  const exported = JSON.parse(JSON.stringify(readOdea2(storage)));
+  const rawBefore = storage.getItem(STORAGE_KEYS.bundle);
+
+  const { backupOfCurrent } = restoreBundle(exported, { catalog, storage, at: "2026-11-17T10:00:00.000Z" });
+
+  assert.ok(backupOfCurrent, "debe haber backup del save previo");
+  assert.equal(storage.getItem(backupOfCurrent.key), rawBefore, "el backup es el save previo tal cual");
+});

@@ -54,6 +54,8 @@ body {
   z-index: 10;
 }
 .skip-link:focus { left: 8px; }
+/* Sin partida no hay HUD al que saltar: el enlace no debe existir. */
+body[data-has-save="false"] .skip-link { display: none; }
 
 /* ------------------------------- topbar --------------------------------- */
 
@@ -640,7 +642,11 @@ body.no-city #city-canvas { display: none; }
   right: 0;
   bottom: 0;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  /* Un carril por botón, sin número fijo: la barra tiene 5 destinos desde
+     v0.16 (Ciudad · Hoy · Teléfono · Mochila · Caminar) y con 4 columnas el
+     quinto caía en una segunda fila tapada por la hoja. */
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
   gap: 2px;
   padding: 5px 6px calc(env(safe-area-inset-bottom, 0px) + 5px);
   background: linear-gradient(180deg, rgba(12, 15, 26, 0.98), rgba(5, 7, 12, 0.99));
@@ -1134,7 +1140,9 @@ body.no-city #city-canvas { display: none; }
 
 .toasts {
   position: fixed;
-  z-index: 30;
+  /* Por encima de la hoja (9), el teléfono (60) y las campañas (100): los
+     avisos de guardado y de la Tienda suceden dentro de esas capas. */
+  z-index: 120;
   top: calc(env(safe-area-inset-top) + 92px);
   left: 50%;
   transform: translateX(-50%);
@@ -1264,6 +1272,9 @@ body.no-city #city-canvas { display: none; }
 .phone-home {
   padding: 18px 14px; display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px 10px; align-content: start;
+  /* En horizontal el teléfono queda bajo (~220 px) y la tercera fila —Ajustes,
+     la única entrada a Menú desde el teléfono— se cortaba sin poder bajar. */
+  overflow-y: auto; min-height: 0; flex: 1; overscroll-behavior: contain;
 }
 .phone-home[hidden] { display: none; }
 .phone-app {

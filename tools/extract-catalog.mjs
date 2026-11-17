@@ -19,6 +19,7 @@
 import fs from "node:fs";
 import vm from "node:vm";
 import crypto from "node:crypto";
+import { checkCatalog, mergeCatalog } from "./catalog-build.mjs";
 
 const [, , htmlPath, flujosPath, outPath = "data/xp-catalog.json"] = process.argv;
 if (!htmlPath || !flujosPath) {
@@ -222,9 +223,30 @@ const catalog = {
   }
 };
 
+/* Se FUSIONA con la copia anterior: `academia`, `shop` y `cosmetics` no se
+   extraen de odea.html, así que reescribir el archivo sin ellas dejaba el juego
+   sin rutas de Academia ni precios de la Mochila. */
+let previous = null;
+if (fs.existsSync(outPath)) {
+  try {
+    previous = JSON.parse(fs.readFileSync(outPath, "utf8"));
+  } catch {
+    previous = null;
+  }
+}
+const merged = mergeCatalog(catalog, previous);
+const integrity = checkCatalog(merged);
+
 fs.mkdirSync(outPath.replace(/[\\/][^\\/]+$/, ""), { recursive: true });
-fs.writeFileSync(outPath, JSON.stringify(catalog, null, 2) + "\n", "utf8");
+fs.writeFileSync(outPath, JSON.stringify(merged, null, 2) + "\n", "utf8");
 console.log(`Catálogo escrito en ${outPath}`);
-console.log(`  campaña=${catalog.counters.campaign} diarias=${catalog.counters.daily} semanales=${catalog.counters.weekly}`);
-console.log(`  trabajos=${catalog.counters.jobs} logros=${catalog.counters.achievements} capital=${catalog.counters.capital}`);
-console.log(`  vida=${catalog.counters.vida} jefes=${catalog.counters.bosses} sagas=${catalog.counters.sagas}`);
+console.log(`  campaña=${merged.counters.campaign} diarias=${merged.counters.daily} semanales=${merged.counters.weekly}`);
+console.log(`  trabajos=${merged.counters.jobs} logros=${merged.counters.achievements} capital=${merged.counters.capital}`);
+console.log(`  vida=${merged.counters.vida} jefes=${merged.counters.bosses} sagas=${merged.counters.sagas}`);
+console.log(`  preservadas=${merged.meta.preservedSections.join(",") || "ninguna"}`);
+if (!integrity.ok) {
+  const faltan = [...integrity.missing, ...integrity.empty].join(", ");
+  console.error(`AVISO: faltan secciones preservadas (${faltan}).`);
+  console.error("Regenerá desde un catálogo anterior que las tenga o volvé a fusionar la extracción de assets.");
+  process.exitCode = 3;
+}

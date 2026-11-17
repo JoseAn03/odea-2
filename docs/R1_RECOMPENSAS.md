@@ -100,7 +100,7 @@ copia → mutación → refresco derivado → validación fail-closed
 
 | Escenario | Comportamiento |
 |---|---|
-| Bundle migrado sin `play` | Válido; la primera escritura crea `play` v2 |
+| Bundle migrado sin `play` | Válido; la primera escritura crea `play` (hoy v3) |
 | Bundle con `play` v1 y registros sin `reward` | Se lee y se deriva igual que antes |
 | Bundle con `play` v1 y un `reward` | Rechazado por validación (incoherente) |
 | Bundle con `play` v2 leído por cliente v1 | El cliente v1 lo ve como versión futura y no muta |

@@ -15,7 +15,7 @@
  */
 import { APP_VERSION } from "./version.js";
 import { loadCatalog } from "./catalog.js";
-import { getStorage } from "./browser-storage.js";
+import { getStorage, removeLegacySyncMeta } from "./browser-storage.js";
 import { localDateKey } from "../src/derive.js";
 import * as ui from "./ui.js";
 import { buildWorld } from "./city/world.js";
@@ -332,6 +332,7 @@ function openDistrictArchive(id) {
 
   /* Snapshot en memoria de sesión: se conserva el de la PRIMERA apertura. */
   if (viewSession) viewSession.capture();
+  const wasOpen = sheetOpen;
   if (!sheetOpen) lastFocus = document.activeElement;
   hideSheetRaw();
 
@@ -355,7 +356,13 @@ function openDistrictArchive(id) {
   }
 
   const close = els.sheet.querySelector(".sheet-close");
-  if (close) close.focus({ preventScroll: true });
+  if (!wasOpen) {
+    if (close) close.focus({ preventScroll: true });
+    return;
+  }
+  /* Repintado tras completar: no se roba el foco al botón de cerrar (antes
+     saltaba ahí en cada guardado). Se deja en la hoja. */
+  ensureFocusInside(els.sheet);
 }
 
 /** Oculta la hoja sin tocar la pestaña activa ni el foco. */
@@ -553,6 +560,9 @@ function renderActiveCampaign() {
     });
     root.append(archive);
   }
+  /* El repintado reemplaza los hijos: si el foco quedó en <body>, vuelve a la
+     capa (antes se perdía en cada misión guardada). */
+  ensureFocusInside(root);
 }
 
 /* --------------------- Misiones Diarias (v0.19.0) -----------------------
@@ -736,6 +746,14 @@ function trapTab(event, container) {
   }
   const first = items[0];
   const last = items[items.length - 1];
+  /* El contenedor tiene tabindex="-1" y puede quedar enfocado (al abrir la
+     capa o al repintarla). Si el foco no está en la lista, se entra por el
+     extremo correcto en vez de dejarlo escapar al fondo. */
+  if (!items.includes(document.activeElement)) {
+    event.preventDefault();
+    (event.shiftKey ? last : first).focus();
+    return;
+  }
   if (event.shiftKey && document.activeElement === first) {
     event.preventDefault();
     last.focus();
@@ -743,6 +761,18 @@ function trapTab(event, container) {
     event.preventDefault();
     first.focus();
   }
+}
+
+/**
+ * Tras repintar una capa que reemplaza sus hijos, el foco puede quedar en
+ * `<body>`. Se devuelve a la capa sin adivinar qué botón era: el contenedor
+ * tiene tabindex="-1" y anuncia su etiqueta.
+ */
+function ensureFocusInside(layer) {
+  if (!layer || layer.hidden) return;
+  const active = document.activeElement;
+  if (active && active !== document.body && layer.contains(active)) return;
+  if (typeof layer.focus === "function") layer.focus({ preventScroll: true });
 }
 
 /** Devuelve el foco al control que abrió la capa (guía, pág. 7). */
@@ -1155,7 +1185,7 @@ async function handleFile(file) {
   openOverlay("Importar progreso");
   ui.renderError(
     els.overlayContent,
-    "Formato no reconocido. Se espera un export de ODEA 1 (odea_bundle_v2) o un respaldo de ODEA 2 (odea2_bundle_v1).",
+    "Formato no reconocido. Se espera un export de ODEA 1 (odea_bundle_v2) o un respaldo de ODEA 2.",
     actions
   );
 }
@@ -1441,7 +1471,7 @@ async function boot() {
   /* La sincronización con Google Drive se retiró a pedido de José
      (v0.27.0): el respaldo es manual, exportando el archivo. Se borra la
      metadata que la sync dejó en este aparato; la partida no se toca. */
-  try { localStorage.removeItem("odea2_sync_v1"); } catch (_) { /* sin storage */ }
+  removeLegacySyncMeta();
   setupServiceWorker();
 
   /* La luz depende de la hora: se revisa cada 5 minutos y al volver a la app,

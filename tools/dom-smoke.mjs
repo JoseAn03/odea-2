@@ -249,8 +249,17 @@ await run("renderHud", () => {
 
 await run("renderChips", () => {
   const root = montar();
-  renderChips(root, bundle, catalog);
-  return { pass: root.children.length > 0, detail: `${root.children.length} chips` };
+  let elegido = null;
+  /* La firma es { onDistrict, activeId }: antes se llamaba con (bundle,
+     catalog) y el clic nunca se probaba. */
+  renderChips(root, { onDistrict: (id) => { elegido = id; }, activeId: DISTRICTS[0].id });
+  const chips = root.querySelectorAll("button");
+  if (chips[0]) chips[0].click();
+  const activo = root.querySelectorAll(".is-active");
+  return {
+    pass: chips.length === 9 && elegido != null && activo.length === 1,
+    detail: `${chips.length} chips · clic=${elegido} · activos=${activo.length}`
+  };
 });
 
 await run("renderTabs", () => {
