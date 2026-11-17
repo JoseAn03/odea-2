@@ -7,6 +7,7 @@
 
 import { PALETTE, DISTRICTS, alpha, mix } from "../districts.js";
 import { fmt } from "../format.js";
+import { createPixelArt } from "./pixel.js";
 
 const FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
@@ -68,6 +69,18 @@ export function createRenderer(canvas) {
 
   function windowBoost() {
     return ambience && Number.isFinite(ambience.windowBoost) ? ambience.windowBoost : 1;
+  }
+
+  /* Capa de arte pixel (rama arte-pixel-ciudad): se crea una sola vez y
+     puede ser null sin DOM; si es null, el render es exactamente el previo. */
+  let pixelArt = null;
+  let pixelTried = false;
+  function art() {
+    if (!pixelTried) {
+      pixelTried = true;
+      try { pixelArt = createPixelArt(); } catch { pixelArt = null; }
+    }
+    return pixelArt;
   }
 
   /* ------------------------------ sprites de texto ------------------------- */
@@ -202,9 +215,11 @@ export function createRenderer(canvas) {
       { x: 1960, y: 0, w: 110, h: S },
       { x: 2610, y: 0, w: 120, h: S }
     ];
-    ctx.fillStyle = C.road;
+    const pxRoads = art();
     for (const b of bands) {
       if (!visible(view, b.x, b.y, b.w, b.h)) continue;
+      if (pxRoads) pxRoads.fill(ctx, "asfalto", b.x, b.y, b.w, b.h);
+      ctx.fillStyle = alpha(C.road, pxRoads ? 0.55 : 1);
       ctx.fillRect(b.x, b.y, b.w, b.h);
     }
 
@@ -229,13 +244,28 @@ export function createRenderer(canvas) {
     ctx.strokeStyle = "rgba(255,255,255,0.055)";
     ctx.lineWidth = 1.5;
     ctx.strokeRect(120, 120, S - 240, S - 240);
+
+    /* Pasos de cebra pixel en los cruces principales. */
+    if (pxRoads) {
+      for (const gx of [715, 1365, 2015]) {
+        for (const gy of [715, 1365, 2015]) {
+          if (!visible(view, gx - 130, gy - 130, 260, 260)) continue;
+          pxRoads.fill(ctx, "cebra", gx - 108, gy - 55, 36, 110);
+          pxRoads.fill(ctx, "cebra", gx + 72, gy - 55, 36, 110);
+          pxRoads.fill(ctx, "cebra", gx - 55, gy - 108, 110, 36);
+          pxRoads.fill(ctx, "cebra", gx - 55, gy + 72, 110, 36);
+        }
+      }
+    }
   }
 
   function drawBlocks(view, world) {
+    const pxBlocks = art();
     for (const block of world.blocks) {
       const r = block.rect;
       if (!visible(view, r.x, r.y, r.w, r.h)) continue;
-      ctx.fillStyle = C.sidewalk;
+      if (pxBlocks) pxBlocks.fill(ctx, "acera", r.x, r.y, r.w, r.h);
+      ctx.fillStyle = pxBlocks ? alpha(C.sidewalk, 0.55) : C.sidewalk;
       ctx.fillRect(r.x, r.y, r.w, r.h);
       ctx.fillStyle = C.ground;
       ctx.fillRect(r.x + 22, r.y + 22, r.w - 44, r.h - 44);
@@ -643,6 +673,58 @@ export function createRenderer(canvas) {
     }
   }
 
+  /* Vida pixel: postes con halo en los cruces, vecinos caminando por las
+     aceras y un carro pixel por la avenida sur. Todo determinista desde
+     `time` (con reduced, time llega en 0 y la escena queda quieta). */
+  function drawPixelLife(view, world, time) {
+    const px = art();
+    if (!px) return;
+    const S = world.size;
+    const step = reduced ? 0 : Math.floor(time * 5) % 2;
+
+    /* Postes en las esquinas NE de los cruces principales. */
+    for (const gx of [715, 1365, 2015]) {
+      for (const gy of [715, 1365, 2015]) {
+        const lx = gx + 66, ly = gy + 66;
+        if (!visible(view, lx - 100, ly - 110, 200, 200)) continue;
+        const pulse = reduced ? 0.16 : 0.15 + 0.03 * Math.sin(time * 1.3 + gx * 0.01 + gy * 0.017);
+        px.glow(ctx, lx, ly - 54, 95, pulse);
+        px.draw(ctx, px.poste, lx, ly, 26, 60);
+      }
+    }
+
+    /* Vecinos con rutas deterministas (ida y vuelta). */
+    const walk = (offset, speed, span) => {
+      const ph = (((offset + time * speed) % (2 * span)) + 2 * span) % (2 * span);
+      return { pos: ph < span ? ph : 2 * span - ph, dir: ph < span ? 1 : -1 };
+    };
+    const n1 = walk(0, 55, 2330);
+    if (visible(view, 170 + n1.pos, 1250, 70, 70)) {
+      px.draw(ctx, px.npcs[0].side[step], 200 + n1.pos, 1308, 42, 52, n1.dir < 0);
+    }
+    const n2 = walk(600, 42, 2330);
+    if (visible(view, 615, 170 + n2.pos, 70, 70)) {
+      const f2 = n2.dir > 0 ? px.npcs[1].front[step] : px.npcs[1].back[step];
+      px.draw(ctx, f2, 650, 200 + n2.pos, 42, 52);
+    }
+    /* Vecino dando la vuelta al Monumento. */
+    const ang = reduced ? 0.6 : time * 0.12;
+    const mx = 1365 + Math.cos(ang) * 168, my = 1365 + Math.sin(ang) * 168;
+    if (visible(view, mx - 45, my - 45, 90, 90)) {
+      const c = Math.cos(ang), sn = Math.sin(ang);
+      const f3 = Math.abs(c) > Math.abs(sn)
+        ? px.npcs[0].side[step]
+        : (sn > 0 ? px.npcs[0].front[step] : px.npcs[0].back[step]);
+      px.draw(ctx, f3, mx, my + 26, 42, 52, c < 0);
+    }
+
+    /* Carro pixel por la avenida horizontal sur (centro y = 2015). */
+    const cx = reduced ? 420 : ((time * 120) % (S + 320)) - 160;
+    if (visible(view, cx - 75, 1975, 150, 90)) {
+      px.draw(ctx, px.carro, cx, 2050, 120, 60);
+    }
+  }
+
   function drawGlitch(view, world, time) {
     if (!visible(view, 2070, 2070, 540, 540)) return;
     const base = 2070 + 28;
@@ -738,6 +820,7 @@ export function createRenderer(canvas) {
     drawGlitch(view, world, time);
     drawMonument(view, world, time);
     drawTraffic(view, world, time);
+    drawPixelLife(view, world, time);
     drawSelection(view);
 
     /* Luces de tráfico: pequeños destellos en cruces principales. */
@@ -850,6 +933,12 @@ export function createRenderer(canvas) {
       ctx.lineTo(p.x - 4.5, p.y - 2);
       ctx.closePath();
       ctx.fill();
+      /* El avatar pixel (único con gorra) sobre el marcador. */
+      const pxPlayer = art();
+      if (pxPlayer) {
+        const pstep = reduced ? 0 : Math.floor(time * 5) % 2;
+        pxPlayer.draw(ctx, pxPlayer.player.front[pstep], p.x, p.y + 17, 34, 42);
+      }
     }
   }
 
