@@ -3,7 +3,7 @@
  *
  * Responsabilidades:
  *  - dibujar la ciudad (Canvas) y atender cámara/gestos;
- *  - pintar HUD, chips y hojas de distrito desde el save migrado;
+ *  - pintar HUD y hojas de distrito desde el save migrado;
  *  - reutilizar la pantalla de importación/restauración de la Fase 1 dentro
  *    del overlay «Mi progreso»;
  *  - avisar de una versión nueva del SW y reaccionar a cambios de otra pestaña.
@@ -22,11 +22,12 @@ import { buildWorld } from "./city/world.js";
 import { createCityView } from "./city/engine.js";
 import { createPlayer } from "./city/player.js";
 import { createViewSession } from "./city/view-session.js";
-import { buildHud, buildInventory, buildToday } from "./hud.js";
+import { buildHud } from "./hud.js";
 import { buildDistrictPanel } from "./district-figures.js";
-import { renderHud, renderChips, renderSheet, renderTabs } from "./hud-ui.js";
+import { renderHud, renderSheet, renderTabs } from "./hud-ui.js";
+import { routeForDay } from "../src/gameplay.js";
 import {
-  TAB_MOCHILA,
+  TAB_CHARACTER,
   TAB_CITY,
   TAB_MENU,
   TAB_TODAY,
@@ -56,11 +57,15 @@ const MAX_FILE_BYTES = 25 * 1024 * 1024;
 const els = {
   canvas: document.getElementById("city-canvas"),
   hud: document.getElementById("hud"),
-  chips: document.getElementById("district-chips"),
   version: document.getElementById("version-badge"),
   toasts: document.getElementById("toasts"),
   floatingImport: document.getElementById("floating-import"),
   walkBtn: document.getElementById("walk-btn"),
+  phoneBackdrop: document.getElementById("phone-backdrop"),
+  phoneHome: document.getElementById("phone-home"),
+  phoneMissions: document.getElementById("phone-missions"),
+  phoneClock: document.getElementById("phone-clock"),
+  phoneHomeBtn: document.getElementById("phone-home-btn"),
   backdrop: document.getElementById("sheet-backdrop"),
   sheet: document.getElementById("sheet"),
   tabbar: document.getElementById("tabbar"),
@@ -102,7 +107,7 @@ if (els.version) {
 const actions = {
   pickFile,
   exportBackup,
-  openProgress: () => openMochila(),
+  openProgress: () => openCharacter(),
   acceptQuarantine: handleAcceptQuarantine,
   rejectQuarantine: handleRejectQuarantine,
   resetReimport: handleResetReimport,
@@ -308,6 +313,107 @@ function renderTabbar() {
   els.tabbar.hidden = !shouldShowTabbar({ hasSave: Boolean(bundle) });
   if (els.tabbar.hidden) return;
   renderTabs(els.tabbar, { active: activeTab, onSelect: selectTab });
+  mountPhoneTabButton();
+}
+
+/** El Teléfono vive en el centro de la barra, pero NO es una pestaña:
+ *  abre una capa (el teléfono) sobre la ciudad. */
+function mountPhoneTabButton() {
+  if (!els.tabbar || els.tabbar.querySelector(".phone-tab")) return;
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "tab phone-tab";
+  btn.setAttribute("aria-label", "Abrir el teléfono: misiones y opciones");
+  const icon = document.createElement("span");
+  icon.className = "tab-icon";
+  icon.setAttribute("aria-hidden", "true");
+  icon.textContent = "📱";
+  const label = document.createElement("span");
+  label.className = "tab-label";
+  label.textContent = "Teléfono";
+  btn.append(icon, label);
+  btn.addEventListener("click", openPhone);
+  els.tabbar.insertBefore(btn, els.tabbar.children[2] || null);
+}
+
+/* ------------------------------- teléfono ------------------------------- */
+
+/* Las 14 misiones del evento CLIPS (diseño aprobado 2026-11-16): por ahora
+ * el teléfono las muestra como avance de la Zona CLIPS. */
+const PHONE_CLIPS = [
+  ["Creador ancla elegido", 40], ["Mapa de campañas", 50], ["Canales creados", 40],
+  ["Descarga automática del VOD", 80], ["Detector de momentos v1", 90],
+  ["Corte vertical con subtítulos", 90], ["Primer clip publicado", 60],
+  ["Racha de 5 clips", 80], ["Clip transformativo", 70], ["Quince en el aire", 90],
+  ["Tablero de métricas", 60], ["Primer dólar", 100], ["Lecciones escritas", 50],
+  ["Tarjeta final", 60]
+];
+
+function phoneEl(tag, cls, text) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+}
+
+function updatePhoneClock() {
+  if (!els.phoneClock) return;
+  const d = new Date();
+  els.phoneClock.textContent =
+    `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+function openPhone() {
+  if (!bundle || !catalog || !els.phoneBackdrop) return;
+  if (walkOn) setWalk(false);
+  hideSheetRaw();
+  els.phoneBackdrop.hidden = false;
+  requestAnimationFrame(() => els.phoneBackdrop.classList.add("is-open"));
+  showPhoneHome();
+  updatePhoneClock();
+}
+
+function closePhone() {
+  if (!els.phoneBackdrop) return;
+  els.phoneBackdrop.classList.remove("is-open");
+  els.phoneBackdrop.hidden = true;
+}
+
+function showPhoneHome() {
+  if (els.phoneHome) els.phoneHome.hidden = false;
+  if (els.phoneMissions) els.phoneMissions.hidden = true;
+}
+
+function showPhoneMissions() {
+  if (!els.phoneMissions || !bundle || !catalog) return;
+  const route = routeForDay(bundle, catalog);
+  const root = els.phoneMissions;
+  root.replaceChildren();
+  root.append(phoneEl("h3", "phone-screen-title", "Misiones"));
+  root.append(phoneEl("p", "phone-screen-sub", `Ruta de hoy · día ${route.catalogDay} del catálogo`));
+  const list = phoneEl("div", "phone-list");
+  for (const m of route.missions) {
+    const row = phoneEl("div", `phone-mission${m.completed ? " is-done" : ""}`);
+    row.append(phoneEl("span", "phone-mission-id", `Misión ${m.id}`));
+    row.append(phoneEl("span", "phone-mission-xp", `${m.xp} XP${m.slot ? ` · slot ${m.slot}` : ""}`));
+    row.append(phoneEl("span", "phone-mission-state", m.completed ? "✓ Hecha" : "Pendiente"));
+    list.append(row);
+  }
+  if (!route.missions.length) {
+    list.append(phoneEl("p", "phone-empty", "No quedan misiones para hoy."));
+  }
+  root.append(list);
+  root.append(phoneEl("h4", "phone-screen-group", "Zona CLIPS · Evento (próximamente)"));
+  const clips = phoneEl("div", "phone-list");
+  for (const [name, xp] of PHONE_CLIPS) {
+    const row = phoneEl("div", "phone-mission is-soon");
+    row.append(phoneEl("span", "phone-mission-id", name));
+    row.append(phoneEl("span", "phone-mission-xp", `${xp} XP`));
+    clips.append(row);
+  }
+  root.append(clips);
+  if (els.phoneHome) els.phoneHome.hidden = true;
+  root.hidden = false;
 }
 
 /** Destino seleccionado en la barra: abre la capa que le corresponde. */
@@ -324,11 +430,10 @@ function selectTab(id) {
   if (!bundle) return;
 
   if (tab === TAB_TODAY) {
-    /* «Hoy» es el centro de control: usa la MISMA ruta diaria del Hub. */
-    hideSheetRaw();
-    if (viewSession) viewSession.restore();
+    /* «Hoy» es un acceso directo al Hub: no duplica la lógica diaria. */
+    hideOverlayRaw();
     setTab(TAB_TODAY);
-    openToday();
+    openDistrict("hub");
     return;
   }
 
@@ -336,7 +441,7 @@ function selectTab(id) {
   /* Salir de la hoja por la barra también termina el recorrido del distrito. */
   if (viewSession) viewSession.restore();
   setTab(tab);
-  if (tab === TAB_MOCHILA) openMochila();
+  if (tab === TAB_CHARACTER) openCharacter();
   else openMenu();
 }
 
@@ -359,33 +464,11 @@ function hideOverlayRaw() {
   document.body.classList.remove("overlay-open");
 }
 
-/** Repinta «Hoy» sin robar el foco (lo usa refresh tras cada escritura). */
-function renderTodayContent() {
-  if (!bundle) return;
-  ui.renderToday(els.overlayContent, buildToday(bundle, catalog), {
-    completeMission: (missionId, system) => completeMission(missionId, system),
-    checkin: () => checkin(),
-    goToDistrict: (districtId) => {
-      closeOverlay();
-      setTab(TAB_CITY);
-      openDistrict(districtId);
-    }
-  });
-}
-
-/** Pantalla «Hoy»: centro de control con la ruta del día. */
-function openToday() {
-  overlayMode = "today";
-  els.overlayTitle.textContent = "Hoy";
-  renderTodayContent();
-  showOverlay();
-}
-
-/** Pantalla «Mochila»: progreso + inventario, todo de consulta. */
-function openMochila() {
+/** Pantalla «Personaje»: solo lectura del progreso. */
+function openCharacter() {
   overlayMode = "character";
-  els.overlayTitle.textContent = "Mochila";
-  if (bundle) ui.renderMochila(els.overlayContent, bundle, buildInventory(bundle, catalog, bundle.core.derived));
+  els.overlayTitle.textContent = "Personaje";
+  if (bundle) ui.renderCharacter(els.overlayContent, bundle);
   showOverlay();
 }
 
@@ -438,7 +521,6 @@ function refresh() {
       bundle = null;
       setCityActive(false);
       els.hud.hidden = true;
-      els.chips.hidden = true;
       openOverlay("Problema al cargar");
       ui.renderFatal(
         els.overlayContent,
@@ -455,7 +537,6 @@ function refresh() {
     const hud = buildHud(bundle, catalog);
     renderHud(els.hud, hud, actions);
     els.hud.hidden = false;
-    els.chips.hidden = false;
     /* Con save, la barra de destinos reemplaza al botón flotante. */
     els.floatingImport.hidden = true;
     renderTabbar();
@@ -469,12 +550,10 @@ function refresh() {
 
     /* El overlay solo se repinta si la pestaña abierta lo usa; las pantallas
        de flujo (importar, cuarentena, errores) se gobiernan a sí mismas. */
-    if (overlayMode === "today") {
-      renderTodayContent();
-    } else if (overlayMode === "character") {
+    if (overlayMode === "character") {
       const message = flash;
       flash = null;
-      ui.renderMochila(els.overlayContent, bundle, buildInventory(bundle, catalog, bundle.core.derived), message);
+      ui.renderCharacter(els.overlayContent, bundle, message);
     } else if (overlayMode === "menu") {
       ui.renderMenu(els.overlayContent, { version: APP_VERSION, actions });
     }
@@ -491,7 +570,6 @@ function refresh() {
   setWalk(false);
   applyAmbience();
   els.hud.hidden = true;
-  els.chips.hidden = true;
   els.floatingImport.hidden = false;
   els.floatingImport.textContent = "Importar mi progreso";
   renderTabbar();
@@ -784,6 +862,24 @@ async function boot() {
   if (els.walkBtn) {
     els.walkBtn.addEventListener("click", () => setWalk(!walkOn));
   }
+  if (els.phoneHomeBtn) {
+    els.phoneHomeBtn.addEventListener("click", () => {
+      if (els.phoneMissions && !els.phoneMissions.hidden) showPhoneHome();
+      else closePhone();
+    });
+  }
+  if (els.phoneBackdrop) {
+    els.phoneBackdrop.addEventListener("click", (event) => {
+      if (event.target === els.phoneBackdrop) closePhone();
+    });
+  }
+  if (els.phoneHome) {
+    for (const appBtn of els.phoneHome.querySelectorAll(".phone-app")) {
+      appBtn.addEventListener("click", () => {
+        if (appBtn.dataset.app === "missions") showPhoneMissions();
+      });
+    }
+  }
   if (els.floatingImport) {
     els.floatingImport.addEventListener("click", () => openOverlay("Importá tu progreso"));
   }
@@ -809,7 +905,6 @@ async function boot() {
     return;
   }
 
-  renderChips(els.chips, { onDistrict: openDistrict });
   refresh();
   setupServiceWorker();
 
