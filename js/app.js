@@ -426,6 +426,7 @@ function afterGameplay(result, okMessage, duplicateMessage) {
 
 function openCampaign(id, inPhone = false) {
   if (!bundle || !catalog || !campaignView(bundle, id)) return;
+  dailyStandalone = false;
   if (walkOn) setWalk(false);
   if (viewSession) viewSession.capture();
   hideSheetRaw();
@@ -506,27 +507,68 @@ function openDaily() {
   renderActiveDaily();
 }
 
-function renderActiveDaily() {
-  if (phoneView !== "diarias" || !bundle || !catalog) return;
+/* El panel de Diarias se pinta igual en sus dos casas (el teléfono y la
+   pestaña «Hoy»): mismo root intercambiable, misma ruta, mismo registro. */
+function paintDaily(root, { compact, onBack }) {
   const route = routeForDay(bundle, catalog);
-  renderDaily(els.phoneMissions, {
-    compact: true,
+  renderDaily(root, {
+    compact,
     view: {
       day: route.catalogDay,
       date: route.date,
       missions: route.missions
     },
-    onBack: () => showPhoneMissions(),
+    onBack,
     onComplete: async (missionId) => {
       await completeMission(missionId, "hub");
       const fresh = routeForDay(bundle, catalog);
       const doneNow = fresh.missions.find((m) => m.id === missionId)?.completed;
-      renderActiveDaily();
+      paintDaily(root, { compact, onBack });
       return doneNow
         ? { ok: true, message: "¡Misión registrada! Cada paso cuenta." }
         : { ok: false, message: "No se pudo registrar la misión. Intentá de nuevo." };
     }
   });
+}
+
+function renderActiveDaily() {
+  if (phoneView !== "diarias" || !bundle || !catalog) return;
+  paintDaily(els.phoneMissions, { compact: true, onBack: () => showPhoneMissions() });
+}
+
+/* «Hoy» (pedido de José): el MISMO panel de Diarias del teléfono, a un
+   toque desde la barra inferior, sin abrir el teléfono. Vive en la capa
+   de campañas (careerDialog) con su propia bandera de estado. */
+let dailyStandalone = false;
+
+function openDailyStandalone() {
+  if (!bundle || !catalog) return;
+  if (walkOn) setWalk(false);
+  if (viewSession) viewSession.capture();
+  hideSheetRaw();
+  hideOverlayRaw();
+  closePhone();
+  careerId = null;
+  careerReturnFocus = document.activeElement;
+  dailyStandalone = true;
+  els.careerBackdrop.hidden = false;
+  els.careerDialog.focus({ preventScroll: true });
+  renderStandaloneDaily();
+}
+
+function renderStandaloneDaily() {
+  if (!dailyStandalone || !bundle || !catalog) return;
+  paintDaily(els.careerDialog, { compact: false, onBack: () => closeDailyStandalone() });
+}
+
+function closeDailyStandalone() {
+  if (!dailyStandalone) return;
+  dailyStandalone = false;
+  els.careerBackdrop.hidden = true;
+  if (viewSession) viewSession.restore();
+  setTab(TAB_CITY);
+  if (careerReturnFocus && document.contains(careerReturnFocus)) careerReturnFocus.focus({ preventScroll: true });
+  careerReturnFocus = null;
 }
 
 async function saveCampaignAction(mutation) {
@@ -778,10 +820,11 @@ function selectTab(id) {
   if (!bundle) return;
 
   if (tab === TAB_TODAY) {
-    /* «Hoy» es un acceso directo al Hub: no duplica la lógica diaria. */
+    /* «Hoy» abre el panel de Misiones Diarias tal cual vive en el teléfono
+       (pedido de José): la misma interfaz, a un toque desde la barra. */
     hideOverlayRaw();
     setTab(TAB_TODAY);
-    openDistrict("hub");
+    openDailyStandalone();
     return;
   }
 
@@ -1183,6 +1226,7 @@ function setupStorageWatcher() {
       renderActiveCampaign();
       if (phoneView === "missions" && !els.phoneBackdrop.hidden) showPhoneMissions();
       if (phoneView === "diarias" && !els.phoneBackdrop.hidden) renderActiveDaily();
+      if (dailyStandalone) renderStandaloneDaily();
       if (toasts) {
         toasts.show("Tu progreso cambió en otra pestaña", {
           tone: "info",
@@ -1288,7 +1332,10 @@ async function boot() {
   }
   if (els.careerBackdrop) {
     els.careerBackdrop.addEventListener("click", (event) => {
-      if (event.target === els.careerBackdrop) closeCampaign();
+      if (event.target === els.careerBackdrop) {
+        if (dailyStandalone) closeDailyStandalone();
+        else closeCampaign();
+      }
     });
   }
   if (els.phoneHome) {
@@ -1310,13 +1357,14 @@ async function boot() {
   window.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
       if (careerId) closeCampaign();
+      else if (dailyStandalone) closeDailyStandalone();
       else if (!els.phoneBackdrop.hidden) closePhone();
       else if (sheetOpen) closeSheet();
       else if (overlayOpen) closeOverlay();
       return;
     }
     /* El foco no se escapa de la capa superior mientras esté abierta. */
-    if (careerId) trapTab(event, els.careerDialog);
+    if (careerId || dailyStandalone) trapTab(event, els.careerDialog);
     else if (!els.phoneBackdrop.hidden) trapTab(event, els.phoneBackdrop);
     else if (sheetOpen) trapTab(event, els.sheet);
     else if (overlayOpen) trapTab(event, els.overlay);
