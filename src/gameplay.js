@@ -17,6 +17,7 @@ import { addDays, deriveStreak, epochDayOf, isoWeekKey, localDateKey } from "./d
 import { missionOf, missionsOf, PHASE3_SYSTEMS } from "./catalog.js";
 import { PLAY_VERSION, RULES_VERSION } from "./shape.js";
 import { applyCampaignMutation } from "./campaign-state.js";
+import { applyShopMutation } from "./shop.js";
 
 export const ROUTE_SIZE = 3;
 export const DAILY_TOTAL_DAYS = 56;
@@ -389,6 +390,10 @@ export function applyMutation(draft, mutation, catalog, { at, date } = {}) {
 
   if (mutation && ["campaign.complete", "application.record"].includes(mutation.type)) {
     return applyCampaignMutation(draft, mutation, { at: atIso, date: dateKey });
+  }
+
+  if (mutation && (mutation.type === "shop.buy" || mutation.type === "shop.equip")) {
+    return applyShopMutation(draft, mutation);
   }
 
   if (mutation && mutation.type === "hub.checkin") {
