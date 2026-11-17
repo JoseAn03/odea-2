@@ -8,7 +8,7 @@
 import { PALETTE, DISTRICTS, alpha, mix } from "../districts.js";
 import { fmt } from "../format.js";
 import { createPixelArt } from "./pixel.js";
-import { clipsRect } from "./layout.js";
+import { clipsRect, cellRect } from "./layout.js";
 
 const FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
@@ -886,58 +886,85 @@ export function createRenderer(canvas) {
   /* Vida pixel: postes con halo en los cruces, vecinos caminando por las
      aceras y un carro pixel por la avenida sur. Todo determinista desde
      `time` (con reduced, time llega en 0 y la escena queda quieta). */
-  /* La Zona Gamer: plaza limpia con UN solo protagonista, su cartel
-     callejero. Los adornos pixel que tapaban la escena se retiraron a
-     petición de José (v0.18.1): la imagen se ve completa. */
+  /* La Zona Gamer ocupa su cuadrado entero (v0.18.2, dibujo de José):
+     la escena ES el suelo del cuadrado y solo queda visible la acera
+     café alrededor, con su letrero de entrada bien visible. */
   function drawClipsZone(view, world, time) {
     const R = clipsRect();
     if (!visible(view, R.x - 60, R.y - 60, R.w + 120, R.h + 120)) return;
-    drawVenueBillboard("gamer", R.x + 145, R.y + 150, 250, PALETTE.pink, "ZONA GAMER");
+    drawVenueSkin("gamer", R);
+    drawVenueSign("ZONA GAMER", R, PALETTE.pink);
   }
 
-  /* Cartel publicitario de calle, estilo Vice City: la escena llena TODO
-     el panel (sin márgenes ni franjas), marco fino, dos postes con su
-     sombra en el suelo y una plaquita pequeña con el nombre del local.
-     El nombre vive en la calle, en el mundo, no flotando en pantalla. */
-  function drawVenueBillboard(id, x, y, w, color, name) {
+  /* La escena del local cubre TODO el cuadrado interior de su manzana
+     (recorte «cover» centrado): tapa suelo y edificios, y deja intacto
+     el marco de acera color café de 22 unidades. */
+  function drawVenueSkin(id, rect) {
     const image = venuePictures[id];
     if (!image || !image.complete || !image.naturalWidth) return;
-    const h = w * 9 / 16;
-    const postH = 30;
-    /* Sombra en el suelo y postes. */
+    const x = rect.x + 22, y = rect.y + 22, w = rect.w - 44, h = rect.h - 44;
+    const ir = image.naturalWidth / image.naturalHeight;
+    const tr = w / h;
+    let sx = 0, sy = 0, sw = image.naturalWidth, sh = image.naturalHeight;
+    if (ir > tr) { sw = sh * tr; sx = (image.naturalWidth - sw) / 2; }
+    else if (ir < tr) { sh = sw / tr; sy = (image.naturalHeight - sh) / 2; }
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(image, sx, sy, sw, sh, x, y, w, h);
+    ctx.strokeStyle = "rgba(5,8,24,0.55)";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(x + 1.5, y + 1.5, w - 3, h - 3);
+  }
+
+  /* Letrero de entrada del local, al pie del cuadrado sobre la acera:
+     tablero oscuro con borde de neón y brillo, nombre en letras
+     espaciadas con núcleo claro (tubo de neón) y dos postes cortos.
+     Tamaño parecido a la plaquita anterior, pero imposible de perder. */
+  function drawVenueSign(name, rect, color) {
+    const bw = 184, bh = 42;
+    const bx = rect.x + (rect.w - bw) / 2;
+    const by = rect.y + rect.h - 78;
+    const cy = by + bh / 2;
+    /* Postes y sombra sobre la acera. */
     ctx.fillStyle = "rgba(3,6,18,0.35)";
     ctx.beginPath();
-    ctx.ellipse(x + w / 2, y + h + postH + 4, w * 0.42, 7, 0, 0, Math.PI * 2);
+    ctx.ellipse(bx + bw / 2, rect.y + rect.h - 6, bw * 0.44, 6, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = "#131a38";
-    ctx.fillRect(x + w * 0.18, y + h, 7, postH);
-    ctx.fillRect(x + w * 0.82 - 7, y + h, 7, postH);
-    /* La imagen abarca el cuadro completo. */
-    ctx.imageSmoothingEnabled = true;
-    ctx.drawImage(image, x, y, w, h);
-    /* Marco fino: oscuro por fuera, un hilo de color por dentro. */
-    ctx.strokeStyle = "rgba(6,10,28,0.9)";
-    ctx.lineWidth = 5;
-    ctx.strokeRect(x, y, w, h);
+    ctx.fillRect(bx + 26, by + bh, 6, rect.y + rect.h - 10 - (by + bh));
+    ctx.fillRect(bx + bw - 32, by + bh, 6, rect.y + rect.h - 10 - (by + bh));
+    /* Tablero con borde de neón brillante. */
+    ctx.save();
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 15;
+    ctx.fillStyle = "rgba(6,9,26,0.96)";
+    ctx.fillRect(bx, by, bw, bh);
     ctx.strokeStyle = color;
-    ctx.lineWidth = 1.6;
-    ctx.strokeRect(x, y, w, h);
-    /* Plaquita con el nombre, entre los postes: pequeña y elegante. */
-    const plateW = Math.min(w * 0.62, 168);
-    const plateH = 25;
-    const px0 = x + (w - plateW) / 2;
-    const py0 = y + h + 3;
-    ctx.fillStyle = "rgba(7,11,30,0.92)";
-    ctx.fillRect(px0, py0, plateW, plateH);
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 1.2;
-    ctx.strokeRect(px0, py0, plateW, plateH);
+    ctx.lineWidth = 2.4;
+    ctx.strokeRect(bx, by, bw, bh);
+    ctx.restore();
+    ctx.strokeStyle = "rgba(255,255,255,0.16)";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(bx + 3.5, by + 3.5, bw - 7, bh - 7);
+    /* Tornillos de luz en las esquinas del tablero. */
     ctx.fillStyle = color;
-    ctx.font = "700 13.5px 'Avenir Next', 'Segoe UI', system-ui, sans-serif";
+    for (const dx of [11, bw - 11]) {
+      ctx.beginPath();
+      ctx.arc(bx + dx, cy, 2.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    /* Nombre: halo de color + núcleo claro, como tubo de neón. */
+    ctx.font = "800 19px 'Avenir Next', 'Segoe UI', system-ui, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    try { ctx.letterSpacing = "2.5px"; } catch { /* navegadores sin letterSpacing */ }
-    ctx.fillText(name, x + w / 2, py0 + plateH / 2 + 0.5, plateW - 10);
+    try { ctx.letterSpacing = "3px"; } catch { /* navegadores sin letterSpacing */ }
+    ctx.save();
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 11;
+    ctx.fillStyle = color;
+    ctx.fillText(name, bx + bw / 2, cy + 0.5, bw - 34);
+    ctx.restore();
+    ctx.fillStyle = mix(color, "#ffffff", 0.55);
+    ctx.fillText(name, bx + bw / 2, cy + 0.5, bw - 34);
     try { ctx.letterSpacing = "0px"; } catch { /* idem */ }
     ctx.textAlign = "left";
     ctx.textBaseline = "alphabetic";
@@ -1173,9 +1200,12 @@ export function createRenderer(canvas) {
     drawMonument(view, world, time);
     drawTraffic(view, world, time);
     drawClipsZone(view, world, time);
-    const breteVenue = DISTRICTS.find((d) => d.id === "empleo").rect;
-    if (visible(view, breteVenue.x, breteVenue.y, breteVenue.w, breteVenue.h)) {
-      drawVenueBillboard("brete", breteVenue.x + 90, breteVenue.y + 140, 250, PALETTE.cyan, "EL BRETE");
+    /* El Brete vive en el cuadrado oeste de Empleo (el que José marcó):
+       su escena cubre el cuadrado entero y el letrero va a la entrada. */
+    const breteCell = cellRect(1, 3);
+    if (visible(view, breteCell.x, breteCell.y, breteCell.w, breteCell.h)) {
+      drawVenueSkin("brete", breteCell);
+      drawVenueSign("EL BRETE", breteCell, PALETTE.cyan);
     }
     drawPixelLife(view, world, time);
     drawSelection(view);
