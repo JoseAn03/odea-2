@@ -22,7 +22,7 @@
 
 export const MIGRATION_SCHEMA_VERSION = 1;
 export const ODEA2_BUNDLE_FORMAT = "odea2_bundle_v1";
-export const ODEA2_APP_VERSION = "0.27.0-fase7";
+export const ODEA2_APP_VERSION = "0.27.1-fase7";
 
 /** Secciones internas del bundle único (decisión D1 de Fase 0). */
 export const BUNDLE_SECTIONS = ["core", "worlds", "legacy"];
@@ -41,10 +41,14 @@ export const PLAY_SECTION = "play";
  *   2 → R1: cada completación nueva CONGELA `reward` (xp y monedas) y la
  *       `rulesVersion` usada al escribir. Un cambio futuro del catálogo ya no
  *       reinterpreta el historial.
+ *   3 → v0.23.0: se añade `play.tienda` (atuendos, vehículos y su gasto) y
+ *       `play.academia` (sinergias y rutas) como capas aditivas. Nada de lo
+ *       anterior cambia de forma.
  *
- * Se aceptan bundles v1 (compatibilidad) y v2. Un `play.version` MAYOR que
- * esta constante deja el bundle en solo lectura/exportación: un cliente viejo
- * nunca debe sobrescribir datos que no entiende.
+ * Se aceptan al LEER v1, v2 y v3. Al ESCRIBIR, la mutación sube
+ * `play.version` a esta constante (un bundle v2 queda migrado en su primera
+ * escritura). Un `play.version` MAYOR deja el bundle en solo lectura y
+ * exportación: un cliente viejo nunca debe sobrescribir datos que no entiende.
  */
 export const PLAY_VERSION = 3;
 

@@ -101,7 +101,7 @@ export function renderActive(root, bundle, actions, flash) {
   root.replaceChildren(
     characterCard(bundle, flash, actions),
     notice(
-      "Este save vive en localStorage bajo la clave odea2_bundle_v1. Exportá un respaldo antes de probar una reimportación."
+      "Este save vive en el almacenamiento del navegador. Exportá un respaldo antes de probar una reimportación."
     )
   );
 }
@@ -632,7 +632,7 @@ export function renderRestorePrompt(root, bundle, actions) {
     card(
       h("h2", {}, "Restaurar respaldo de ODEA 2"),
       notice(
-        "Este archivo es un respaldo odea2_bundle_v1. Restaurar NO es re-migrar: no toca la huella del origen ni las reglas de reimportación.",
+        "Este archivo es un respaldo de ODEA 2. Restaurar NO es re-migrar: no toca la huella del origen ni las reglas de reimportación.",
         "warn"
       ),
       h(

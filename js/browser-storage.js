@@ -16,3 +16,18 @@ export function getStorage() {
     );
   }
 }
+
+/**
+ * Borra la metadata que dejó la sincronización con Drive, retirada en v0.27.0.
+ *
+ * Vive acá —y no en `app.js`— porque el adaptador es la única capa que habla
+ * con `localStorage` directamente: así la regla de `check:write-path` sigue
+ * siendo cierta. No toca la partida.
+ */
+export function removeLegacySyncMeta() {
+  try {
+    window.localStorage.removeItem("odea2_sync_v1");
+  } catch (error) {
+    /* sin almacenamiento: no hay nada que limpiar */
+  }
+}

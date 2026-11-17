@@ -561,8 +561,10 @@ export function detectBundleFormat(obj) {
  * Garantías:
  *   1. El archivo debe ser un respaldo ODEA 2 activo y de schema soportado.
  *   2. Se valida que las fuentes sigan cuadrando con el snapshot (XP_DRIFT).
- *   3. Se respalda el save actual (`kind: "save"`) ANTES de reemplazarlo.
- *   4. La confirmación explícita del usuario es responsabilidad de la UI.
+ *   3. Se respalda el save actual (`kind: "save"`) ANTES de reemplazarlo y el
+ *      backup se verifica byte a byte contra el save previo (v0.27.1).
+ *   4. La escritura se relee y, si no coincide, se revierte el save anterior.
+ *   5. La confirmación explícita del usuario es responsabilidad de la UI.
  */
 export function restoreBundle(bundle2, opts = {}) {
   const { storage, catalog } = opts;
@@ -591,10 +593,50 @@ export function restoreBundle(bundle2, opts = {}) {
   const at = opts.at || nowIso();
   const restored = loadOdea2(bundle2, catalog, { referenceDate: opts.referenceDate });
   const current = readOdea2(storage);
+  const previousRaw = storage.getItem(STORAGE_KEYS.bundle);
   const backupOfCurrent = current ? backupBundle(current, storage, { at, kind: "save" }) : null;
 
+  /* Restaurar reemplaza la partida entera: el backup tiene que ser el save
+     anterior, byte a byte, igual que en la ruta de gameplay. */
+  if (backupOfCurrent) {
+    const backupRaw = storage.getItem(backupOfCurrent.key);
+    if (backupRaw == null) {
+      throw new MigrationError("BACKUP_FAILED", "El backup del save actual no quedó legible; no se restauró nada.");
+    }
+    if (previousRaw != null && backupRaw !== previousRaw) {
+      throw new MigrationError(
+        "BACKUP_MISMATCH",
+        "El backup no coincide byte a byte con el save previo; no se restauró nada."
+      );
+    }
+  }
+
   restored.import = { ...restored.import, restoredAt: at };
-  storage.setItem(STORAGE_KEYS.bundle, JSON.stringify(restored));
+  const serialized = JSON.stringify(restored);
+  try {
+    storage.setItem(STORAGE_KEYS.bundle, serialized);
+  } catch (error) {
+    try {
+      if (previousRaw != null) storage.setItem(STORAGE_KEYS.bundle, previousRaw);
+    } catch {
+      /* sin margen: se informa igual */
+    }
+    throw new MigrationError("QUOTA_EXCEEDED", `No se pudo escribir el respaldo restaurado: ${error.message}`);
+  }
+
+  /* Relectura: restaurar tampoco puede dejar un save distinto del validado. */
+  if (storage.getItem(STORAGE_KEYS.bundle) !== serialized) {
+    try {
+      if (previousRaw != null) storage.setItem(STORAGE_KEYS.bundle, previousRaw);
+    } catch {
+      /* rollback best-effort */
+    }
+    throw new MigrationError(
+      "WRITE_VERIFY_FAILED",
+      "La relectura no coincide con lo restaurado; se revirtió el save anterior."
+    );
+  }
+
   storage.removeItem(STORAGE_KEYS.quarantine);
   return { bundle: restored, backupOfCurrent };
 }

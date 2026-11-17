@@ -19,7 +19,7 @@
     aria-label="Mapa de Costa Neón: isla tropical, Zona Gamer al noreste y El Brete al sur. También accesibles desde el teléfono."></canvas>
   <div class="scanlines" aria-hidden="true"></div>
 
-  <header id="hud" class="hud" hidden></header>
+  <header id="hud" class="hud" hidden tabindex="-1"></header>
 
   <span id="version-badge" class="version-badge">v—</span>
   <div id="toasts" class="toasts" role="status" aria-live="polite"></div>
@@ -45,7 +45,7 @@
           <button class="phone-app" type="button" data-app="bag"><span class="phone-app-icon" aria-hidden="true">🎒</span><span>Inventario</span></button>
           <button class="phone-app" type="button" data-app="gear"><span class="phone-app-icon" aria-hidden="true">⚙️</span><span>Ajustes</span></button>
         </div>
-        <div id="phone-missions" class="phone-missions" hidden></div>
+        <div id="phone-missions" class="phone-missions" hidden tabindex="-1"></div>
       </div>
       <button id="phone-home-btn" class="phone-home-btn" type="button" aria-label="Inicio del teléfono"></button>
     </div>
@@ -56,9 +56,9 @@
   </div>
 
   <div id="sheet-backdrop" class="sheet-backdrop" hidden></div>
-  <aside id="sheet" class="sheet" role="dialog" aria-modal="false" aria-labelledby="sheet-title" hidden></aside>
+  <aside id="sheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" tabindex="-1" hidden></aside>
 
-  <div id="overlay" class="overlay" hidden>
+  <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="overlay-title" tabindex="-1" hidden>
     <div class="overlay-panel">
       <header class="overlay-head">
         <div>

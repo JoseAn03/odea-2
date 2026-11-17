@@ -21,6 +21,7 @@ import {
   CRITICAL_TARGETS,
   BUNDLE_SECTIONS,
   PLAY_VERSION,
+  ODEA2_BUNDLE_FORMAT,
   fingerprintOf,
   deepEqual,
   getPath
@@ -51,7 +52,7 @@ function has(obj, key) {
 export function bundleBaseChecks(bundle2) {
   const format = check(
     "FORMAT",
-    bundle2 && bundle2._format === "odea2_bundle_v1" && bundle2.schemaVersion === 1,
+    bundle2 && bundle2._format === ODEA2_BUNDLE_FORMAT && bundle2.schemaVersion === 1,
     `format=${bundle2 && bundle2._format} schemaVersion=${bundle2 && bundle2.schemaVersion}`
   );
 
@@ -399,15 +400,18 @@ export function validatePlaySection(bundle2, catalog) {
   checks.push(check("PLAY_SHAPE", plain, plain ? "play es un objeto plano" : "play no es un objeto plano"));
   if (!plain) return checks;
 
-  /* Se aceptan bundles aditivos v1 (anteriores a R1, sin recompensa congelada)
-     y v2. Una versión MAYOR se rechaza en la ruta de mutación: un cliente viejo
-     no debe sobrescribir datos que no entiende. */
-  const versionOk = play.version === 1 || play.version === PLAY_VERSION;
+  /* Se aceptan los bundles aditivos v1 (anteriores a R1, sin recompensa
+     congelada) y cualquier versión hasta PLAY_VERSION: v2 (R1) y v3 (Tienda y
+     Academia) son compatibles hacia atrás. Una versión MAYOR se rechaza: un
+     cliente viejo no debe sobrescribir datos que no entiende. */
+  const playVersion = Number(play.version);
+  const versionOk =
+    playVersion === 1 || (Number.isInteger(playVersion) && playVersion > 1 && playVersion <= PLAY_VERSION);
   checks.push(
     check(
       "PLAY_VERSION",
       versionOk,
-      `version=${play.version} aceptadas=1,${PLAY_VERSION}`
+      `version=${play.version} aceptadas=1..${PLAY_VERSION}`
     )
   );
 

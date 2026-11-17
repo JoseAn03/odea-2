@@ -12,7 +12,7 @@
  * anterior sigue controlando la pestaña, su caché queda intacto y no se
  * mezclan assets de dos versiones. `activate` borra los cachés viejos.
  */
-const CACHE_VERSION = "odea2-v0.27.0-fase7";
+const CACHE_VERSION = "odea2-v0.27.1-fase7";
 
 const SHELL = [
   "./",
@@ -20,6 +20,10 @@ const SHELL = [
   "./manifest.webmanifest",
   "./css/app.css",
   "./css/campaign.css",
+  /* El catálogo entra al cascarón (v0.27.1): sin él la app no arranca y un
+     primer arranque offline no tenía copia. Se sigue revalidando con
+     `networkFirst`, así que un catálogo nuevo se aplica al instante en línea. */
+  "./data/xp-catalog.json",
   "./assets/slots/brete.webp",
   "./assets/slots/gamer.webp",
   "./assets/slots/diarias.webp",
@@ -111,9 +115,17 @@ async function cacheFirst(request) {
   return response;
 }
 
+/* Tiempo máximo de espera de red antes de caer al caché: en un móvil con señal
+ * mala, `fetch` puede quedarse colgado y bloquear el arranque. */
+const NETWORK_TIMEOUT_MS = 4000;
+
 async function networkFirst(request) {
+  const canAbort = typeof AbortController === "function";
+  const controller = canAbort ? new AbortController() : null;
+  let timer = null;
   try {
-    const response = await fetch(request);
+    if (controller) timer = setTimeout(() => controller.abort(), NETWORK_TIMEOUT_MS);
+    const response = await fetch(request, controller ? { signal: controller.signal } : undefined);
     if (response.ok) {
       const cache = await caches.open(CACHE_VERSION);
       cache.put(request, response.clone());
@@ -123,5 +135,7 @@ async function networkFirst(request) {
     const cached = await caches.match(request, { ignoreSearch: true });
     if (cached) return cached;
     throw error;
+  } finally {
+    if (timer !== null) clearTimeout(timer);
   }
 }

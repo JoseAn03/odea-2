@@ -1,11 +1,12 @@
 {
   "name": "odea-2",
-  "version": "0.27.0-fase7",
+  "version": "0.27.1-fase7",
   "private": true,
   "type": "module",
   "description": "ODEA 2 (Costa Neón): mapa cenital tropical con terreno reservado para futuras expansiones, sobre el progreso migrado desde ODEA 1.",
   "scripts": {
-    "test": "node --test",
+    "test": "node tools/check-tests.mjs && node --test",
+    "check:tests": "node tools/check-tests.mjs",
     "check:write-path": "node tools/check-write-path.mjs",
     "extract-catalog": "node tools/extract-catalog.mjs",
     "extract-assets": "node tools/extract-assets.mjs",
