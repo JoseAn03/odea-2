@@ -605,3 +605,4 @@
 .shop-btn.is-ghost { background: transparent; color: #FFF8F4; border: 1px solid #1D2233; font-weight: 400; }
 .shop-btn.is-disabled { background: #1D2233; color: #8E93A8; cursor: not-allowed; font-weight: 400; }
 .shop-note { color: #8E93A8; font-size: 0.78rem; margin: 16px 0 4px; }
+.shop-district-btn { margin: 14px 0 4px; width: 100%; }

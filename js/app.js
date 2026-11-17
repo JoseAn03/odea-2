@@ -259,6 +259,13 @@ function openDistrict(id) {
     openCampaign(id === "gamer" ? "gamer" : "brete");
     return;
   }
+  if (id === "mercado") {
+    /* La manzana de la Tienda abre la Tienda (pedido de José): el panel
+       completo para comprar, con la escena de la tienda de fondo. El panel
+       de cifras del Mercado queda a un botón dentro de la tienda. */
+    openShopStandalone();
+    return;
+  }
   openDistrictArchive(id);
 }
 
@@ -361,6 +368,7 @@ function afterShop(result, okMessage, duplicateMessage) {
   }
   refresh();
   if (phoneView === "tienda" && !els.phoneBackdrop.hidden) showPhoneShop();
+  if (shopStandalone) renderStandaloneShop();
 }
 
 function buyShopItem(itemId) {
@@ -427,6 +435,7 @@ function afterGameplay(result, okMessage, duplicateMessage) {
 function openCampaign(id, inPhone = false) {
   if (!bundle || !catalog || !campaignView(bundle, id)) return;
   dailyStandalone = false;
+  shopStandalone = false;
   if (walkOn) setWalk(false);
   if (viewSession) viewSession.capture();
   hideSheetRaw();
@@ -549,6 +558,7 @@ function openDailyStandalone() {
   hideOverlayRaw();
   closePhone();
   careerId = null;
+  shopStandalone = false;
   careerReturnFocus = document.activeElement;
   dailyStandalone = true;
   els.careerBackdrop.hidden = false;
@@ -564,6 +574,54 @@ function renderStandaloneDaily() {
 function closeDailyStandalone() {
   if (!dailyStandalone) return;
   dailyStandalone = false;
+  els.careerBackdrop.hidden = true;
+  if (viewSession) viewSession.restore();
+  setTab(TAB_CITY);
+  if (careerReturnFocus && document.contains(careerReturnFocus)) careerReturnFocus.focus({ preventScroll: true });
+  careerReturnFocus = null;
+}
+
+/* La Tienda desde su manzana (pedido de José): el mismo panel de compras
+   del teléfono, en la capa de campañas y con la escena de la tienda de
+   fondo. El panel de cifras del Mercado se abre desde adentro. */
+let shopStandalone = false;
+
+function openShopStandalone() {
+  if (!bundle || !catalog) return;
+  if (walkOn) setWalk(false);
+  if (viewSession) viewSession.capture();
+  hideSheetRaw();
+  hideOverlayRaw();
+  closePhone();
+  careerId = null;
+  dailyStandalone = false;
+  careerReturnFocus = document.activeElement;
+  shopStandalone = true;
+  els.careerBackdrop.hidden = false;
+  els.careerDialog.focus({ preventScroll: true });
+  renderStandaloneShop();
+}
+
+function renderStandaloneShop() {
+  if (!shopStandalone || !bundle || !catalog) return;
+  renderShop(els.careerDialog, {
+    bundle,
+    standalone: true,
+    actions: {
+      buy: (itemId) => buyShopItem(itemId),
+      equip: (itemId) => equipShopItem(itemId),
+      onBack: () => closeShopStandalone(),
+      onDistrict: () => {
+        closeShopStandalone();
+        openDistrictArchive("mercado");
+      }
+    }
+  });
+}
+
+function closeShopStandalone() {
+  if (!shopStandalone) return;
+  shopStandalone = false;
   els.careerBackdrop.hidden = true;
   if (viewSession) viewSession.restore();
   setTab(TAB_CITY);
@@ -1227,6 +1285,7 @@ function setupStorageWatcher() {
       if (phoneView === "missions" && !els.phoneBackdrop.hidden) showPhoneMissions();
       if (phoneView === "diarias" && !els.phoneBackdrop.hidden) renderActiveDaily();
       if (dailyStandalone) renderStandaloneDaily();
+      if (shopStandalone) renderStandaloneShop();
       if (toasts) {
         toasts.show("Tu progreso cambió en otra pestaña", {
           tone: "info",
@@ -1334,6 +1393,7 @@ async function boot() {
     els.careerBackdrop.addEventListener("click", (event) => {
       if (event.target === els.careerBackdrop) {
         if (dailyStandalone) closeDailyStandalone();
+        else if (shopStandalone) closeShopStandalone();
         else closeCampaign();
       }
     });
@@ -1358,13 +1418,14 @@ async function boot() {
     if (event.key === "Escape") {
       if (careerId) closeCampaign();
       else if (dailyStandalone) closeDailyStandalone();
+      else if (shopStandalone) closeShopStandalone();
       else if (!els.phoneBackdrop.hidden) closePhone();
       else if (sheetOpen) closeSheet();
       else if (overlayOpen) closeOverlay();
       return;
     }
     /* El foco no se escapa de la capa superior mientras esté abierta. */
-    if (careerId || dailyStandalone) trapTab(event, els.careerDialog);
+    if (careerId || dailyStandalone || shopStandalone) trapTab(event, els.careerDialog);
     else if (!els.phoneBackdrop.hidden) trapTab(event, els.phoneBackdrop);
     else if (sheetOpen) trapTab(event, els.sheet);
     else if (overlayOpen) trapTab(event, els.overlay);
