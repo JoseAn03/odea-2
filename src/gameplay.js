@@ -299,13 +299,36 @@ export function migratedKeys(bundle2, catalog, system, dateKey = localDateKey())
 }
 
 /**
- * Ruta del día del Hub: 3 misiones derivadas de la fecha local.
- * `missions` incluye las ya completadas con su flag; `pending` es la ruta
- * jugable. No se guarda nada.
+ * Día del plan PERSONAL del jugador (v0.19.0, pedido de José): en ODEA 1 el
+ * día se cuenta desde SU fecha de inicio (`core.identity.startDate`, el
+ * día 1) y avanza con el calendario: si empezó el 27-oct, el 17-nov va por
+ * el día 22. Antes la ruta se derivaba del epoch crudo y caía en un día
+ * arbitrario del catálogo que no era el suyo. Sin startDate válida se
+ * conserva el ciclo por epoch (compatibilidad con pruebas y partidas sin
+ * migrar). El resultado se acota a 1..DAILY_TOTAL_DAYS.
+ */
+export function planDayFor(bundle2, dateKey = localDateKey()) {
+  const startDate = bundle2 && bundle2.core && bundle2.core.identity
+    ? bundle2.core.identity.startDate
+    : null;
+  const epochDay = epochDayOf(dateKey);
+  if (isValidDateKey(startDate)) {
+    const planDay = epochDay - epochDayOf(startDate) + 1;
+    return Math.min(Math.max(planDay, 1), DAILY_TOTAL_DAYS);
+  }
+  return (((epochDay % DAILY_TOTAL_DAYS) + DAILY_TOTAL_DAYS) % DAILY_TOTAL_DAYS) + 1;
+}
+
+/**
+ * Ruta del día del Hub: las 3 misiones del día del plan del jugador.
+ * `missions` incluye las ya completadas con su flag y los textos del
+ * catálogo (título, descripción, tiempo y evidencia) para que la UI las
+ * presente con el mismo formato que las misiones de campaña; `pending`
+ * es la ruta jugable. No se guarda nada.
  */
 export function routeForDay(bundle2, catalog, dateKey = localDateKey()) {
   const epochDay = epochDayOf(dateKey);
-  const catalogDay = (((epochDay % DAILY_TOTAL_DAYS) + DAILY_TOTAL_DAYS) % DAILY_TOTAL_DAYS) + 1;
+  const catalogDay = planDayFor(bundle2, dateKey);
   const daily = (catalog && catalog.daily) || {};
 
   const all = Object.entries(daily)
@@ -317,6 +340,11 @@ export function routeForDay(bundle2, catalog, dateKey = localDateKey()) {
       xp: Number(mission && mission.xp) || 0,
       slot: (mission && mission.slot) || null,
       day: catalogDay,
+      title: (mission && mission.title) || id,
+      description: (mission && mission.description) || "",
+      time: Number(mission && mission.time) || null,
+      verification: (mission && mission.verification) || "",
+      category: (mission && mission.category) || null,
       completed: isMissionDone(bundle2, id)
     }));
 

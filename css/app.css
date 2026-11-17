@@ -676,6 +676,10 @@ body.no-city #city-canvas { display: none; }
   color: var(--cyan);
   background: rgba(0, 229, 255, 0.1);
 }
+.tab.walk-tab.on {
+  color: #fff;
+  background: rgba(255, 46, 147, 0.28);
+}
 
 /* -------------------------------- chips --------------------------------- */
 
@@ -751,26 +755,8 @@ body.no-city #city-canvas { display: none; }
 }
 .floating-import:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
 
-.walk-btn {
-  position: fixed;
-  z-index: 7;
-  right: 12px;
-  bottom: calc(env(safe-area-inset-bottom) + 68px);
-  appearance: none;
-  font: inherit;
-  font-size: 0.82rem;
-  font-weight: 750;
-  color: #06222B;
-  background: var(--cyan);
-  padding: 10px 16px;
-  min-height: 42px;
-  border: none;
-  border-radius: 999px;
-  box-shadow: 0 8px 24px rgba(0, 229, 255, 0.35);
-  cursor: pointer;
-}
-.walk-btn.on { background: var(--pink); color: #fff; box-shadow: 0 8px 24px rgba(255, 46, 147, 0.35); }
-.walk-btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
+/* El botón flotante de caminar se retiró en v0.19.0: Caminar vive en la
+   barra de destinos, en el puesto que dejó Menú. */
 
 .version-badge {
   position: fixed;
