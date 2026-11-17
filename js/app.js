@@ -27,7 +27,7 @@ import { buildDistrictPanel } from "./district-figures.js";
 import { renderHud, renderSheet, renderTabs } from "./hud-ui.js";
 import { routeForDay } from "../src/gameplay.js";
 import { campaignView } from "../src/campaign-state.js";
-import { renderCampaign } from "./campaign-ui.js";
+import { renderCampaign, renderDaily } from "./campaign-ui.js";
 import { DISTRICTS } from "./districts.js";
 import { clipsRect } from "./city/layout.js";
 import { newPlayerBundle } from "../src/new-player.js";
@@ -65,7 +65,6 @@ const els = {
   version: document.getElementById("version-badge"),
   toasts: document.getElementById("toasts"),
   floatingImport: document.getElementById("floating-import"),
-  walkBtn: document.getElementById("walk-btn"),
   phoneBackdrop: document.getElementById("phone-backdrop"),
   phoneHome: document.getElementById("phone-home"),
   phoneMissions: document.getElementById("phone-missions"),
@@ -89,6 +88,7 @@ let city = null;
 let player = null;
 let cityWorld = null;
 let walkOn = false;
+let walkTabBtn = null;
 /* Palanca invisible: dirección de mundo activa mientras el dedo arrastra
    en modo caminar (null = sin dirigir). El destino se renueva cada cuadro
    un tramo por delante del avatar, así camina continuo hasta soltar. */
@@ -217,9 +217,13 @@ function setWalk(on) {
     if (player) player.clearTarget();
   }
   if (city) city.setWalkMode(walkOn);
-  if (els.walkBtn) {
-    els.walkBtn.textContent = walkOn ? "⏹ Dejar de caminar" : "🚶 Caminar";
-    els.walkBtn.classList.toggle("on", walkOn);
+  if (walkTabBtn) {
+    walkTabBtn.classList.toggle("on", walkOn);
+    walkTabBtn.setAttribute("aria-pressed", walkOn ? "true" : "false");
+    const icon = walkTabBtn.querySelector(".tab-icon");
+    const label = walkTabBtn.querySelector(".tab-label");
+    if (icon) icon.textContent = walkOn ? "⏹" : "🚶";
+    if (label) label.textContent = walkOn ? "Parar" : "Caminar";
   }
   if (walkOn && player && city) {
     const st = player.state();
@@ -332,6 +336,7 @@ function afterGameplay(result, okMessage, duplicateMessage) {
   refresh();
   if (sheetOpen && sheetDistrictId) openDistrictArchive(sheetDistrictId);
   if (phoneView === "missions" && !els.phoneBackdrop.hidden) showPhoneMissions();
+  if (phoneView === "diarias" && !els.phoneBackdrop.hidden) renderActiveDaily();
 }
 
 /* ------------------------ campañas: un solo estado ----------------------- */
@@ -401,6 +406,44 @@ function renderActiveCampaign() {
     });
     root.append(archive);
   }
+}
+
+/* --------------------- Misiones Diarias (v0.19.0) -----------------------
+   La ruta del día como un bloque más del sistema de campañas, dentro del
+   teléfono: misma escena de cabecera, mismo expediente, misma mecánica de
+   tarjetas — ajustado a la esencia diaria (un toque para completar). */
+
+function openDaily() {
+  if (!bundle || !catalog) return;
+  if (walkOn) setWalk(false);
+  phoneView = "diarias";
+  els.phoneHome.hidden = true;
+  els.phoneMissions.hidden = false;
+  els.phoneMissions.classList.add("is-campaign");
+  renderActiveDaily();
+}
+
+function renderActiveDaily() {
+  if (phoneView !== "diarias" || !bundle || !catalog) return;
+  const route = routeForDay(bundle, catalog);
+  renderDaily(els.phoneMissions, {
+    compact: true,
+    view: {
+      day: route.catalogDay,
+      date: route.date,
+      missions: route.missions
+    },
+    onBack: () => showPhoneMissions(),
+    onComplete: async (missionId) => {
+      await completeMission(missionId, "hub");
+      const fresh = routeForDay(bundle, catalog);
+      const doneNow = fresh.missions.find((m) => m.id === missionId)?.completed;
+      renderActiveDaily();
+      return doneNow
+        ? { ok: true, message: "¡Misión registrada! Cada paso cuenta." }
+        : { ok: false, message: "No se pudo registrar la misión. Intentá de nuevo." };
+    }
+  });
 }
 
 async function saveCampaignAction(mutation) {
@@ -483,8 +526,37 @@ function renderTabbar() {
   if (!els.tabbar) return;
   els.tabbar.hidden = !shouldShowTabbar({ hasSave: Boolean(bundle) });
   if (els.tabbar.hidden) return;
-  renderTabs(els.tabbar, { active: activeTab, onSelect: selectTab });
+  renderTabs(els.tabbar, { active: activeTab, onSelect: selectTab, exclude: [TAB_MENU] });
   mountPhoneTabButton();
+  mountWalkTabButton();
+}
+
+/** Caminar vive en la barra, en el puesto que dejó Menú (v0.19.0, pedido
+ *  de José): el botón flotante estorbaba sobre el mapa en su teléfono.
+ *  Menú no desaparece: sigue abriéndose desde Ajustes del teléfono. */
+function mountWalkTabButton() {
+  if (!els.tabbar || els.tabbar.querySelector(".walk-tab")) return;
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "tab walk-tab";
+  btn.setAttribute("aria-label", "Caminar por la ciudad: tocá para caminar, tocá de nuevo para parar");
+  btn.setAttribute("aria-pressed", "false");
+  const icon = document.createElement("span");
+  icon.className = "tab-icon";
+  icon.setAttribute("aria-hidden", "true");
+  icon.textContent = "🚶";
+  const label = document.createElement("span");
+  label.className = "tab-label";
+  label.textContent = "Caminar";
+  btn.append(icon, label);
+  btn.addEventListener("click", () => {
+    if (walkOn) { setWalk(false); return; }
+    closePhone();
+    selectTab(TAB_CITY);
+    setWalk(true);
+  });
+  els.tabbar.append(btn);
+  walkTabBtn = btn;
 }
 
 /** El Teléfono vive en el centro de la barra, pero NO es una pestaña:
@@ -564,29 +636,17 @@ function showPhoneMissions() {
   const root = els.phoneMissions;
   root.replaceChildren();
   root.append(phoneEl("h3", "phone-screen-title", "Misiones"));
-  root.append(phoneEl("p", "phone-screen-sub", `Ruta de hoy · día ${route.catalogDay} del catálogo`));
-  const list = phoneEl("div", "phone-list");
-  for (const m of route.missions) {
-    const row = phoneEl("div", `phone-mission${m.completed ? " is-done" : ""}`);
-    row.append(phoneEl("span", "phone-mission-id", `Misión ${m.id}`));
-    row.append(phoneEl("span", "phone-mission-xp", `${m.xp} XP${m.slot ? ` · slot ${m.slot}` : ""}`));
-    row.append(phoneEl("span", "phone-mission-state", m.completed ? "✓ Hecha" : "Pendiente"));
-    if (!m.completed) {
-      const complete = phoneEl("button", "campaign-archive", "Completar misión de hoy");
-      complete.type = "button";
-      complete.addEventListener("click", async () => {
-        complete.disabled = true;
-        try { await completeMission(m.id, "hub"); }
-        finally { complete.disabled = false; }
-      });
-      row.append(complete);
-    }
-    list.append(row);
-  }
-  if (!route.missions.length) {
-    list.append(phoneEl("p", "phone-empty", "No quedan misiones para hoy."));
-  }
-  root.append(list);
+  root.append(phoneEl("p", "phone-screen-sub", `Ruta de hoy · Día ${route.catalogDay} de 56 · tu plan personal`));
+  /* v0.19.0 (pedido de José): la ruta diaria es un bloque más del MISMO
+     sistema de campañas — su propia pantalla con escena, progreso y
+     expediente de misiones, igual a El Brete y Zona Gamer. */
+  const dailyDone = route.missions.filter((m) => m.completed).length;
+  const dailyTotal = route.missions.length;
+  const dailyBtn = phoneEl("button", "campaign-phone-route",
+    `Misiones Diarias · Día ${route.catalogDay} · ${dailyDone}/${dailyTotal}${dailyTotal ? ` · ${Math.round((dailyDone / dailyTotal) * 100)}%` : ""}`);
+  dailyBtn.type = "button";
+  dailyBtn.addEventListener("click", () => openDaily());
+  root.append(dailyBtn);
   root.append(phoneEl("h4", "phone-screen-group", "Tus campañas profesionales"));
   for (const id of ["brete", "gamer"]) {
     const view = campaignView(bundle, id);
@@ -748,7 +808,6 @@ function refresh() {
       city.setPlayerVisible(true);
       city.setCredit(hud.xpBreakdown.evento + hud.xpBreakdown.farm);
     }
-    if (els.walkBtn) els.walkBtn.hidden = false;
     applyAmbience();
 
     /* El overlay solo se repinta si la pestaña abierta lo usa; las pantallas
@@ -769,7 +828,6 @@ function refresh() {
     city.setCredit(null);
     city.clearSelection();
   }
-  if (els.walkBtn) els.walkBtn.hidden = true;
   setWalk(false);
   applyAmbience();
   els.hud.hidden = true;
@@ -1029,6 +1087,7 @@ function setupStorageWatcher() {
       refresh();
       renderActiveCampaign();
       if (phoneView === "missions" && !els.phoneBackdrop.hidden) showPhoneMissions();
+      if (phoneView === "diarias" && !els.phoneBackdrop.hidden) renderActiveDaily();
       if (toasts) {
         toasts.show("Tu progreso cambió en otra pestaña", {
           tone: "info",
@@ -1063,9 +1122,6 @@ async function boot() {
   }
   if (els.backdrop) {
     els.backdrop.addEventListener("click", closeSheet);
-  }
-  if (els.walkBtn) {
-    els.walkBtn.addEventListener("click", () => setWalk(!walkOn));
   }
   if (els.phoneHomeBtn) {
     els.phoneHomeBtn.addEventListener("click", () => {
