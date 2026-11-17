@@ -24,6 +24,6 @@ test("teléfono: no es una pestaña más; la barra sigue con sus 4 destinos", ()
   assert.equal(TABS.length, 4);
   assert.deepEqual(
     TABS.map((t) => t.label),
-    ["Ciudad", "Hoy", "Personaje", "Menú"]
+    ["Ciudad", "Hoy", "Mochila", "Menú"]
   );
 });
