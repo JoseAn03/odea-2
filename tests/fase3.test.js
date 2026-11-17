@@ -529,6 +529,25 @@ test("18. cámara: snapshot exacto, se conserva al cambiar de distrito y no sobr
   assert.deepEqual(viewOf(camera), current);
 });
 
+test("18a. encuadre panorámico: el mapa estirado conserva taps y zoom bajo el dedo", () => {
+  const camera = createCamera({ worldSize: WORLD_SIZE });
+  camera.setHorizontalScale(1.55);
+  camera.setViewport(1366, 768);
+  camera.jumpTo(1365, 1450, 0.22);
+
+  const point = { x: 2050, y: 720 };
+  const screen = camera.worldToScreen(point.x, point.y);
+  const roundTrip = camera.screenToWorld(screen.x, screen.y);
+  assert.ok(Math.abs(roundTrip.x - point.x) < 1e-8);
+  assert.ok(Math.abs(roundTrip.y - point.y) < 1e-8);
+
+  const anchorBefore = camera.screenToWorld(410, 280);
+  camera.zoomAt(410, 280, 1.4);
+  const anchorAfter = camera.screenToWorld(410, 280);
+  assert.ok(Math.abs(anchorAfter.x - anchorBefore.x) < 1e-8);
+  assert.ok(Math.abs(anchorAfter.y - anchorBefore.y) < 1e-8);
+});
+
 /* ========================================================================== */
 /* 19. Ruta única de escritura                                                */
 /* ========================================================================== */

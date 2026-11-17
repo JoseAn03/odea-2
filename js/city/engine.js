@@ -24,6 +24,14 @@ export function createCityView({ canvas, world, onSelectDistrict }) {
   let time = 0;
   let lastDraw = 0;
   let initialized = false;
+  let activeHorizontalScale = 1;
+  const COAST_SPAN = world.size * 1.24;
+
+  function overviewZoom(width, height, horizontalScale) {
+    const fitWidth = width / (COAST_SPAN * horizontalScale);
+    const fitHeight = height / COAST_SPAN;
+    return Math.min(fitWidth, fitHeight) * 0.92;
+  }
 
   renderer.setReducedMotion(reduced);
 
@@ -40,13 +48,17 @@ export function createCityView({ canvas, world, onSelectDistrict }) {
     const rect = canvas.getBoundingClientRect();
     const width = rect.width || window.innerWidth;
     const height = rect.height || window.innerHeight;
+    const horizontalScale = width > height * 1.12 ? 1.55 : 1;
+    const layoutChanged = horizontalScale !== activeHorizontalScale;
+    activeHorizontalScale = horizontalScale;
+    camera.setHorizontalScale(horizontalScale);
     renderer.resize(width, height, window.devicePixelRatio || 1);
     camera.setViewport(width, height);
 
-    if (!initialized) {
+    if (!initialized || layoutChanged) {
       initialized = true;
-      const zoom = Math.max(width, height) / world.size;
-      camera.jumpTo(MONUMENT.x, MONUMENT.y + 90, Math.min(1, Math.max(camera.clampZoom(zoom), 0.22)));
+      const zoom = overviewZoom(width, height, horizontalScale);
+      camera.jumpTo(MONUMENT.x, MONUMENT.y + 90, Math.min(1, camera.clampZoom(zoom)));
     } else if (reduced) {
       drawNow();
     }
@@ -157,8 +169,13 @@ export function createCityView({ canvas, world, onSelectDistrict }) {
       drawNow();
     },
     recenter() {
-      const zoom = Math.max(window.innerWidth, window.innerHeight) / world.size;
-      camera.jumpTo(MONUMENT.x, MONUMENT.y + 90, Math.max(camera.clampZoom(zoom), 0.22));
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      const horizontalScale = width > height * 1.12 ? 1.55 : 1;
+      camera.setHorizontalScale(horizontalScale);
+      camera.setViewport(width, height);
+      const zoom = overviewZoom(width, height, horizontalScale);
+      camera.jumpTo(MONUMENT.x, MONUMENT.y + 90, Math.min(1, camera.clampZoom(zoom)));
       drawNow();
     },
     redraw: drawNow,

@@ -90,7 +90,7 @@ function treeAt(area, rx, ry, rand) {
     x: area.x + area.w * rx,
     y: area.y + area.h * ry,
     r: 7 + rand() * 8,
-    tone: rand() > 0.5 ? PALETTE.cyan : PALETTE.orange
+    tone: rand() > 0.5 ? "#2B9252" : "#4A9E52"
   };
 }
 

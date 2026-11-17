@@ -3,7 +3,7 @@
  * Coordenadas de mundo ↔ pantalla.
  */
 
-export function createCamera({ worldSize, maxZoom = 2.6 }) {
+export function createCamera({ worldSize, maxZoom = 2.6, horizontalScale = 1 }) {
   const state = {
     x: worldSize / 2,
     y: worldSize / 2,
@@ -11,6 +11,7 @@ export function createCamera({ worldSize, maxZoom = 2.6 }) {
     vw: 1,
     vh: 1,
     worldSize,
+    horizontalScale: Math.max(0.75, horizontalScale),
     minZoom: 0.08,
     maxZoom
   };
@@ -22,13 +23,14 @@ export function createCamera({ worldSize, maxZoom = 2.6 }) {
   }
 
   function clampPosition(x, y, zoom) {
-    const halfW = state.vw / (2 * zoom);
+    const halfW = state.vw / (2 * zoom * state.horizontalScale);
     const halfH = state.vh / (2 * zoom);
     const m = MARGIN_PX / zoom;
-    const loX = Math.min(halfW, state.worldSize / 2) - m;
-    const hiX = Math.max(state.worldSize - halfW, state.worldSize / 2) + m;
-    const loY = Math.min(halfH, state.worldSize / 2) - m;
-    const hiY = Math.max(state.worldSize - halfH, state.worldSize / 2) + m;
+    const coastGutter = state.worldSize * 0.12;
+    const loX = Math.min(halfW, state.worldSize / 2) - m - coastGutter;
+    const hiX = Math.max(state.worldSize - halfW, state.worldSize / 2) + m + coastGutter;
+    const loY = Math.min(halfH, state.worldSize / 2) - m - coastGutter;
+    const hiY = Math.max(state.worldSize - halfH, state.worldSize / 2) + m + coastGutter;
     return {
       x: Math.max(loX, Math.min(hiX, x)),
       y: Math.max(loY, Math.min(hiY, y))
@@ -38,7 +40,10 @@ export function createCamera({ worldSize, maxZoom = 2.6 }) {
   function setViewport(width, height) {
     state.vw = Math.max(1, width);
     state.vh = Math.max(1, height);
-    state.minZoom = Math.max(0.035, Math.min(state.vw, state.vh) / state.worldSize * 0.95);
+    const coastSpan = state.worldSize * 1.24;
+    const fitWidth = state.vw / (coastSpan * state.horizontalScale);
+    const fitHeight = state.vh / coastSpan;
+    state.minZoom = Math.max(0.035, Math.min(fitWidth, fitHeight) * 0.86);
     state.zoom = clampZoom(state.zoom);
     const p = clampPosition(state.x, state.y, state.zoom);
     state.x = p.x;
@@ -46,6 +51,10 @@ export function createCamera({ worldSize, maxZoom = 2.6 }) {
     target.x = state.x;
     target.y = state.y;
     target.zoom = state.zoom;
+  }
+
+  function setHorizontalScale(scale) {
+    state.horizontalScale = Math.max(0.75, Math.min(2, Number(scale) || 1));
   }
 
   function jumpTo(x, y, zoom = state.zoom) {
@@ -59,7 +68,11 @@ export function createCamera({ worldSize, maxZoom = 2.6 }) {
   }
 
   function panBy(dxScreen, dyScreen) {
-    const p = clampPosition(state.x - dxScreen / state.zoom, state.y - dyScreen / state.zoom, state.zoom);
+    const p = clampPosition(
+      state.x - dxScreen / (state.zoom * state.horizontalScale),
+      state.y - dyScreen / state.zoom,
+      state.zoom
+    );
     state.x = p.x;
     state.y = p.y;
     target.x = p.x;
@@ -88,7 +101,7 @@ export function createCamera({ worldSize, maxZoom = 2.6 }) {
   }
 
   function focusRect(rect, { padding = 90, offsetY = 0, maxFocusZoom = 1.25 } = {}) {
-    const fitX = state.vw / (rect.w + padding * 2);
+    const fitX = state.vw / (rect.w * state.horizontalScale + padding * 2);
     const fitY = state.vh / (rect.h + padding * 2);
     const zoom = clampZoom(Math.min(maxFocusZoom, Math.max(state.minZoom, Math.min(fitX, fitY))));
     setCenter(rect.x + rect.w / 2, rect.y + rect.h / 2 + offsetY / zoom, zoom);
@@ -96,14 +109,14 @@ export function createCamera({ worldSize, maxZoom = 2.6 }) {
 
   function screenToWorld(sx, sy) {
     return {
-      x: state.x + (sx - state.vw / 2) / state.zoom,
+      x: state.x + (sx - state.vw / 2) / (state.zoom * state.horizontalScale),
       y: state.y + (sy - state.vh / 2) / state.zoom
     };
   }
 
   function worldToScreen(wx, wy) {
     return {
-      x: (wx - state.x) * state.zoom + state.vw / 2,
+      x: (wx - state.x) * state.zoom * state.horizontalScale + state.vw / 2,
       y: (wy - state.y) * state.zoom + state.vh / 2
     };
   }
@@ -130,6 +143,7 @@ export function createCamera({ worldSize, maxZoom = 2.6 }) {
 
   return {
     state,
+    setHorizontalScale,
     setViewport,
     jumpTo,
     panBy,
