@@ -136,7 +136,11 @@ export function createDriveTransport({ clientId, fetchImpl, doc } = {}) {
               reject(new SyncError("needs-interaction", "Google no entregó un token de acceso."));
             }
           };
-          tokenClient.requestAccessToken({ prompt: interactive ? "consent" : "" });
+          /* prompt "" siempre: Google muestra el consentimiento SOLO la
+             primera vez (cuando hace falta de verdad). Forzar "consent" en
+             cada reconexión obligaba a José a pasar la pantalla completa
+             de permisos cada vez que la sesión vencía. */
+          tokenClient.requestAccessToken({ prompt: "" });
         });
       } finally {
         pendingToken = null;
@@ -242,7 +246,7 @@ const FRESH_META = () => ({
   bootstrapped: false
 });
 
-export function createSyncEngine({ storage, readRawSave, applySave, transport, onState, onPulled, debounceMs = 2500, connectTimeoutMs = 25000, sessionTimeoutMs = 12000, nowIso } = {}) {
+export function createSyncEngine({ storage, readRawSave, applySave, transport, onState, onPulled, debounceMs = 2500, connectTimeoutMs = 25000, sessionTimeoutMs = 12000, retryDelayMs = 1500, nowIso } = {}) {
   const now = nowIso || (() => new Date().toISOString());
   let meta = FRESH_META();
   try {
@@ -410,6 +414,13 @@ export function createSyncEngine({ storage, readRawSave, applySave, transport, o
         return;
       }
       await reconcile("boot");
+      /* La renovación silenciosa al abrir puede fallar por algo pasajero
+         (la sesión de Google aún cargando, red inestable): un segundo
+         intento solo, sin pedirle nada a José, antes de rendirse. */
+      if (state.status === "needsReconnect") {
+        await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
+        await reconcile("boot");
+      }
     },
     async connect() {
       if (!transport) {

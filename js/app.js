@@ -1275,7 +1275,15 @@ async function boot() {
      porque un teléfono puede quedar en segundo plano toda la tarde. */
   setInterval(applyAmbience, 5 * 60 * 1000);
   document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) applyAmbience();
+    if (!document.hidden) {
+      applyAmbience();
+      /* Si la sesión de Google quedó esperando reconexión, al volver a la
+         app se intenta renovar en silencio una vez más: si la sesión del
+         navegador está viva, entra sola sin pedirle nada. */
+      if (syncEngine && syncEngine.getState().status === "needsReconnect") {
+        syncEngine.syncNow();
+      }
+    }
   });
 }
 
