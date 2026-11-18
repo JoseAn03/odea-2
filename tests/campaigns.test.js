@@ -41,7 +41,7 @@ test("partida nueva: cero XP, cero monedas, perfil vacío y campañas listas sin
 });
 
 test("campañas: 96 misiones únicas, 8 capítulos de 6 por ruta y entregables completos", () => {
-  const rutas = Object.entries(CAMPAIGNS).filter(([id]) => !["eventos", "garaje"].includes(id));
+  const rutas = Object.entries(CAMPAIGNS).filter(([id]) => !["eventos", "garaje", "academia"].includes(id));
   const misiones = rutas.flatMap(([, c]) => c.chapters.flatMap((ch) => ch.missions));
   assert.equal(misiones.length, 96);
   assert.equal(new Set(misiones.map((m) => m.id)).size, 96);
@@ -121,6 +121,46 @@ test("garaje: las 13 rutinas de ODEA 1 + 14 de detalle, 27 misiones en 4 capítu
   assert.equal(view.next.id, "garaje-01");
   assert.equal(complete(s, "garaje-01").status, "applied");
   assert.equal(campaignView(saved(s), "garaje").done, 1);
+});
+
+test("academia: las 6 rutas y 29 pasos de ODEA 1, con Google Advanced como certificación principal", () => {
+  const c = CAMPAIGNS.academia;
+  assert.ok(c, "la campaña de la Academia existe");
+  assert.deepEqual(c.chapters.map((ch) => ch.missions.length), [5, 7, 6, 4, 3, 4]);
+  const ms = c.chapters.flatMap((ch) => ch.missions);
+  assert.equal(ms.length, 29);
+  assert.equal(ms.reduce((a, m) => a + m.xp, 0), 2170);
+  assert.equal(ms.reduce((a, m) => a + m.coins, 0), 142);
+  const titulos = ms.map((m) => m.title);
+  for (const t of ["Examen de inglés EF SET", "Publicar el certificado EF SET", "Cerrar el curso INA de IA Moderna",
+    "Instalar SQL Server Express + SSMS", "Puente T-SQL: 10 consultas de práctica",
+    "Curso 1: Foundations of Data Science", "Curso 7: Capstone y certificado completo 🏅",
+    "Power BI (Coursera): preparar y cargar datos", "Aprobar el examen con voucher: AI-900 (recomendado) o DP-900 🏅",
+    "Google AI Essentials (Coursera)", "Kaggle Learn: Intro to Machine Learning",
+    "Trailhead: ruta de reportes y dashboards (parte 1)", "SAP Learning: ruta introductoria",
+    "GitHub: proyecto insignia con IA", "🏆 Analista de la era IA"])
+    assert.ok(titulos.includes(t), `falta «${t}»`);
+  assert.ok(!titulos.some((t) => /Ask Questions|Prepare Data for Exploration|Data Analysis with R/.test(t)),
+    "la certificación básica de Google salió de la ruta");
+  assert.equal(ms[0].id, "academia-01");
+  assert.equal(ms[28].id, "academia-29");
+  for (const m of ms) {
+    assert.equal(m.campaignId, "academia");
+    assert.ok(m.title && m.brief && m.deliverable && m.criterion);
+    assert.ok(m.steps.length >= 2);
+    assert.ok(Number.isSafeInteger(m.xp) && m.xp >= 40);
+    assert.ok(Number.isSafeInteger(m.coins) && m.coins > 0);
+  }
+  assert.ok(fs.existsSync(new URL(`../${c.image}`, import.meta.url)), "la escena de la universidad existe");
+  const s = fresh();
+  const view = campaignView(saved(s), "academia");
+  assert.equal(view.total, 29);
+  assert.equal(view.next.id, "academia-01");
+  assert.equal(complete(s, "academia-02").error.code, "MISSION_LOCKED", "la ruta avanza en orden");
+  assert.equal(complete(s, "academia-01").status, "applied");
+  const after = campaignView(saved(s), "academia");
+  assert.equal(after.done, 1);
+  assert.equal(after.chapters[0].missions[1].unlocked, true);
 });
 
 test("campañas: un save anterior empieza en cero y conserva su progreso migrado", () => {

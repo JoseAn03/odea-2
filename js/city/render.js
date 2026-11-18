@@ -66,7 +66,7 @@ export function createRenderer(canvas) {
   let glow = null;
   const venuePictures = {};
   if (typeof Image !== "undefined") {
-    for (const id of ["brete", "gamer", "tienda", "eventos", "garaje"]) {
+    for (const id of ["brete", "gamer", "tienda", "eventos", "garaje", "academia"]) {
       const image = new Image();
       image.src = new URL(`../../assets/slots/${id}.webp`, import.meta.url).href;
       venuePictures[id] = image;
@@ -1312,6 +1312,15 @@ export function createRenderer(canvas) {
       if (visible(view, garajeCell.x, garajeCell.y, garajeCell.w, garajeCell.h)) {
         drawVenueSkin("garaje", garajeCell);
         drawVenueSign("GARAJE", garajeCell, "#FFA94D");
+      }
+
+      /* La Academia ocupa la manzana oeste del Distrito IA (1,0): la
+         universidad cubre el cuadrado entero, con su letrero cian —el
+         color del distrito— a la entrada. */
+      const academiaCell = cellRect(1, 0);
+      if (visible(view, academiaCell.x, academiaCell.y, academiaCell.w, academiaCell.h)) {
+        drawVenueSkin("academia", academiaCell);
+        drawVenueSign("ACADEMIA", academiaCell, PALETTE.cyan);
       }
 
       ctx.restore();

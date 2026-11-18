@@ -23,6 +23,13 @@ export const CLIPS_CELL = { col: 3, row: 0 };
    Lab de ODEA 1); el evento rota, la zona se queda. */
 export const EVENTOS_CELL = { col: 0, row: 3 };
 
+/* La ACADEMIA: la manzana oeste del Distrito IA (1,0), el distrito que ya
+   guardaba la clave legacy «academia» y cuya descripción la nombra («Vidrio
+   cian y la Academia»). Ahí vive la universidad y su campaña de
+   certificaciones portada de ODEA 1. La manzana este (2,0) sigue abriendo
+   el panel del distrito, como El Brete dejó Empleo en su cuadrado este. */
+export const ACADEMIA_CELL = { col: 1, row: 0 };
+
 export const WORLD_SIZE =
   GRID.margin * 2 + GRID.cols * GRID.block + (GRID.cols - 1) * GRID.road;
 
@@ -36,6 +43,11 @@ export function clipsRect() {
 /** Rectángulo de la Zona de Eventos. */
 export function eventosRect() {
   return cellRect(EVENTOS_CELL.col, EVENTOS_CELL.row);
+}
+
+/** Rectángulo de la Academia. */
+export function academiaRect() {
+  return cellRect(ACADEMIA_CELL.col, ACADEMIA_CELL.row);
 }
 
 /** Rectángulo de una manzana (col, row) con row 0 = norte. */

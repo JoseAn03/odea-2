@@ -646,6 +646,147 @@ const garajeChapters = [
   },
 ];
 
+/* LA ACADEMIA — el Mundo del Currículum de ODEA 1 (Fase 8) portado tal
+   cual: 6 rutas y 29 pasos para construir el currículum 2026. ÚNICO cambio,
+   ordenado por José el 2026-11-18: la Ruta Google ya no cierra el
+   certificado básico de Google Data Analytics — sale de la ruta — y en su
+   lugar va el Google Advanced Data Analytics como la certificación Google
+   principal, con sus 7 cursos de Coursera (él ya está inscrito en la
+   Advanced). La misión 29 de ODEA 1 se marcaba sola al cerrar las 28
+   anteriores; acá, con desbloqueo secuencial, es el cierre de la ruta. */
+const ACADEMIA_CRITERION = 'Se completa cuando el paso real quedó hecho: curso terminado, examen aprobado o artefacto publicado, sin XP por nada.';
+const academiaChapters = [
+  {
+    id: 'academia-arranque',
+    title: '01 · Ruta 0 · Arranque',
+    subtitle: 'Esta semana.',
+    missions: [
+      mission('Examen de inglés EF SET', '50 min en línea, gratis: el inglés certificado no caduca nunca; es tu activo más durable.',
+        ['Reservá 50 minutos sin interrupciones y hacé el examen en línea.', 'Guardá el resultado y el enlace oficial del certificado.'],
+        'Resultado del EF SET guardado, con su enlace oficial.', ACADEMIA_CRITERION, 50, 60, 4),
+      mission('Publicar el certificado EF SET', 'Guardá el resultado y agregalo a tu perfil de LinkedIn.',
+        ['Agregá el certificado a la sección de licencias y certificaciones de LinkedIn.', 'Verificá que el enlace público abra el resultado.'],
+        'Certificado EF SET visible en el perfil de LinkedIn.', ACADEMIA_CRITERION, 15, 40, 3),
+      mission('Cerrar el curso INA de IA Moderna', 'Termina el 22 de noviembre: actividades NetAcad, encuesta y examen final con 70 o más.',
+        ['Completá las actividades NetAcad pendientes.', 'Hacé la encuesta del curso.', 'Presentá el examen final y aprobá con 70 o más.'],
+        'Curso INA de IA Moderna cerrado, con el examen final aprobado.', ACADEMIA_CRITERION, 180, 80, 5),
+      mission('Instalar SQL Server Express + SSMS', 'SQL es EL fundamento que no muere: cambia el motor, no el lenguaje.',
+        ['Instalá SQL Server Express en la compu.', 'Instalá SSMS y conectate a tu instancia local.'],
+        'SQL Server Express + SSMS instalados y conectando.', ACADEMIA_CRITERION, 45, 40, 3),
+      mission('Puente T-SQL: 10 consultas de práctica', 'Diferencias clave contra MySQL: TOP, IDENTITY, funciones de fecha, CTE.',
+        ['Escribí las 10 consultas en T-SQL sobre una base de práctica.', 'Cubrí TOP, IDENTITY, funciones de fecha y al menos una CTE.'],
+        'Script con las 10 consultas T-SQL corriendo en SSMS.', ACADEMIA_CRITERION, 90, 70, 5),
+    ],
+  },
+  {
+    id: 'academia-google',
+    title: '02 · Ruta 1 · Google Advanced',
+    subtitle: 'La certificación Google principal: Python, estadística y machine learning.',
+    missions: [
+      mission('Curso 1: Foundations of Data Science', 'El arranque del Google Advanced Data Analytics en Coursera: cómo trabajan los profesionales de datos y cómo se organiza un proyecto. Ya estás inscrito; Financial Aid si no tenés suscripción.',
+        ['Completá todos los módulos del curso 1.', 'Guardá el certificado del curso al cerrarlo.'],
+        'Curso 1 del Advanced terminado, con su certificado.', ACADEMIA_CRITERION, 600, 80, 5),
+      mission('Curso 2: Get Started with Python', 'Python desde la práctica: variables, estructuras de datos y las bases para programar análisis.',
+        ['Completá todos los módulos del curso 2.', 'Guardá el certificado del curso al cerrarlo.'],
+        'Curso 2 del Advanced terminado, con su certificado.', ACADEMIA_CRITERION, 600, 80, 5),
+      mission('Curso 3: Go Beyond the Numbers: Translate Data into Insights', 'De los datos a la historia: patrones, visualización y cómo contar lo que los datos dicen.',
+        ['Completá todos los módulos del curso 3.', 'Guardá el certificado del curso al cerrarlo.'],
+        'Curso 3 del Advanced terminado, con su certificado.', ACADEMIA_CRITERION, 600, 80, 5),
+      mission('Curso 4: The Power of Statistics', 'Estadística aplicada: muestreo, probabilidad y pruebas de hipótesis.',
+        ['Completá todos los módulos del curso 4.', 'Guardá el certificado del curso al cerrarlo.'],
+        'Curso 4 del Advanced terminado, con su certificado.', ACADEMIA_CRITERION, 600, 80, 5),
+      mission('Curso 5: Regression Analysis: Simplify Complex Data Relationships', 'Modelos de regresión para explicar y predecir relaciones entre variables.',
+        ['Completá todos los módulos del curso 5.', 'Guardá el certificado del curso al cerrarlo.'],
+        'Curso 5 del Advanced terminado, con su certificado.', ACADEMIA_CRITERION, 600, 80, 5),
+      mission('Curso 6: The Nuts and Bolts of Machine Learning', 'Machine learning en la práctica: construir, evaluar y cuidar un modelo.',
+        ['Completá todos los módulos del curso 6.', 'Guardá el certificado del curso al cerrarlo.'],
+        'Curso 6 del Advanced terminado, con su certificado.', ACADEMIA_CRITERION, 600, 80, 5),
+      mission('Curso 7: Capstone y certificado completo 🏅', 'El proyecto final del programa: reclamás el Google Advanced Data Analytics Professional Certificate, la certificación Google principal de esta Academia.',
+        ['Completá el proyecto capstone del programa.', 'Reclamá el certificado profesional completo.', 'Agregalo a LinkedIn y al CV.'],
+        'Google Advanced Data Analytics Professional Certificate reclamado.', ACADEMIA_CRITERION, 900, 120, 7),
+    ],
+  },
+  {
+    id: 'academia-microsoft',
+    title: '03 · Ruta 2 · Microsoft',
+    subtitle: 'Power BI, Fabric y nube.',
+    missions: [
+      mission('Power BI (Coursera): preparar y cargar datos', 'Certificado Microsoft Power BI Data Analyst, parte 1.',
+        ['Completá la parte 1 en Coursera: preparar y cargar datos en Power BI.', 'Guardá el certificado de la parte al cerrarla.'],
+        'Parte 1 del certificado Microsoft Power BI Data Analyst terminada.', ACADEMIA_CRITERION, 600, 80, 5),
+      mission('Power BI (Coursera): modelado y DAX', 'Parte 2: tu fuerte, formalizado.',
+        ['Completá la parte 2 en Coursera: modelado de datos y DAX.', 'Guardá el certificado de la parte al cerrarla.'],
+        'Parte 2 del certificado Microsoft Power BI Data Analyst terminada.', ACADEMIA_CRITERION, 600, 80, 5),
+      mission('Power BI (Coursera): visualización y certificado', 'Parte 3: quedás listo para el examen PL-300 cuando haya voucher.',
+        ['Completá la parte 3 en Coursera: visualización y publicación.', 'Reclamá el certificado completo del programa.'],
+        'Certificado Microsoft Power BI Data Analyst (Coursera) completo.', ACADEMIA_CRITERION, 600, 80, 5),
+      mission('Microsoft Fabric: ruta gratuita en MS Learn', 'Fabric es la evolución del ecosistema Power BI: lagos de datos y análisis en un solo lugar.',
+        ['Completá la ruta de introducción a Fabric en MS Learn.', 'Anotá qué partes de Fabric tocan tu trabajo de hoy en Power BI.'],
+        'Ruta de Fabric en MS Learn completada.', ACADEMIA_CRITERION, 240, 60, 4),
+      mission('Virtual Training Day: Fundamentals', 'Evento gratuito de Microsoft; al asistir te dan el voucher del examen de fundamentos.',
+        ['Inscribite a un Virtual Training Day de fundamentos (datos o IA).', 'Asistí al evento completo y reclamá el voucher.'],
+        'Voucher de examen de fundamentos reclamado.', ACADEMIA_CRITERION, 240, 60, 4),
+      mission('Aprobar el examen con voucher: AI-900 (recomendado) o DP-900 🏅', 'AI-900 (Azure AI Fundamentals) mira al futuro y combina con tu curso del INA; DP-900 es la ruta de datos clásica. Uno de los dos, oficial Microsoft.',
+        ['Elegí el examen: AI-900 o DP-900.', 'Agendá con el voucher y presentalo.', 'Guardá el certificado oficial de Microsoft.'],
+        'Examen de fundamentos de Microsoft aprobado (AI-900 o DP-900).', ACADEMIA_CRITERION, 300, 120, 7),
+    ],
+  },
+  {
+    id: 'academia-ia',
+    title: '04 · Ruta 3 · IA aplicada',
+    subtitle: 'La ruta del futuro.',
+    missions: [
+      mission('Google AI Essentials (Coursera)', 'Fundamentos prácticos de IA generativa para trabajar: prompting y criterio, en horas no semanas.',
+        ['Completá el curso en Coursera.', 'Guardá el certificado al cerrarlo.'],
+        'Google AI Essentials terminado, con su certificado.', ACADEMIA_CRITERION, 300, 70, 5),
+      mission('Tu flujo de análisis con IA, documentado', 'Guía personal: cómo usás IA para explorar datos, generar SQL y revisar resultados SIN confiar a ciegas. Verificar es la habilidad.',
+        ['Escribí tu guía: en qué pasos usás IA y en cuáles no.', 'Anotá cómo verificás cada resultado antes de usarlo.'],
+        'Guía personal del flujo de análisis con IA, escrita.', ACADEMIA_CRITERION, 120, 70, 5),
+      mission('Proyecto: automatización n8n + IA (datos demo)', 'Un flujo que lee datos, los analiza con IA y genera un reporte solo. Publicado en GitHub: tu diferenciador 2026.',
+        ['Construí el flujo en n8n con datos demo: lectura, análisis con IA y reporte automático.', 'Publicalo en GitHub con su README.'],
+        'Automatización n8n + IA publicada en GitHub.', ACADEMIA_CRITERION, 300, 90, 6),
+      mission('Kaggle Learn: Intro to Machine Learning', 'Gratis y corto: tu primer modelo predictivo en Python, como el de No-Show pero formal.',
+        ['Completá el curso Intro to Machine Learning en Kaggle Learn.', 'Guardá el certificado de finalización.'],
+        'Curso de Kaggle Learn terminado, con su certificado.', ACADEMIA_CRITERION, 240, 70, 5),
+    ],
+  },
+  {
+    id: 'academia-demanda',
+    title: '05 · Ruta 4 · Demanda inmediata',
+    subtitle: 'Lo que las vacantes piden HOY.',
+    missions: [
+      mission('Trailhead: ruta de reportes y dashboards (parte 1)', 'Salesforce sigue siendo la brecha #1 en las vacantes de Costa Rica.',
+        ['Completá la primera parte de la ruta de reportes y dashboards en Trailhead.', 'Anotá los puntos (badges) ganados en el camino.'],
+        'Parte 1 de la ruta de Trailhead completada.', ACADEMIA_CRITERION, 240, 60, 4),
+      mission('Trailhead: proyecto práctico de reportes (parte 2)', 'Un playground con reportes reales para mostrar en entrevista.',
+        ['Construí el proyecto práctico de reportes en tu playground.', 'Dejá los reportes listos para mostrarlos en una entrevista.'],
+        'Proyecto práctico de reportes de Trailhead terminado.', ACADEMIA_CRITERION, 240, 70, 5),
+      mission('SAP Learning: ruta introductoria', 'Navegación y conceptos: “SAP a nivel usuario”, honesto y suficiente por ahora.',
+        ['Completá la ruta introductoria en SAP Learning.', 'Anotá los conceptos y pantallas que un usuario de SAP reconoce.'],
+        'Ruta introductoria de SAP Learning completada.', ACADEMIA_CRITERION, 180, 60, 4),
+    ],
+  },
+  {
+    id: 'academia-vitrina',
+    title: '06 · Ruta 5 · Vitrina 2026',
+    subtitle: 'El CV que se ve.',
+    missions: [
+      mission('GitHub: proyecto insignia con IA', 'Un pipeline completo y público: datos → SQL → Python → Power BI → automatización. Con README que cuente la historia.',
+        ['Armá el pipeline completo en un repo público.', 'Escribí el README contando la historia: problema, método y resultado.'],
+        'Proyecto insignia con IA publicado en GitHub.', ACADEMIA_CRITERION, 300, 90, 6),
+      mission('LinkedIn: headline y sección destacada', 'Titular con las palabras de 2026: datos, automatización e IA aplicada.',
+        ['Actualizá el headline con datos, automatización e IA aplicada.', 'Dejá la sección destacada con tu mejor evidencia arriba.'],
+        'Headline y sección destacada de LinkedIn actualizados.', ACADEMIA_CRITERION, 60, 50, 3),
+      mission('Regenerar el CV “perfecto”', 'CV ES/EN con todo lo nuevo, y subirlo a Indeed, elempleo y LinkedIn.',
+        ['Regenerá el CV en español e inglés con todo lo nuevo.', 'Subilo a Indeed, elempleo y LinkedIn.'],
+        'CV ES/EN regenerado y subido a las tres plataformas.', ACADEMIA_CRITERION, 120, 70, 5),
+      mission('🏆 Analista de la era IA', 'En ODEA 1 se marcaba sola al completar las 28 anteriores: fundamentos fuertes + IA + credenciales. Acá es el cierre de la ruta: se completa cuando todo lo demás ya existe. El objetivo de la Academia.',
+        ['Verificá que las 28 misiones anteriores estén completas.', 'Cerrá la Academia con la evidencia de tu credencial más fuerte.'],
+        'La Academia completa: fundamentos + IA + credenciales.', ACADEMIA_CRITERION, 30, 100, 7),
+    ],
+  },
+];
+
 function buildCampaign(config, chapterDefinitions) {
   let sequence = 0;
   return {
@@ -699,6 +840,15 @@ export const CAMPAIGNS = {
     districtId: 'garaje',
     image: 'assets/slots/garaje.webp',
   }, garajeChapters),
+  academia: buildCampaign({
+    id: 'academia',
+    name: 'La Academia',
+    subtitle: 'El Mundo del Currículum de ODEA 1: tu ruta de certificaciones ₡0, paso a paso.',
+    goal: 'Construir el currículum 2026 con credenciales reales: las 6 rutas de la Academia de ODEA 1, con Google Advanced Data Analytics como la certificación Google principal (la básica salió de la ruta). Cada misión se completa cuando el paso real quedó hecho. Al completar las 29 misiones ganás la insignia «Analista Certificado».',
+    accent: '#00e5ff',
+    districtId: 'ia',
+    image: 'assets/slots/academia.webp',
+  }, academiaChapters),
 };
 
 export const CAMPAIGN_MISSIONS = Object.values(CAMPAIGNS)
