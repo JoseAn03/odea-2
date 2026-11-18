@@ -43,6 +43,13 @@ export const ZONAIA_CELL = { col: 2, row: 0 };
    «UCR DE LA MENTE», el nombre que José le puso a la zona. */
 export const SABIDURIA_CELL = { col: 0, row: 0 };
 
+/* EL MUNDO DE IAN: la manzana sureste del Hub (2,2), una de las cuatro
+   centrales junto a la rotonda donde aparece el muñequito (pedido de
+   José: cuadrito propio y cerca del avatar). Ahí vive el patio de juegos
+   de la imagen aprobada — papá e Ian con la bola, la casa del árbol y el
+   rincón de videojuegos — y su campaña de 54 misiones para Ian Daniel. */
+export const MUNDOIAN_CELL = { col: 2, row: 2 };
+
 export const WORLD_SIZE =
   GRID.margin * 2 + GRID.cols * GRID.block + (GRID.cols - 1) * GRID.road;
 
@@ -71,6 +78,11 @@ export function zonaiaRect() {
 /** Rectángulo de Sabiduría Práctica (la manzana del Mirador de Sagas). */
 export function sabiduriaRect() {
   return cellRect(SABIDURIA_CELL.col, SABIDURIA_CELL.row);
+}
+
+/** Rectángulo del Mundo de Ian (la manzana sureste del Hub). */
+export function mundoianRect() {
+  return cellRect(MUNDOIAN_CELL.col, MUNDOIAN_CELL.row);
 }
 
 /** Rectángulo de una manzana (col, row) con row 0 = norte. */

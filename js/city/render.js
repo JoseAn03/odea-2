@@ -66,7 +66,7 @@ export function createRenderer(canvas) {
   let glow = null;
   const venuePictures = {};
   if (typeof Image !== "undefined") {
-    for (const id of ["brete", "gamer", "tienda", "eventos", "garaje", "academia", "zonaia", "sabiduria"]) {
+    for (const id of ["brete", "gamer", "tienda", "eventos", "garaje", "academia", "zonaia", "sabiduria", "mundoian"]) {
       const image = new Image();
       image.src = new URL(`../../assets/slots/${id}.webp`, import.meta.url).href;
       venuePictures[id] = image;
@@ -1394,6 +1394,18 @@ export function createRenderer(canvas) {
       if (visible(view, sabiduriaCell.x, sabiduriaCell.y, sabiduriaCell.w, sabiduriaCell.h)) {
         if (!useMap) drawVenueSkin("sabiduria", sabiduriaCell);
         drawVenueSign("UCR DE LA MENTE", sabiduriaCell, "#B388FF");
+      }
+
+      /* EL MUNDO DE IAN ocupa la manzana sureste del Hub (2,2), junto a
+         la rotonda: el patio de juegos de la imagen aprobada cubre el
+         cuadrado — en el mapa imagen ya viene pintado dentro de
+         city-map.webp y en el respaldo procedural se dibuja su escena —
+         con su letrero celeste a la entrada: «MUNDO IAN», el mundo de
+         Ian Daniel. */
+      const mundoianCell = cellRect(2, 2);
+      if (visible(view, mundoianCell.x, mundoianCell.y, mundoianCell.w, mundoianCell.h)) {
+        if (!useMap) drawVenueSkin("mundoian", mundoianCell);
+        drawVenueSign("MUNDO IAN", mundoianCell, "#4FC3F7");
       }
 
       ctx.restore();
