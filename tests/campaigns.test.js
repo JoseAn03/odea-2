@@ -41,7 +41,7 @@ test("partida nueva: cero XP, cero monedas, perfil vacío y campañas listas sin
 });
 
 test("campañas: 96 misiones únicas, 8 capítulos de 6 por ruta y entregables completos", () => {
-  const rutas = Object.entries(CAMPAIGNS).filter(([id]) => id !== "eventos");
+  const rutas = Object.entries(CAMPAIGNS).filter(([id]) => !["eventos", "garaje"].includes(id));
   const misiones = rutas.flatMap(([, c]) => c.chapters.flatMap((ch) => ch.missions));
   assert.equal(misiones.length, 96);
   assert.equal(new Set(misiones.map((m) => m.id)).size, 96);
@@ -93,6 +93,34 @@ test("evento Decision Lab: las 14 misiones de ODEA 1, en sus 5 fases y con su XP
   const after = campaignView(saved(s), "eventos");
   assert.equal(after.done, 1);
   assert.equal(after.chapters[0].missions[1].unlocked, true);
+});
+
+test("garaje: las 13 rutinas de ODEA 1 + 14 de detalle, 27 misiones en 4 capítulos", () => {
+  const c = CAMPAIGNS.garaje;
+  assert.ok(c, "la campaña del Garaje existe");
+  assert.deepEqual(c.chapters.map((ch) => ch.missions.length), [7, 7, 6, 7]);
+  const ms = c.chapters.flatMap((ch) => ch.missions);
+  assert.equal(ms.length, 27);
+  const titulos = ms.map((m) => m.title);
+  for (const t of ["Lavar el carro", "Revisar presión de llantas", "Limpiar el interior", "Revisar nivel de aceite",
+    "Revisar refrigerante y líquido de frenos", "Revisar luces y escobillas", "Cambio de aceite y filtro",
+    "Lavar la moto", "Limpiar y lubricar la cadena", "Revisar frenos", "Revisar luces",
+    "Lavado completo y encerado", "Detalle interior profundo", "Kit de arrastre completo", "Lista para la revisión técnica (Dekra)"])
+    assert.ok(titulos.includes(t), `falta «${t}»`);
+  for (const m of ms) {
+    assert.equal(m.campaignId, "garaje");
+    assert.ok(m.title && m.brief && m.deliverable && m.criterion);
+    assert.ok(m.steps.length >= 2);
+    assert.ok(Number.isSafeInteger(m.xp) && m.xp >= 40);
+    assert.ok(Number.isSafeInteger(m.coins) && m.coins > 0);
+  }
+  assert.ok(fs.existsSync(new URL(`../${c.image}`, import.meta.url)), "la escena del parqueo existe");
+  const s = fresh();
+  const view = campaignView(saved(s), "garaje");
+  assert.equal(view.total, 27);
+  assert.equal(view.next.id, "garaje-01");
+  assert.equal(complete(s, "garaje-01").status, "applied");
+  assert.equal(campaignView(saved(s), "garaje").done, 1);
 });
 
 test("campañas: un save anterior empieza en cero y conserva su progreso migrado", () => {
