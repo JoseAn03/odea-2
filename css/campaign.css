@@ -606,3 +606,68 @@
 .shop-btn.is-disabled { background: #1D2233; color: #8E93A8; cursor: not-allowed; font-weight: 400; }
 .shop-note { color: #8E93A8; font-size: 0.78rem; margin: 16px 0 4px; }
 .shop-district-btn { margin: 14px 0 4px; width: 100%; }
+
+/* ===== Garaje vivo (v0.30.0): lista corrida, relojes y kilometraje ===== */
+.garage-overview { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.garage-stat { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.garage-stat strong { color: #f6f4e6; font-size: 17px; }
+.garage-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; margin-top: 18px; }
+.garage-rail { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.garage-main { min-width: 0; }
+.garage-week, .garage-vehicle {
+  border: 1px solid var(--campaign-line);
+  border-radius: 5px;
+  background: linear-gradient(125deg, rgba(255,255,255,.025), transparent 60%), var(--campaign-panel);
+  padding: 14px;
+}
+.garage-week-title { margin: 0 0 10px; font-size: 15px; color: #f6f4e6; }
+.garage-week-empty { margin: 0; color: var(--campaign-muted); font-size: 13px; }
+.garage-week-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.garage-week-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.garage-week-name { color: #e8ecdf; font-size: 13px; min-width: 0; }
+.garage-vehicle-head { display: flex; align-items: center; gap: 10px; }
+.garage-vehicle-icon { font-size: 26px; line-height: 1; }
+.garage-vehicle-name { display: flex; flex-direction: column; min-width: 0; }
+.garage-vehicle-name strong { color: #f6f4e6; font-size: 15px; }
+.garage-vehicle-name span { color: var(--campaign-muted); font-size: 12px; }
+.garage-km { margin: 12px 0 2px; color: var(--campaign-accent); font-size: 22px; font-weight: 700; }
+.garage-km-date { margin: 0 0 12px; color: var(--campaign-muted); font-size: 12px; }
+.garage-km-form { display: flex; gap: 8px; }
+.garage-km-input {
+  flex: 1; min-width: 0; padding: 9px 10px; border-radius: 5px;
+  border: 1px solid var(--campaign-line); background: #0B111C; color: #f6f4e6;
+  font: inherit; font-size: 14px;
+}
+.garage-km-button { white-space: nowrap; }
+.garage-group { margin-bottom: 26px; }
+.garage-group-title { margin: 4px 0 6px; font-size: 18px; color: #f6f4e6; }
+.garage-group-sub { margin: 18px 0 2px; font-size: 13px; letter-spacing: .06em; color: var(--campaign-muted); text-transform: uppercase; }
+.garage-mission {
+  margin-top: 10px; overflow: hidden;
+  border: 1px solid var(--campaign-line); border-radius: 5px;
+  background: linear-gradient(125deg, rgba(255,255,255,.025), transparent 60%), var(--campaign-panel);
+  padding: 13px 14px;
+}
+.garage-mission--vencida { border-color: rgba(255, 107, 107, .45); }
+.garage-mission--completada { opacity: .72; }
+.garage-mission-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.garage-mission-title { margin: 0; font-size: 15px; color: #f6f4e6; }
+.garage-chip {
+  flex: none; padding: 3px 8px; border-radius: 999px; font-size: 10px; font-weight: 700;
+  letter-spacing: .05em; background: #263643; color: #cfe3ea;
+}
+.garage-chip--al-dia { background: rgba(62, 217, 122, .18); color: #3ED97A; }
+.garage-chip--por-vencer { background: rgba(255, 209, 102, .18); color: var(--campaign-coral); }
+.garage-chip--vencida { background: rgba(255, 107, 107, .18); color: #FF8A8A; }
+.garage-chip--sin-registro { background: rgba(119, 234, 210, .14); color: var(--campaign-accent); }
+.garage-chip--completada { background: rgba(62, 217, 122, .18); color: #3ED97A; }
+.garage-mission-brief { margin: 8px 0 0; color: #d7dee2; font-size: 13.5px; }
+.garage-steps { margin: 8px 0 0; padding-left: 18px; color: var(--campaign-muted); font-size: 12.5px; }
+.garage-steps li { margin-top: 2px; }
+.garage-mission-meta { margin: 10px 0 0; color: var(--campaign-muted); font-size: 12px; }
+.garage-do { margin-top: 12px; }
+.garage-done { margin: 12px 0 0; color: #3ED97A; font-weight: 700; font-size: 13.5px; }
+@media (min-width: 860px) {
+  .garage-layout { grid-template-columns: 300px minmax(0, 1fr); align-items: start; }
+  .garage-rail { position: sticky; top: 12px; }
+}
