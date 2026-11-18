@@ -33,7 +33,7 @@ import { renderGarage } from "./garage-ui.js";
 import { renderShop } from "./shop-ui.js";
 import { equippedLook, shopItem } from "../src/shop.js";
 import { DISTRICTS } from "./districts.js";
-import { academiaRect, cellRect, clipsRect, eventosRect, zonaiaRect } from "./city/layout.js";
+import { academiaRect, cellRect, clipsRect, eventosRect, sabiduriaRect, zonaiaRect } from "./city/layout.js";
 import { newPlayerBundle } from "../src/new-player.js";
 import {
   TAB_MOCHILA,
@@ -327,6 +327,15 @@ function openDistrict(id) {
     openCampaign("zonaia");
     return;
   }
+  if (id === "sabiduria") {
+    /* La manzana del Mirador de Sagas abre Sabiduría Práctica: la
+       campaña de las 60 misiones del PDF «Sabiduría para vivir con
+       criterio», en el panel de campañas; la ficha del distrito
+       Mirador (sagas y jefes) queda accesible desde el propio panel. */
+    closePhone();
+    openCampaign("sabiduria");
+    return;
+  }
   if (id === "eventos") {
     /* La manzana del estadio abre el evento vigente (hoy el SJO Decision
        Lab portado de ODEA 1) en el panel de campañas. */
@@ -554,6 +563,9 @@ function openCampaign(id, inPhone = false) {
     } else if (id === "zonaia") {
       const r = zonaiaRect();
       city.camera.jumpTo(r.x + r.w / 2, r.y + r.h / 2, city.camera.clampZoom(0.8));
+    } else if (id === "sabiduria") {
+      const r = sabiduriaRect();
+      city.camera.jumpTo(r.x + r.w / 2, r.y + r.h / 2, city.camera.clampZoom(0.8));
     } else if (id === "garaje") {
       const r = cellRect(3, 2);
       city.camera.jumpTo(r.x + r.w / 2, r.y + r.h / 2, city.camera.clampZoom(0.8));
@@ -593,10 +605,10 @@ function renderActiveCampaign() {
       expectedCount: view.applications.count
     })
   });
-  const archiveFor = id === "brete" ? "empleo" : null;
+  const archiveFor = id === "brete" ? "empleo" : id === "sabiduria" ? "mirador" : null;
   if (archiveFor) {
     const archive = phoneEl("button", "campaign-archive",
-      "Ver misiones de empleo heredadas de ODEA 1");
+      id === "sabiduria" ? "Ver la ficha del Mirador de Sagas" : "Ver misiones de empleo heredadas de ODEA 1");
     archive.type = "button";
     archive.addEventListener("click", () => {
       closeCampaign();
