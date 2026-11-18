@@ -527,6 +527,125 @@ const eventosChapters = [
   },
 ];
 
+/* EL GARAJE — las misiones de vehículos de ODEA 1 (Garaje v1) traspasadas
+   tal cual: las rutinas del Hyundai Accent 2017 y de la Formula X2 con su
+   ritmo original (cada 7/14/15/30/90 días, escrito en cada misión). José
+   pidió además el detalle a fondo: dos capítulos nuevos de mantenimiento
+   detallado y limpieza profunda por vehículo. En el sistema de campañas
+   cada misión se completa una vez, con evidencia. */
+const GARAJE_CRITERION = 'Se completa cuando el trabajo quedó hecho de verdad en el vehículo real, sin XP por nada.';
+const garajeChapters = [
+  {
+    id: 'garaje-accent-rutina',
+    title: '01 · Hyundai Accent 2017 — Rutina',
+    subtitle: 'Las 7 rutinas de ODEA 1, con su ritmo original.',
+    missions: [
+      mission('Lavar el carro', 'La rutina semanal de ODEA 1 (cada 7 días): exterior completo, sin saltarse los rines.',
+        ['Enjuagá y lavá con shampoo para carro, de arriba hacia abajo.', 'Lavá rines y llantas con cepillo aparte.', 'Secá con microfibra para no dejar marcas de agua.'],
+        'El Accent lavado y seco.', GARAJE_CRITERION, 45, 50, 3),
+      mission('Revisar presión de llantas', 'La rutina de ODEA 1 (cada 14 días): presión correcta = agarre, frenado y consumo.',
+        ['Medí en frío, con el manómetro, según la presión de la placa de la puerta.', 'Revisá las 4 llantas y también la de repuesto.', 'Inspección visual: desgaste parejo, cortes u objetos clavados.'],
+        'Las 5 llantas a su presión, con la inspección hecha.', GARAJE_CRITERION, 20, 40, 3),
+      mission('Limpiar el interior', 'La rutina de ODEA 1 (cada 14 días): cabina limpia, sin acumular.',
+        ['Sacá la basura y sacudí las alfombras.', 'Aspirado completo: asientos, piso y maletero.', 'Limpiá plásticos, tablero y vidrios por dentro.'],
+        'Interior limpio y ordenado.', GARAJE_CRITERION, 40, 50, 3),
+      mission('Revisar nivel de aceite', 'La rutina de ODEA 1 (cada 15 días): dos minutos que cuidan el motor.',
+        ['Con el motor frío y el carro en plano, sacá la varilla y limpiarla.', 'Volvé a meterla y leé: el nivel va entre mínimo y máximo.', 'Fijate en el color y anotá el kilometraje.'],
+        'Nivel de aceite verificado y kilometraje anotado.', GARAJE_CRITERION, 15, 40, 3),
+      mission('Revisar refrigerante y líquido de frenos', 'La rutina de ODEA 1 (cada 30 días): los dos fluidos que no perdonan.',
+        ['Nivel de refrigerante en su depósito, entre marcas (en frío, sin abrir el radiador caliente).', 'Nivel de líquido de frenos en su depósito y su color.', 'Buscá fugas o mangueras húmedas alrededor.'],
+        'Ambos fluidos en nivel, sin fugas visibles.', GARAJE_CRITERION, 20, 50, 3),
+      mission('Revisar luces y escobillas', 'La rutina de ODEA 1 (cada 30 días): ver y que te vean.',
+        ['Probá todas las luces: bajas, altas, direccionales, freno, reversa y placa.', 'Revisá las escobillas: que limpien sin rayar ni brincar.', 'Cambiá lo que falle antes de seguir rodando.'],
+        'Luces completas y escobillas en buen estado.', GARAJE_CRITERION, 20, 50, 3),
+      mission('Cambio de aceite y filtro', 'La rutina mayor de ODEA 1 (cada 90 días, con control por fecha y km).',
+        ['Aceite de la viscosidad correcta para el Accent y filtro nuevo.', 'Drená en caliente, cambiá el filtro y rellená al nivel.', 'Anotá fecha y kilometraje; el aceite usado se desecha responsablemente, nunca al suelo ni al caño.'],
+        'Aceite y filtro nuevos, con fecha y km registrados.', GARAJE_CRITERION, 90, 100, 7),
+    ],
+  },
+  {
+    id: 'garaje-accent-detalle',
+    title: '02 · Hyundai Accent 2017 — Detalle y fondo',
+    subtitle: 'Mantenimiento detallado y limpieza profunda del carro.',
+    missions: [
+      mission('Lavado completo y encerado', 'El detalle exterior a fondo: protección, no solo limpieza.',
+        ['Lavado completo como en la rutina, incluyendo marcos de puerta y tapa de gasolina.', 'Descontaminá la pintura si se siente áspera al tacto.', 'Cera en toda la carrocería, por paneles, y brillo en las llantas.'],
+        'Carrocería encerada y protegida.', GARAJE_CRITERION, 120, 80, 5),
+      mission('Detalle interior profundo', 'La cabina como nueva: cada rincón.',
+        ['Aspirado a fondo: bajo los asientos, rieles y esquinas del maletero.', 'Limpieza de tapicería y alfombras según su material.', 'Plásticos hidratados sin brillo grasoso y vidrios por dentro y por fuera.'],
+        'Interior detallado por completo.', GARAJE_CRITERION, 120, 80, 5),
+      mission('Filtros de aire y de cabina', 'Los dos filtros que respira el carro: motor y aire acondicionado.',
+        ['Revisá el filtro de aire del motor contra la luz: si no pasa luz, se cambia.', 'Revisá el filtro de cabina detrás de la guantera.', 'Cambiá el que toque y anotá la fecha.'],
+        'Filtros revisados o cambiados, con fecha anotada.', GARAJE_CRITERION, 30, 60, 4),
+      mission('Batería y limpieza de bornes', 'Arranque firme: la batería cuidada dura más.',
+        ['Bornes sin sulfato: limpieza con cepillo y bicarbonato si hace falta.', 'Terminales bien ajustadas y protegidas contra la corrosión.', 'Probá el arranque y, si podés, la carga con multímetro.'],
+        'Batería limpia, ajustada y arrancando firme.', GARAJE_CRITERION, 30, 60, 4),
+      mission('Rotación, alineación y balanceo', 'El cuidado que hace durar las llantas el doble.',
+        ['Rotación de llantas según el patrón del manual.', 'Alineación y balanceo (en taller con equipo, si no tenés el tuyo).', 'Presión final en las 4 y reapriete de tuercas.'],
+        'Llantas rotadas, carro alineado y balanceado.', GARAJE_CRITERION, 90, 90, 6),
+      mission('Correas, mangueras y suspensión', 'La inspección que encuentra el problema antes de que suene.',
+        ['Correas: grietas, brillo o flojera = cambio cercano.', 'Mangueras: hinchazón, grietas o abrazaderas flojas.', 'Amortiguadores: fugas de aceite y rebote (empujá la esquina: debe estabilizarse en 1-2 rebotes).'],
+        'Inspección completa con la lista de lo que toca cambiar.', GARAJE_CRITERION, 45, 70, 5),
+      mission('Listo para la revisión técnica (Dekra)', 'El checklist completo antes de llevar el Accent a Dekra.',
+        ['Luces, frenos, llantas y cinturones: todo probado como en las rutinas.', 'Emisiones: sin humo visible ni fugas de escape; motor afinado.', 'Kit de seguridad: extintor vigente, triángulos, chaleco y herramienta básica.'],
+        'El Accent listo para pasar la revisión técnica.', GARAJE_CRITERION, 90, 100, 7),
+    ],
+  },
+  {
+    id: 'garaje-moto-rutina',
+    title: '03 · Formula X2 — Rutina',
+    subtitle: 'Las 6 rutinas de ODEA 1, con su ritmo original.',
+    missions: [
+      mission('Lavar la moto', 'La rutina semanal de ODEA 1 (cada 7 días): limpia y sin dañar la eléctrica.',
+        ['Lavá con esponja y shampoo, sin chorro a presión directo a la parte eléctrica ni a la cadena.', 'Enjuagá y secá con microfibra, incluyendo cromos y plásticos.', 'Dejá la cadena lista para su limpieza y lubricación.'],
+        'La X2 lavada y seca.', GARAJE_CRITERION, 40, 50, 3),
+      mission('Revisar presión de llantas', 'La rutina de ODEA 1 (cada 7 días): en la moto, la presión ES el agarre.',
+        ['Medí en frío según la presión del manual o la calcomanía del basculante.', 'Inspección visual: desgaste, cortes y objetos clavados.', 'Ajustá antes de rodar, nunca después de calentar la llanta.'],
+        'Ambas llantas a su presión, inspeccionadas.', GARAJE_CRITERION, 15, 40, 3),
+      mission('Limpiar y lubricar la cadena', 'La rutina de ODEA 1 (cada 14 días): la cadena cuidada dura el triple.',
+        ['Desengrasá la cadena con su limpiador y cepillo.', 'Secá por completo antes de lubricar.', 'Lubricante de cadena por la cara interna, girando la rueda; de pasada, mirá la tensión.'],
+        'Cadena limpia y lubricada.', GARAJE_CRITERION, 30, 60, 4),
+      mission('Revisar nivel de aceite', 'La rutina de ODEA 1 (cada 15 días): la mirilla no miente.',
+        ['Moto derecha y en plano: leé el nivel en la mirilla o varilla.', 'El nivel va entre mínimo y máximo; fijate en el color.', 'Anotá el kilometraje para el control del cambio.'],
+        'Nivel de aceite verificado y km anotado.', GARAJE_CRITERION, 10, 40, 3),
+      mission('Revisar frenos', 'La rutina de ODEA 1 (cada 30 días): lo que te detiene, revisado.',
+        ['Pastillas: grosor visible y desgaste parejo.', 'Nivel y color del líquido de frenos.', 'Tacto de la manigueta y el pedal: firmes, sin esponjosidad.'],
+        'Frenos revisados y respondiendo firme.', GARAJE_CRITERION, 30, 60, 4),
+      mission('Revisar luces', 'La rutina de ODEA 1 (cada 30 días): que te vean es la mitad de la seguridad.',
+        ['Alta, baja y luz de placa funcionando.', 'Direccionales de ambos lados, adelante y atrás.', 'Luz de freno con los dos mandos: manigueta y pedal.'],
+        'Todas las luces de la X2 funcionando.', GARAJE_CRITERION, 15, 40, 3),
+    ],
+  },
+  {
+    id: 'garaje-moto-detalle',
+    title: '04 · Formula X2 — Detalle y fondo',
+    subtitle: 'Mantenimiento detallado y limpieza profunda de la moto.',
+    missions: [
+      mission('Lavado y detalle completo de la moto', 'La X2 como nueva: cada pieza.',
+        ['Lavado detallado como en la rutina, pieza por pieza.', 'Plásticos y cromos limpios y protegidos; cera en el tanque.', 'Llantas limpias y cadena relubricada al final.'],
+        'La moto detallada por completo.', GARAJE_CRITERION, 90, 70, 5),
+      mission('Ajuste de tensión de la cadena', 'Ni floja ni tensa: la holgura exacta del manual.',
+        ['Medí la holgura en el punto medio inferior, con la moto como indica el manual.', 'Ajustá con los tensores por igual en ambos lados: la rueda queda alineada.', 'Apretá el eje, verificá de nuevo y lubricá.'],
+        'Cadena a su tensión correcta, rueda alineada.', GARAJE_CRITERION, 30, 60, 4),
+      mission('Cambio de aceite y filtro de la moto', 'El cambio completo, con su registro por km.',
+        ['Aceite para moto de la viscosidad correcta y filtro nuevo si aplica.', 'Drená en caliente, cambiá el filtro y rellená al nivel de la mirilla.', 'Anotá fecha y kilometraje; el aceite usado se desecha responsablemente.'],
+        'Aceite nuevo en la X2, con fecha y km registrados.', GARAJE_CRITERION, 60, 90, 6),
+      mission('Bujía: revisión o cambio', 'La bujía cuenta cómo está quemando el motor.',
+        ['Sacá la bujía con su copa, sin forzar.', 'Leé el color: café claro = sano; negro o blanco = algo que revisar.', 'Calibrá la luz o cambiá la bujía; torque correcto al ponerla.'],
+        'Bujía revisada o cambiada, con su lectura anotada.', GARAJE_CRITERION, 30, 60, 4),
+      mission('Filtro de aire de la moto', 'El aire limpio es potencia y economía.',
+        ['Abrí la caja del filtro y sacalo con cuidado.', 'Si es de espuma: lavar, secar y aceitar según el tipo; si es de papel y está sucio, se cambia.', 'Sellá bien la caja al cerrar.'],
+        'Filtro de aire limpio o nuevo.', GARAJE_CRITERION, 25, 50, 3),
+      mission('Kit de arrastre completo', 'Piñón, corona y cadena se revisan juntos: se gastan juntos.',
+        ['Cadena: eslabones duros, estiramiento y óxido.', 'Corona y piñón: dientes afilados o doblados como gancho = cambio.', 'Si toca, el kit se cambia completo, nunca solo una pieza.'],
+        'Kit de arrastre revisado, o cambiado completo si tocaba.', GARAJE_CRITERION, 75, 90, 6),
+      mission('Lista para la revisión técnica (Dekra)', 'El checklist completo antes de llevar la X2 a Dekra.',
+        ['Luces, frenos y llantas probados como en las rutinas.', 'Espejos firmes, pito sonando y sin fugas visibles.', 'Emisiones: sin humo excesivo; cadena y kit en orden.'],
+        'La X2 lista para pasar la revisión técnica.', GARAJE_CRITERION, 60, 90, 6),
+    ],
+  },
+];
+
 function buildCampaign(config, chapterDefinitions) {
   let sequence = 0;
   return {
@@ -571,6 +690,15 @@ export const CAMPAIGNS = {
     districtId: 'eventos',
     image: 'assets/slots/eventos.webp',
   }, eventosChapters),
+  garaje: buildCampaign({
+    id: 'garaje',
+    name: 'El Garaje',
+    subtitle: 'Tu taller personal: el Accent 2017 y la Formula X2, como en ODEA 1.',
+    goal: 'Mantener tus dos vehículos al día con las rutinas del Garaje de ODEA 1 y el detalle a fondo: mantenimiento y limpieza hechos por vos, paso a paso. Cada misión se completa cuando el trabajo quedó hecho de verdad en el vehículo real.',
+    accent: '#ffa94d',
+    districtId: 'garaje',
+    image: 'assets/slots/garaje.webp',
+  }, garajeChapters),
 };
 
 export const CAMPAIGN_MISSIONS = Object.values(CAMPAIGNS)
