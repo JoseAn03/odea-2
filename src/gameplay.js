@@ -18,6 +18,7 @@ import { missionOf, missionsOf, PHASE3_SYSTEMS } from "./catalog.js";
 import { PLAY_VERSION, RULES_VERSION } from "./shape.js";
 import { applyCampaignMutation } from "./campaign-state.js";
 import { applyGarageMutation } from "./garage-state.js";
+import { applyIanMutation } from "./ian-state.js";
 import { applyShopMutation } from "./shop.js";
 
 export const ROUTE_SIZE = 3;
@@ -395,6 +396,10 @@ export function applyMutation(draft, mutation, catalog, { at, date } = {}) {
 
   if (mutation && ["garage.complete", "garage.km"].includes(mutation.type)) {
     return applyGarageMutation(draft, mutation, { at: atIso, date: dateKey });
+  }
+
+  if (mutation && mutation.type === "ian.complete") {
+    return applyIanMutation(draft, mutation, { at: atIso, date: dateKey });
   }
 
   if (mutation && (mutation.type === "shop.buy" || mutation.type === "shop.equip")) {

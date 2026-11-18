@@ -18,6 +18,7 @@
 
 import { campaignRewards } from "./campaign-state.js";
 import { garageRewards } from "./garage-state.js";
+import { ianRewards } from "./ian-state.js";
 
 export const BALANCE_BONUS = 30;
 export const FARM_XP_PER = 2;
@@ -217,6 +218,7 @@ export function sourcesFromMigrated(bundle2, catalog = null) {
   return {
     campaignRewards: campaignRewards(bundle2),
     garageRewards: garageRewards(bundle2),
+    ianRewards: ianRewards(bundle2),
     identity: { streak: streakInfo.streak },
     progress: {
       completedMissions: clone(s.progress && s.progress.completedMissions || []),
@@ -561,6 +563,7 @@ export function derive(sources, catalog, referenceDate) {
     sumXpWithFrozen(catalog.puente, p.completedPuente, frozen);
   const extraCampaign = sources.campaignRewards || {};
   const garaje = (sources.garageRewards && sources.garageRewards.xp) || 0;
+  const ian = (sources.ianRewards && sources.ianRewards.xp) || 0;
   const career = campaign + daily + weekly + jobs + b2b + (extraCampaign.career || 0);
 
   const ach = sumXpForIds(catalog.achievements, p.unlockedAch);
@@ -581,8 +584,8 @@ export function derive(sources, catalog, referenceDate) {
     .reduce((a, e) => a + Math.max(0, Number(e && e.xp) || 0), 0) + (extraCampaign.evento || 0);
   const farm = farmXPGain(sources.credits.farm);
 
-  const xpBreakdown = { career, ach, vida, capital, focus, diary, bosses, hunt, evento, farm, garaje };
-  const totalXP = career + ach + vida + capital + focus + diary + bosses + hunt + evento + farm + garaje;
+  const xpBreakdown = { career, ach, vida, capital, focus, diary, bosses, hunt, evento, farm, garaje, ian };
+  const totalXP = career + ach + vida + capital + focus + diary + bosses + hunt + evento + farm + garaje + ian;
 
   const fullDays = fullDaysCount(p, catalog);
   const campaignLevel = Math.min(fullDays + 1, catalog.dailyTotalDays + 1);
@@ -602,7 +605,8 @@ export function derive(sources, catalog, referenceDate) {
     ((sources.credits.eventRL && sources.credits.eventRL.log || []).reduce((a, e) => a + Math.max(0, Number(e.coins) || 0), 0)) +
     farmCoinsEarned(sources.credits.farm) +
     (Object.keys(sources.gods || {}).length * 50) + (extraCampaign.coins || 0) +
-    ((sources.garageRewards && sources.garageRewards.coins) || 0);
+    ((sources.garageRewards && sources.garageRewards.coins) || 0) +
+    ((sources.ianRewards && sources.ianRewards.coins) || 0);
   const spent = Number((sources.shop && sources.shop.spent) || 0) || 0;
   const balance = Math.max(0, coinsEarned - spent);
 
