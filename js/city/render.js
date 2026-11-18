@@ -66,7 +66,7 @@ export function createRenderer(canvas) {
   let glow = null;
   const venuePictures = {};
   if (typeof Image !== "undefined") {
-    for (const id of ["brete", "gamer", "tienda", "eventos", "garaje", "academia"]) {
+    for (const id of ["brete", "gamer", "tienda", "eventos", "garaje", "academia", "zonaia"]) {
       const image = new Image();
       image.src = new URL(`../../assets/slots/${id}.webp`, import.meta.url).href;
       venuePictures[id] = image;
@@ -1321,6 +1321,16 @@ export function createRenderer(canvas) {
       if (visible(view, academiaCell.x, academiaCell.y, academiaCell.w, academiaCell.h)) {
         drawVenueSkin("academia", academiaCell);
         drawVenueSign("ACADEMIA", academiaCell, PALETTE.cyan);
+      }
+
+      /* La Zona IA ocupa la manzana este del Distrito IA (2,0): la base
+         de operaciones de IA cubre el cuadrado entero, con su letrero
+         rosado neón a la entrada — el rosa de su domo y sus hologramas,
+         que la distingue de la ACADEMIA cian de la manzana vecina. */
+      const zonaiaCell = cellRect(2, 0);
+      if (visible(view, zonaiaCell.x, zonaiaCell.y, zonaiaCell.w, zonaiaCell.h)) {
+        drawVenueSkin("zonaia", zonaiaCell);
+        drawVenueSign("ZONA IA", zonaiaCell, PALETTE.pink);
       }
 
       ctx.restore();

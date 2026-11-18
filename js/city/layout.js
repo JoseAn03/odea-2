@@ -26,9 +26,15 @@ export const EVENTOS_CELL = { col: 0, row: 3 };
 /* La ACADEMIA: la manzana oeste del Distrito IA (1,0), el distrito que ya
    guardaba la clave legacy «academia» y cuya descripción la nombra («Vidrio
    cian y la Academia»). Ahí vive la universidad y su campaña de
-   certificaciones portada de ODEA 1. La manzana este (2,0) sigue abriendo
-   el panel del distrito, como El Brete dejó Empleo en su cuadrado este. */
+   certificaciones portada de ODEA 1. */
 export const ACADEMIA_CELL = { col: 1, row: 0 };
+
+/* La ZONA IA: la manzana este del Distrito IA (2,0). Ahí vive la base de
+   operaciones de IA y su campaña «Construir agentes de IA con criterio
+   profesional»: las 48 misiones del plan que José subió en PDF. Con esta
+   manzana, el Distrito IA queda completo: Academia al oeste, Zona IA al
+   este. */
+export const ZONAIA_CELL = { col: 2, row: 0 };
 
 export const WORLD_SIZE =
   GRID.margin * 2 + GRID.cols * GRID.block + (GRID.cols - 1) * GRID.road;
@@ -48,6 +54,11 @@ export function eventosRect() {
 /** Rectángulo de la Academia. */
 export function academiaRect() {
   return cellRect(ACADEMIA_CELL.col, ACADEMIA_CELL.row);
+}
+
+/** Rectángulo de la Zona IA. */
+export function zonaiaRect() {
+  return cellRect(ZONAIA_CELL.col, ZONAIA_CELL.row);
 }
 
 /** Rectángulo de una manzana (col, row) con row 0 = norte. */
