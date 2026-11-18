@@ -11,7 +11,8 @@ export const XP_ORDER = [
   "bosses",
   "hunt",
   "evento",
-  "farm"
+  "farm",
+  "garaje"
 ];
 
 export const XP_LABELS = {
@@ -24,7 +25,8 @@ export const XP_LABELS = {
   bosses: "Jefes",
   hunt: "Cacería",
   evento: "Evento",
-  farm: "Farmeo"
+  farm: "Farmeo",
+  garaje: "Garaje"
 };
 
 const numberFormat = new Intl.NumberFormat("es-ES", { useGrouping: "always" });

@@ -413,7 +413,8 @@
       "bosses": 1100,
       "hunt": 95,
       "evento": 60,
-      "farm": 12
+      "farm": 12,
+      "garaje": 0
     },
     "totalXP": 6915,
     "campaignLevel": 3,

@@ -27,7 +27,9 @@ import { buildDistrictPanel } from "./district-figures.js";
 import { renderHud, renderSheet, renderTabs } from "./hud-ui.js";
 import { routeForDay } from "../src/gameplay.js";
 import { campaignView } from "../src/campaign-state.js";
+import { garageView } from "../src/garage-state.js";
 import { renderCampaign, renderDaily } from "./campaign-ui.js";
+import { renderGarage } from "./garage-ui.js";
 import { renderShop } from "./shop-ui.js";
 import { equippedLook, shopItem } from "../src/shop.js";
 import { DISTRICTS } from "./districts.js";
@@ -180,6 +182,8 @@ let phoneView = "home";
 let careerReturnFocus = null;
 let phoneReturnFocus = null;
 let campaignWritePending = false;
+let garageOpen = false;
+let garageWritePending = false;
 
 if (els.version) {
   els.version.textContent = `v${APP_VERSION}`;
@@ -321,12 +325,12 @@ function openDistrict(id) {
     return;
   }
   if (id === "garaje") {
-    /* La manzana del Garaje abre su campaña (pedido de José): las rutinas
-       de vehículos de ODEA 1 + el detalle a fondo, en el panel de siempre.
-       El panel de cifras del distrito queda a un botón dentro de la
-       campaña, como el archivo de Empleo en El Brete. */
+    /* La manzana del Garaje abre el Garaje vivo (pedido de José): la misma
+       interfaz de misiones, pero lista corrida sin capítulos, reloj por
+       rutina y registro de kilometraje. El panel de cifras del distrito
+       queda a un botón dentro, como el archivo de Empleo en El Brete. */
     closePhone();
-    openCampaign("garaje");
+    openGarage();
     return;
   }
   if (id === "mercado") {
@@ -506,6 +510,7 @@ function openCampaign(id, inPhone = false) {
   if (!bundle || !catalog || !campaignView(bundle, id)) return;
   dailyStandalone = false;
   shopStandalone = false;
+  garageOpen = false;
   if (walkOn) setWalk(false);
   if (viewSession) viewSession.capture();
   hideSheetRaw();
@@ -540,8 +545,9 @@ function openCampaign(id, inPhone = false) {
 }
 
 function closeCampaign() {
-  if (!careerId) return;
+  if (!careerId && !garageOpen) return;
   careerId = null;
+  garageOpen = false;
   els.careerBackdrop.hidden = true;
   if (viewSession) viewSession.restore();
   setTab(TAB_CITY);
@@ -551,6 +557,7 @@ function closeCampaign() {
 
 function renderActiveCampaign() {
   const inPhone = !els.phoneBackdrop.hidden && ["brete", "gamer"].includes(phoneView);
+  if (garageOpen && !inPhone) { renderGaragePanel(); return; }
   const id = inPhone ? phoneView : careerId;
   if (!id || !bundle) return;
   const root = inPhone ? els.phoneMissions : els.careerDialog;
@@ -565,11 +572,10 @@ function renderActiveCampaign() {
       expectedCount: view.applications.count
     })
   });
-  const archiveFor = id === "brete" ? "empleo" : id === "garaje" ? "garaje" : null;
+  const archiveFor = id === "brete" ? "empleo" : null;
   if (archiveFor) {
-    const archive = phoneEl("button", "campaign-archive", id === "brete"
-      ? "Ver misiones de empleo heredadas de ODEA 1"
-      : "Ver misiones de vehículos heredadas de ODEA 1");
+    const archive = phoneEl("button", "campaign-archive",
+      "Ver misiones de empleo heredadas de ODEA 1");
     archive.type = "button";
     archive.addEventListener("click", () => {
       closeCampaign();
@@ -637,6 +643,7 @@ function openDailyStandalone() {
   hideOverlayRaw();
   closePhone();
   careerId = null;
+  garageOpen = false;
   shopStandalone = false;
   careerReturnFocus = document.activeElement;
   dailyStandalone = true;
@@ -673,6 +680,7 @@ function openShopStandalone() {
   hideOverlayRaw();
   closePhone();
   careerId = null;
+  garageOpen = false;
   dailyStandalone = false;
   careerReturnFocus = document.activeElement;
   shopStandalone = true;
@@ -737,6 +745,72 @@ async function saveCampaignAction(mutation) {
     return { ok: false, message: "No se pudo guardar. Tu progreso anterior sigue intacto; exportá un respaldo y reintentá." };
   } finally {
     campaignWritePending = false;
+  }
+}
+
+/* ------------------------- el Garaje vivo ------------------------- */
+
+function openGarage() {
+  if (!bundle || !catalog) return;
+  dailyStandalone = false;
+  shopStandalone = false;
+  if (walkOn) setWalk(false);
+  if (viewSession) viewSession.capture();
+  hideSheetRaw();
+  hideOverlayRaw();
+  closePhone();
+  careerReturnFocus = document.activeElement;
+  careerId = null;
+  garageOpen = true;
+  els.careerBackdrop.hidden = false;
+  els.careerDialog.focus({ preventScroll: true });
+  if (city) {
+    const r = cellRect(3, 2);
+    city.camera.jumpTo(r.x + r.w / 2, r.y + r.h / 2, city.camera.clampZoom(0.8));
+  }
+  renderGaragePanel();
+}
+
+function renderGaragePanel() {
+  if (!garageOpen || !bundle) return;
+  renderGarage(els.careerDialog, {
+    view: garageView(bundle, gameplayDate().date),
+    onBack: () => closeCampaign(),
+    onComplete: (missionId) => saveGarageAction({ type: "garage.complete", missionId }),
+    onKm: (vehicle, km) => saveGarageAction({ type: "garage.km", vehicle, km }),
+    onArchive: () => {
+      closeCampaign();
+      closePhone();
+      openDistrictArchive("garaje");
+    }
+  });
+}
+
+async function saveGarageAction(mutation) {
+  if (garageWritePending) return { text: "Ya hay un registro en curso.", kind: "error" };
+  garageWritePending = true;
+  try {
+    const result = await applyGameplayMutationLocked(storage, catalog, mutation, gameplayDate());
+    if (result.status !== "applied") {
+      const messages = {
+        DUPLICATE: "Ese registro ya estaba guardado hoy; no se pagó otra vez.",
+        KM_INVALID: "Ese kilometraje no es válido.",
+        QUOTA_EXCEEDED: "No hay espacio para guardar. Exportá un respaldo y liberá espacio antes de continuar.",
+        CONCURRENT_CHANGE: "Otra pestaña cambió el progreso. Revisá el registro antes de volver a intentar."
+      };
+      refresh();
+      setTimeout(renderGaragePanel, 1100);
+      return { text: messages[result.error?.code] ||
+        (result.status === "duplicate" ? messages.DUPLICATE :
+          `No se pudo guardar (${result.error?.code || "error"}). No se otorgaron premios.`), kind: "error" };
+    }
+    refresh();
+    setTimeout(renderGaragePanel, 500);
+    return null;
+  } catch (error) {
+    return { text: "No se pudo guardar. Tu progreso anterior sigue intacto; exportá un respaldo y reintentá.", kind: "error" };
+  } finally {
+    garageWritePending = false;
   }
 }
 
@@ -1437,6 +1511,7 @@ async function boot() {
   window.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
       if (careerId) closeCampaign();
+      else if (garageOpen) closeCampaign();
       else if (dailyStandalone) closeDailyStandalone();
       else if (shopStandalone) closeShopStandalone();
       else if (!els.phoneBackdrop.hidden) closePhone();

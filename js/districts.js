@@ -144,7 +144,7 @@ export const DISTRICTS = [
     mix(PALETTE.orange, PALETTE.pink, 0.12),
     "industrial",
     "Talleres, grúas y kilómetros: el taller de vehículos de ODEA 1.",
-    [],
+    ["garaje"],
     ["garaje"]
   ),
   district(
