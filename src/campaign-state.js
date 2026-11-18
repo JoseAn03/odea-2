@@ -41,7 +41,7 @@ export function campaignView(bundle, id) {
     ...campaign, chapters, done, total: all.length,
     percent: Math.round(done / Math.max(1, all.length) * 100),
     next: all.find((m) => !m.completed) || null,
-    rank: done === all.length ? (id === "brete" ? "Ruta de analista completada" : id === "eventos" ? "Analista de Decisiones" : id === "garaje" ? "Mecánico de la casa" : id === "academia" ? "Analista Certificado" : id === "zonaia" ? "Arquitecto de Agentes" : id === "sabiduria" ? "Sabio con criterio" : "Ruta profesional completada") :
+    rank: done === all.length ? (id === "brete" ? "Ruta de analista completada" : id === "eventos" ? "Analista de Decisiones" : id === "garaje" ? "Mecánico de la casa" : id === "academia" ? "Analista Certificado" : id === "zonaia" ? "Arquitecto de Agentes" : id === "sabiduria" ? "Sabio con criterio" : id === "mundoian" ? "Pequeño Gran Hombre" : "Ruta profesional completada") :
       done >= 36 ? "Profesional en práctica" : done >= 24 ? "Constructor de portafolio" :
       done >= 12 ? "En formación" : "Primeros pasos",
     applications: {

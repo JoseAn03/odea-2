@@ -33,7 +33,7 @@ import { renderGarage } from "./garage-ui.js";
 import { renderShop } from "./shop-ui.js";
 import { equippedLook, shopItem } from "../src/shop.js";
 import { DISTRICTS } from "./districts.js";
-import { academiaRect, cellRect, clipsRect, eventosRect, sabiduriaRect, zonaiaRect } from "./city/layout.js";
+import { academiaRect, cellRect, clipsRect, eventosRect, mundoianRect, sabiduriaRect, zonaiaRect } from "./city/layout.js";
 import { newPlayerBundle } from "../src/new-player.js";
 import {
   TAB_MOCHILA,
@@ -336,6 +336,16 @@ function openDistrict(id) {
     openCampaign("sabiduria");
     return;
   }
+  if (id === "mundoian") {
+    /* La manzana sureste del Hub abre El Mundo de Ian: la campaña de
+       las 54 misiones de la ruta de Ian Daniel (valores, curiosidad,
+       responsabilidad, emociones, cuerpo, familia, creación, sueños y
+       juego con papá), en el panel de campañas; la ficha del Hub queda
+       accesible desde el propio panel. */
+    closePhone();
+    openCampaign("mundoian");
+    return;
+  }
   if (id === "eventos") {
     /* La manzana del estadio abre el evento vigente (hoy el SJO Decision
        Lab portado de ODEA 1) en el panel de campañas. */
@@ -566,6 +576,9 @@ function openCampaign(id, inPhone = false) {
     } else if (id === "sabiduria") {
       const r = sabiduriaRect();
       city.camera.jumpTo(r.x + r.w / 2, r.y + r.h / 2, city.camera.clampZoom(0.8));
+    } else if (id === "mundoian") {
+      const r = mundoianRect();
+      city.camera.jumpTo(r.x + r.w / 2, r.y + r.h / 2, city.camera.clampZoom(0.8));
     } else if (id === "garaje") {
       const r = cellRect(3, 2);
       city.camera.jumpTo(r.x + r.w / 2, r.y + r.h / 2, city.camera.clampZoom(0.8));
@@ -605,10 +618,10 @@ function renderActiveCampaign() {
       expectedCount: view.applications.count
     })
   });
-  const archiveFor = id === "brete" ? "empleo" : id === "sabiduria" ? "mirador" : null;
+  const archiveFor = id === "brete" ? "empleo" : id === "sabiduria" ? "mirador" : id === "mundoian" ? "hub" : null;
   if (archiveFor) {
     const archive = phoneEl("button", "campaign-archive",
-      id === "sabiduria" ? "Ver la ficha del Mirador de Sagas" : "Ver misiones de empleo heredadas de ODEA 1");
+      id === "sabiduria" ? "Ver la ficha del Mirador de Sagas" : id === "mundoian" ? "Ver la ficha del Hub" : "Ver misiones de empleo heredadas de ODEA 1");
     archive.type = "button";
     archive.addEventListener("click", () => {
       closeCampaign();

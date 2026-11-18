@@ -41,7 +41,7 @@ test("partida nueva: cero XP, cero monedas, perfil vacío y campañas listas sin
 });
 
 test("campañas: 96 misiones únicas, 8 capítulos de 6 por ruta y entregables completos", () => {
-  const rutas = Object.entries(CAMPAIGNS).filter(([id]) => !["eventos", "garaje", "academia", "zonaia", "sabiduria"].includes(id));
+  const rutas = Object.entries(CAMPAIGNS).filter(([id]) => !["eventos", "garaje", "academia", "zonaia", "sabiduria", "mundoian"].includes(id));
   const misiones = rutas.flatMap(([, c]) => c.chapters.flatMap((ch) => ch.missions));
   assert.equal(misiones.length, 96);
   assert.equal(new Set(misiones.map((m) => m.id)).size, 96);
@@ -409,4 +409,52 @@ test("postulaciones: lock entre pestañas conserva un solo premio para un mismo 
   ]);
   assert.equal(results.filter((r) => r.status === "applied").length, 1);
   assert.equal(campaignView(saved(s), "brete").applications.count, 1);
+});
+
+test("mundoian: las 54 misiones de la ruta de Ian Daniel", () => {
+  const c = CAMPAIGNS.mundoian;
+  assert.ok(c, "la campaña del Mundo de Ian existe");
+  assert.deepEqual(c.chapters.map((ch) => ch.missions.length), [6, 6, 6, 6, 6, 6, 6, 6, 6]);
+  assert.deepEqual(c.chapters.map((ch) => ch.title), [
+    "01 · Un corazón bueno",
+    "02 · Mente curiosa",
+    "03 · Responsable como un grande",
+    "04 · Emociones con nombre",
+    "05 · Cuerpo fuerte y sano",
+    "06 · Familia y amigos",
+    "07 · Crear e imaginar",
+    "08 · Sueños y valentía",
+    "09 · A jugar con papá",
+  ]);
+  const ms = c.chapters.flatMap((ch) => ch.missions);
+  assert.equal(ms.length, 54);
+  assert.equal(ms.reduce((a, m) => a + m.xp, 0), 3015);
+  assert.equal(ms.reduce((a, m) => a + m.coins, 0), 216);
+  const titulos = ms.map((m) => m.title);
+  for (const t of ["Decir la verdad aunque cueste", "Cazador de letras", "Profesor Ian",
+    "La noche de juegos", "Paseo de exploradores", "La guarida secreta",
+    "El semáforo de mis emociones", "Todavía no puedo", "Mi mapa de gustos"])
+    assert.ok(titulos.includes(t), `falta «${t}»`);
+  assert.equal(ms[0].id, "mundoian-01");
+  assert.equal(ms[0].title, "Decir la verdad aunque cueste");
+  assert.equal(ms[53].id, "mundoian-54");
+  for (const m of ms) {
+    assert.equal(m.campaignId, "mundoian");
+    assert.ok(m.title && m.brief && m.deliverable && m.criterion);
+    assert.ok(m.brief.includes("La misión está lista cuando"), `la condición de la guía está en «${m.title}»`);
+    assert.equal(m.steps.length, 3);
+    assert.ok(Number.isSafeInteger(m.xp) && (m.xp === 55 || m.xp === 60));
+    assert.equal(m.coins, 4);
+  }
+  assert.ok(fs.existsSync(new URL(`../${c.image}`, import.meta.url)), "la escena del patio de juegos existe");
+  const s = fresh();
+  const view = campaignView(saved(s), "mundoian");
+  assert.equal(view.total, 54);
+  assert.equal(view.next.id, "mundoian-01");
+  assert.equal(complete(s, "mundoian-02").error.code, "MISSION_LOCKED", "la ruta avanza en orden");
+  assert.equal(complete(s, "mundoian-01").status, "applied");
+  for (let i = 2; i <= 54; i++) complete(s, `mundoian-${String(i).padStart(2, "0")}`);
+  const full = campaignView(saved(s), "mundoian");
+  assert.equal(full.done, 54);
+  assert.equal(full.rank, "Pequeño Gran Hombre", "el rango final de la ruta");
 });
