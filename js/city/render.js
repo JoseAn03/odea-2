@@ -73,6 +73,43 @@ export function createRenderer(canvas) {
     }
   }
 
+  /* Rediseño del mapa (v0.33.0): la imagen que José diseñó con otra IA ES la
+     isla cuando ya cargó — reemplaza a la ciudad procedural (calles, aceras,
+     rellenos de manzana, edificios de distrito, costa y decoración estática)
+     y encima solo vive lo dinámico (avatar, NPCs, vehículos, efectos) y los
+     letreros de las zonas. Si la imagen no cargó o falló, el render es
+     exactamente el de siempre: fallback sin regresión.
+     Registro medido con PIL sobre la imagen de 2048×2048: el cuadrado de
+     asfalto urbano (la grilla de calles, mayor componente conexa oscura)
+     ocupa el bbox (188,168)–(1864,1856). Ese cuadrado se dibuja sobre el
+     cuadrado urbano del juego [120, 2720]² y la imagen completa —con su
+     playa y su mar— se escala en consecuencia; el mundo la recorta.
+     La grilla interna de la imagen no es perfectamente lineal: los centros
+     de sus manzanas caen desplazados respecto a los centros de celda del
+     juego entre +96/+87 unidades (esquina noroeste) y ~+11/−8 (esquina
+     sureste). Los letreros y los toques siguen mandando por celda. */
+  const CITY_MAP_SRC = { x: 188, y: 168, w: 1676, h: 1688 };
+  const CITY_MAP_SCALE_X = 2600 / CITY_MAP_SRC.w;
+  const CITY_MAP_SCALE_Y = 2600 / CITY_MAP_SRC.h;
+  const CITY_MAP_DEST = {
+    x: 120 - CITY_MAP_SRC.x * CITY_MAP_SCALE_X,
+    y: 120 - CITY_MAP_SRC.y * CITY_MAP_SCALE_Y,
+    w: 2048 * CITY_MAP_SCALE_X,
+    h: 2048 * CITY_MAP_SCALE_Y
+  };
+  let cityMapPicture = null;
+  if (typeof Image !== "undefined") {
+    cityMapPicture = new Image();
+    cityMapPicture.src = new URL("../../assets/city-map.webp", import.meta.url).href;
+  }
+  function cityMapReady() {
+    return !!(cityMapPicture && cityMapPicture.complete && cityMapPicture.naturalWidth > 0);
+  }
+  function drawCityMap() {
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(cityMapPicture, CITY_MAP_DEST.x, CITY_MAP_DEST.y, CITY_MAP_DEST.w, CITY_MAP_DEST.h);
+  }
+
   /* Capa de arte pixel (rama arte-pixel-main): se crea una sola vez y
      puede ser null sin DOM; si es null, el render es exactamente el previo. */
   let pixelArt = null;
@@ -896,7 +933,8 @@ export function createRenderer(canvas) {
   function drawClipsZone(view, world, time) {
     const R = clipsRect();
     if (!visible(view, R.x - 60, R.y - 60, R.w + 120, R.h + 120)) return;
-    drawVenueSkin("gamer", R);
+    /* Con el mapa rediseñado la imagen ya trae la escena: solo el letrero. */
+    if (!cityMapReady()) drawVenueSkin("gamer", R);
     drawVenueSign("ZONA GAMER", R, PALETTE.pink);
   }
 
@@ -1200,7 +1238,7 @@ export function createRenderer(canvas) {
     const imgs = ["brete", "gamer", "tienda"]
       .map((id) => (venuePictures[id] && venuePictures[id].complete && venuePictures[id].naturalWidth > 0 ? "1" : "0"))
       .join("");
-    return `${levels}|${windowBoost()}|${reduced ? "r" : "n"}|${imgs}`;
+    return `${levels}|${windowBoost()}|${reduced ? "r" : "n"}|${imgs}|${cityMapReady() ? "map" : "proc"}`;
   }
 
   function ensureStatic(camera, world, time) {
@@ -1248,52 +1286,65 @@ export function createRenderer(canvas) {
       ctx.translate(-state.x, -state.y);
 
       drawOcean(view, world);
-      drawCoast(world);
-      drawCoastalLandmarks(world, view, time);
-      drawExpansionIslands(world, view);
+      /* Con el mapa rediseñado cargado, la imagen ES la isla: trae su costa,
+         su playa y su mar cercano, así que la costa procedural y las islas
+         de expansión no se dibujan (quedarían duplicadas). El océano del
+         juego queda debajo, para lo que la imagen no cubra fuera del mundo. */
+      const useMap = cityMapReady();
+      if (useMap) {
+        drawCityMap();
+      } else {
+        drawCoast(world);
+        drawCoastalLandmarks(world, view, time);
+        drawExpansionIslands(world, view);
+      }
 
       /* Todo el damero vive dentro de la costa; las zonas futuras siguen libres. */
       ctx.save();
       traceIsland(world.size);
       ctx.clip();
 
-      /* Base verde de Costa Neón bajo las avenidas y las manzanas. */
-      if (visible(view, 0, 0, world.size, world.size, 300)) {
-        ctx.fillStyle = C.base;
-        ctx.fillRect(0, 0, world.size, world.size);
+      if (!useMap) {
+        /* Base verde de Costa Neón bajo las avenidas y las manzanas. */
+        if (visible(view, 0, 0, world.size, world.size, 300)) {
+          ctx.fillStyle = C.base;
+          ctx.fillRect(0, 0, world.size, world.size);
+        }
+
+        /* Tinte de distrito bajo las calles. */
+        for (const d of DISTRICTS) {
+          if (!visible(view, d.rect.x, d.rect.y, d.rect.w, d.rect.h)) continue;
+          ctx.fillStyle = alpha(d.accent, 0.045);
+          ctx.fillRect(d.rect.x, d.rect.y, d.rect.w, d.rect.h);
+        }
+
+        drawRoads(view, world, time);
+        drawBlocks(view, world);
+        drawDecor(view, world, time);
+
+        for (const b of world.buildings) {
+          if (!visible(view, b.x - 30, b.y - 30, b.w + 50, b.h + 50)) continue;
+          drawBuilding(b, view, time);
+        }
+
+        drawPixelPark(view, world, time);
+        /* El monumento/rotonda central tampoco se dibuja: la imagen del
+           rediseño ya trae la suya en el cruce central. */
+        drawMonument(view, world, time);
       }
-
-      /* Tinte de distrito bajo las calles. */
-      for (const d of DISTRICTS) {
-        if (!visible(view, d.rect.x, d.rect.y, d.rect.w, d.rect.h)) continue;
-        ctx.fillStyle = alpha(d.accent, 0.045);
-        ctx.fillRect(d.rect.x, d.rect.y, d.rect.w, d.rect.h);
-      }
-
-      drawRoads(view, world, time);
-      drawBlocks(view, world);
-      drawDecor(view, world, time);
-
-      for (const b of world.buildings) {
-        if (!visible(view, b.x - 30, b.y - 30, b.w + 50, b.h + 50)) continue;
-        drawBuilding(b, view, time);
-      }
-
-      drawPixelPark(view, world, time);
-      drawMonument(view, world, time);
       drawClipsZone(view, world, time);
       /* El Brete vive en el cuadrado oeste de Empleo (el que José marcó):
          su escena cubre el cuadrado entero y el letrero va a la entrada. */
       const breteCell = cellRect(1, 3);
       if (visible(view, breteCell.x, breteCell.y, breteCell.w, breteCell.h)) {
-        drawVenueSkin("brete", breteCell);
+        if (!useMap) drawVenueSkin("brete", breteCell);
         drawVenueSign("EL BRETE", breteCell, PALETTE.cyan);
       }
       /* La Tienda ocupa la manzana del Mercado (3,1): su escena estilo
          Palí cubre el cuadrado entero, con el letrero verde a la entrada. */
       const tiendaCell = cellRect(3, 1);
       if (visible(view, tiendaCell.x, tiendaCell.y, tiendaCell.w, tiendaCell.h)) {
-        drawVenueSkin("tienda", tiendaCell);
+        if (!useMap) drawVenueSkin("tienda", tiendaCell);
         drawVenueSign("TIENDA", tiendaCell, "#3ED97A");
       }
 
@@ -1302,7 +1353,7 @@ export function createRenderer(canvas) {
          entrada. El evento rota (hoy: SJO Decision Lab); la zona no. */
       const eventosCell = eventosRect();
       if (visible(view, eventosCell.x, eventosCell.y, eventosCell.w, eventosCell.h)) {
-        drawVenueSkin("eventos", eventosCell);
+        if (!useMap) drawVenueSkin("eventos", eventosCell);
         drawVenueSign("EVENTOS", eventosCell, "#EF3E4A");
       }
 
@@ -1310,7 +1361,7 @@ export function createRenderer(canvas) {
          cuadrado entero, con su letrero naranja a la entrada. */
       const garajeCell = cellRect(3, 2);
       if (visible(view, garajeCell.x, garajeCell.y, garajeCell.w, garajeCell.h)) {
-        drawVenueSkin("garaje", garajeCell);
+        if (!useMap) drawVenueSkin("garaje", garajeCell);
         drawVenueSign("GARAJE", garajeCell, "#FFA94D");
       }
 
@@ -1319,7 +1370,7 @@ export function createRenderer(canvas) {
          color del distrito— a la entrada. */
       const academiaCell = cellRect(1, 0);
       if (visible(view, academiaCell.x, academiaCell.y, academiaCell.w, academiaCell.h)) {
-        drawVenueSkin("academia", academiaCell);
+        if (!useMap) drawVenueSkin("academia", academiaCell);
         drawVenueSign("ACADEMIA", academiaCell, PALETTE.cyan);
       }
 
@@ -1329,7 +1380,7 @@ export function createRenderer(canvas) {
          que la distingue de la ACADEMIA cian de la manzana vecina. */
       const zonaiaCell = cellRect(2, 0);
       if (visible(view, zonaiaCell.x, zonaiaCell.y, zonaiaCell.w, zonaiaCell.h)) {
-        drawVenueSkin("zonaia", zonaiaCell);
+        if (!useMap) drawVenueSkin("zonaia", zonaiaCell);
         drawVenueSign("ZONA IA", zonaiaCell, PALETTE.pink);
       }
 
