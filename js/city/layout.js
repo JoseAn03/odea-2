@@ -36,6 +36,13 @@ export const ACADEMIA_CELL = { col: 1, row: 0 };
    este. */
 export const ZONAIA_CELL = { col: 2, row: 0 };
 
+/* SABIDURÍA PRÁCTICA: la manzana del Mirador de Sagas (0,0), esquina
+   noroeste. Ahí vive el templo de la imagen aprobada — la «universidad
+   de la mente» de José — y su campaña de las 60 misiones del PDF
+   «Sabiduría para vivir con criterio». El letrero de la manzana dice
+   «UCR DE LA MENTE», el nombre que José le puso a la zona. */
+export const SABIDURIA_CELL = { col: 0, row: 0 };
+
 export const WORLD_SIZE =
   GRID.margin * 2 + GRID.cols * GRID.block + (GRID.cols - 1) * GRID.road;
 
@@ -59,6 +66,11 @@ export function academiaRect() {
 /** Rectángulo de la Zona IA. */
 export function zonaiaRect() {
   return cellRect(ZONAIA_CELL.col, ZONAIA_CELL.row);
+}
+
+/** Rectángulo de Sabiduría Práctica (la manzana del Mirador de Sagas). */
+export function sabiduriaRect() {
+  return cellRect(SABIDURIA_CELL.col, SABIDURIA_CELL.row);
 }
 
 /** Rectángulo de una manzana (col, row) con row 0 = norte. */

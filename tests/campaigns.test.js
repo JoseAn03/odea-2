@@ -41,7 +41,7 @@ test("partida nueva: cero XP, cero monedas, perfil vacío y campañas listas sin
 });
 
 test("campañas: 96 misiones únicas, 8 capítulos de 6 por ruta y entregables completos", () => {
-  const rutas = Object.entries(CAMPAIGNS).filter(([id]) => !["eventos", "garaje", "academia", "zonaia"].includes(id));
+  const rutas = Object.entries(CAMPAIGNS).filter(([id]) => !["eventos", "garaje", "academia", "zonaia", "sabiduria"].includes(id));
   const misiones = rutas.flatMap(([, c]) => c.chapters.flatMap((ch) => ch.missions));
   assert.equal(misiones.length, 96);
   assert.equal(new Set(misiones.map((m) => m.id)).size, 96);
@@ -214,6 +214,62 @@ test("zonaia: las 48 misiones del PDF «Construir agentes de IA con criterio pro
   const full = campaignView(saved(s), "zonaia");
   assert.equal(full.done, 48);
   assert.equal(full.rank, "Arquitecto de Agentes", "el rango final de la ruta");
+});
+
+test("sabiduria: las 60 misiones del PDF «Sabiduría para vivir con criterio»", () => {
+  const c = CAMPAIGNS.sabiduria;
+  assert.ok(c, "la campaña de Sabiduría Práctica existe");
+  assert.deepEqual(c.chapters.map((ch) => ch.missions.length), [6, 6, 6, 6, 6, 6, 6, 6, 6, 6]);
+  assert.deepEqual(c.chapters.map((ch) => ch.title), [
+    "01 · Carácter, propósito y responsabilidad",
+    "02 · Pensamiento crítico y decisiones",
+    "03 · Inteligencia emocional y adversidad",
+    "04 · Relaciones, escucha y límites",
+    "05 · Hábitos, atención y energía",
+    "06 · Dinero, estabilidad y decisiones financieras",
+    "07 · Economía, riesgo y oportunidades",
+    "08 · Negocios y creación de valor",
+    "09 · Ventas, persuasión y negociación",
+    "10 · Poder, buen juicio y servicio",
+  ]);
+  const ms = c.chapters.flatMap((ch) => ch.missions);
+  assert.equal(ms.length, 60);
+  assert.equal(ms.reduce((a, m) => a + m.xp, 0), 3350);
+  assert.equal(ms.reduce((a, m) => a + m.coins, 0), 240);
+  const titulos = ms.map((m) => m.title);
+  for (const t of ["Tu definición de una buena vida", "Tu código personal", "Tu diario de decisiones",
+    "Detector de gurús y promesas", "Aprendé a nombrar lo que sentís", "Escuchá sin preparar tu discurso",
+    "Decí no sin humillar", "Tu revisión semanal", "Tu radiografía financiera privada",
+    "Deuda sin autoengaño", "Tu fondo para imprevistos", "Leé los incentivos",
+    "Desarmá un negocio real", "Calculá antes de poner precio", "Preguntá antes de presentar",
+    "Negociá intereses y alternativas", "Leé el poder con dos columnas",
+    "Sabiduría puesta al servicio", "Tu manual de vida, versión 1"])
+    assert.ok(titulos.includes(t), `falta «${t}»`);
+  assert.equal(ms[0].id, "sabiduria-01");
+  assert.equal(ms[0].title, "Tu definición de una buena vida");
+  assert.equal(ms[59].id, "sabiduria-60");
+  for (const m of ms) {
+    assert.equal(m.campaignId, "sabiduria");
+    assert.ok(m.title && m.brief && m.deliverable && m.criterion);
+    assert.ok(m.brief.includes("La misión está lista cuando"), `la condición del PDF está en «${m.title}»`);
+    assert.ok(m.steps.length >= 2);
+    assert.ok(Number.isSafeInteger(m.xp) && (m.xp === 55 || m.xp === 60));
+    assert.equal(m.coins, 4);
+  }
+  assert.ok(fs.existsSync(new URL(`../${c.image}`, import.meta.url)), "la escena del templo de la mente existe");
+  const s = fresh();
+  const view = campaignView(saved(s), "sabiduria");
+  assert.equal(view.total, 60);
+  assert.equal(view.next.id, "sabiduria-01");
+  assert.equal(complete(s, "sabiduria-02").error.code, "MISSION_LOCKED", "la ruta avanza en orden");
+  assert.equal(complete(s, "sabiduria-01").status, "applied");
+  const after = campaignView(saved(s), "sabiduria");
+  assert.equal(after.done, 1);
+  assert.equal(after.chapters[0].missions[1].unlocked, true);
+  for (const m of ms.slice(1)) assert.equal(complete(s, m.id).status, "applied", m.id);
+  const full = campaignView(saved(s), "sabiduria");
+  assert.equal(full.done, 60);
+  assert.equal(full.rank, "Sabio con criterio", "el rango final de la ruta");
 });
 
 test("campañas: un save anterior empieza en cero y conserva su progreso migrado", () => {

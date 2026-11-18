@@ -66,7 +66,7 @@ export function createRenderer(canvas) {
   let glow = null;
   const venuePictures = {};
   if (typeof Image !== "undefined") {
-    for (const id of ["brete", "gamer", "tienda", "eventos", "garaje", "academia", "zonaia"]) {
+    for (const id of ["brete", "gamer", "tienda", "eventos", "garaje", "academia", "zonaia", "sabiduria"]) {
       const image = new Image();
       image.src = new URL(`../../assets/slots/${id}.webp`, import.meta.url).href;
       venuePictures[id] = image;
@@ -1382,6 +1382,18 @@ export function createRenderer(canvas) {
       if (visible(view, zonaiaCell.x, zonaiaCell.y, zonaiaCell.w, zonaiaCell.h)) {
         if (!useMap) drawVenueSkin("zonaia", zonaiaCell);
         drawVenueSign("ZONA IA", zonaiaCell, PALETTE.pink);
+      }
+
+      /* SABIDURÍA PRÁCTICA ocupa la manzana del Mirador de Sagas (0,0):
+         el templo de la imagen aprobada cubre el cuadrado entero — en el
+         mapa imagen ya viene pintado dentro de city-map.webp y en el
+         respaldo procedural se dibuja su escena — con su letrero violeta
+         a la entrada: «UCR DE LA MENTE», el nombre que José le puso a la
+         zona (el violeta de la túnica del sabio). */
+      const sabiduriaCell = cellRect(0, 0);
+      if (visible(view, sabiduriaCell.x, sabiduriaCell.y, sabiduriaCell.w, sabiduriaCell.h)) {
+        if (!useMap) drawVenueSkin("sabiduria", sabiduriaCell);
+        drawVenueSign("UCR DE LA MENTE", sabiduriaCell, "#B388FF");
       }
 
       ctx.restore();
