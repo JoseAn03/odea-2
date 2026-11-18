@@ -66,7 +66,7 @@ export function createRenderer(canvas) {
   let glow = null;
   const venuePictures = {};
   if (typeof Image !== "undefined") {
-    for (const id of ["brete", "gamer", "tienda", "eventos"]) {
+    for (const id of ["brete", "gamer", "tienda", "eventos", "garaje"]) {
       const image = new Image();
       image.src = new URL(`../../assets/slots/${id}.webp`, import.meta.url).href;
       venuePictures[id] = image;
@@ -1304,6 +1304,14 @@ export function createRenderer(canvas) {
       if (visible(view, eventosCell.x, eventosCell.y, eventosCell.w, eventosCell.h)) {
         drawVenueSkin("eventos", eventosCell);
         drawVenueSign("EVENTOS", eventosCell, "#EF3E4A");
+      }
+
+      /* El Garaje ocupa su manzana (3,2): el parqueo-taller cubre el
+         cuadrado entero, con su letrero naranja a la entrada. */
+      const garajeCell = cellRect(3, 2);
+      if (visible(view, garajeCell.x, garajeCell.y, garajeCell.w, garajeCell.h)) {
+        drawVenueSkin("garaje", garajeCell);
+        drawVenueSign("GARAJE", garajeCell, "#FFA94D");
       }
 
       ctx.restore();
