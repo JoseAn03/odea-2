@@ -31,7 +31,7 @@ import { renderCampaign, renderDaily } from "./campaign-ui.js";
 import { renderShop } from "./shop-ui.js";
 import { equippedLook, shopItem } from "../src/shop.js";
 import { DISTRICTS } from "./districts.js";
-import { clipsRect, eventosRect } from "./city/layout.js";
+import { cellRect, clipsRect, eventosRect } from "./city/layout.js";
 import { newPlayerBundle } from "../src/new-player.js";
 import {
   TAB_MOCHILA,
@@ -320,6 +320,15 @@ function openDistrict(id) {
     openCampaign(id === "gamer" ? "gamer" : "brete");
     return;
   }
+  if (id === "garaje") {
+    /* La manzana del Garaje abre su campaña (pedido de José): las rutinas
+       de vehículos de ODEA 1 + el detalle a fondo, en el panel de siempre.
+       El panel de cifras del distrito queda a un botón dentro de la
+       campaña, como el archivo de Empleo en El Brete. */
+    closePhone();
+    openCampaign("garaje");
+    return;
+  }
   if (id === "mercado") {
     /* La manzana de la Tienda abre la Tienda (pedido de José): el panel
        completo para comprar, con la escena de la tienda de fondo. El panel
@@ -519,6 +528,9 @@ function openCampaign(id, inPhone = false) {
     else if (id === "eventos") {
       const r = eventosRect();
       city.camera.jumpTo(r.x + r.w / 2, r.y + r.h / 2, city.camera.clampZoom(0.8));
+    } else if (id === "garaje") {
+      const r = cellRect(3, 2);
+      city.camera.jumpTo(r.x + r.w / 2, r.y + r.h / 2, city.camera.clampZoom(0.8));
     } else {
       const r = clipsRect();
       city.camera.jumpTo(r.x + r.w / 2, r.y + r.h / 2, city.camera.clampZoom(0.8));
@@ -553,13 +565,16 @@ function renderActiveCampaign() {
       expectedCount: view.applications.count
     })
   });
-  if (id === "brete") {
-    const archive = phoneEl("button", "campaign-archive", "Ver misiones de empleo heredadas de ODEA 1");
+  const archiveFor = id === "brete" ? "empleo" : id === "garaje" ? "garaje" : null;
+  if (archiveFor) {
+    const archive = phoneEl("button", "campaign-archive", id === "brete"
+      ? "Ver misiones de empleo heredadas de ODEA 1"
+      : "Ver misiones de vehículos heredadas de ODEA 1");
     archive.type = "button";
     archive.addEventListener("click", () => {
       closeCampaign();
       closePhone();
-      openDistrictArchive("empleo");
+      openDistrictArchive(archiveFor);
     });
     root.append(archive);
   }
