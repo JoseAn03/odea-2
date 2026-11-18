@@ -28,8 +28,10 @@ import { renderHud, renderSheet, renderTabs } from "./hud-ui.js";
 import { routeForDay } from "../src/gameplay.js";
 import { campaignView } from "../src/campaign-state.js";
 import { garageView } from "../src/garage-state.js";
+import { ianView } from "../src/ian-state.js";
 import { renderCampaign, renderDaily } from "./campaign-ui.js";
 import { renderGarage } from "./garage-ui.js";
+import { renderIan } from "./ian-ui.js";
 import { renderShop } from "./shop-ui.js";
 import { equippedLook, shopItem } from "../src/shop.js";
 import { DISTRICTS } from "./districts.js";
@@ -184,6 +186,8 @@ let phoneReturnFocus = null;
 let campaignWritePending = false;
 let garageOpen = false;
 let garageWritePending = false;
+let ianOpen = false;
+let ianWritePending = false;
 
 if (els.version) {
   els.version.textContent = `v${APP_VERSION}`;
@@ -337,13 +341,15 @@ function openDistrict(id) {
     return;
   }
   if (id === "mundoian") {
-    /* La manzana sureste del Hub abre El Mundo de Ian: la campaña de
-       las 54 misiones de la ruta de Ian Daniel (valores, curiosidad,
+    /* La manzana sureste del Hub abre El Mundo de Ian VIVO: las 54
+       misiones de la ruta de Ian Daniel (valores, curiosidad,
        responsabilidad, emociones, cuerpo, familia, creación, sueños y
-       juego con papá), en el panel de campañas; la ficha del Hub queda
-       accesible desde el propio panel. */
+       juego con papá), TODAS desbloqueadas con el sistema del Garaje:
+       las de juego y hábito se repiten por ciclo y los proyectos se
+       hacen una sola vez; la ficha del Hub queda accesible desde el
+       propio panel. */
     closePhone();
-    openCampaign("mundoian");
+    openIan();
     return;
   }
   if (id === "eventos") {
@@ -545,6 +551,7 @@ function openCampaign(id, inPhone = false) {
   dailyStandalone = false;
   shopStandalone = false;
   garageOpen = false;
+  ianOpen = false;
   if (walkOn) setWalk(false);
   if (viewSession) viewSession.capture();
   hideSheetRaw();
@@ -591,9 +598,10 @@ function openCampaign(id, inPhone = false) {
 }
 
 function closeCampaign() {
-  if (!careerId && !garageOpen) return;
+  if (!careerId && !garageOpen && !ianOpen) return;
   careerId = null;
   garageOpen = false;
+  ianOpen = false;
   els.careerBackdrop.hidden = true;
   if (viewSession) viewSession.restore();
   setTab(TAB_CITY);
@@ -604,6 +612,7 @@ function closeCampaign() {
 function renderActiveCampaign() {
   const inPhone = !els.phoneBackdrop.hidden && ["brete", "gamer"].includes(phoneView);
   if (garageOpen && !inPhone) { renderGaragePanel(); return; }
+  if (ianOpen && !inPhone) { renderIanPanel(); return; }
   const id = inPhone ? phoneView : careerId;
   if (!id || !bundle) return;
   const root = inPhone ? els.phoneMissions : els.careerDialog;
@@ -690,6 +699,7 @@ function openDailyStandalone() {
   closePhone();
   careerId = null;
   garageOpen = false;
+  ianOpen = false;
   shopStandalone = false;
   careerReturnFocus = document.activeElement;
   dailyStandalone = true;
@@ -727,6 +737,7 @@ function openShopStandalone() {
   closePhone();
   careerId = null;
   garageOpen = false;
+  ianOpen = false;
   dailyStandalone = false;
   careerReturnFocus = document.activeElement;
   shopStandalone = true;
@@ -857,6 +868,71 @@ async function saveGarageAction(mutation) {
     return { text: "No se pudo guardar. Tu progreso anterior sigue intacto; exportá un respaldo y reintentá.", kind: "error" };
   } finally {
     garageWritePending = false;
+  }
+}
+
+/* ------------------------- el Mundo de Ian vivo ------------------------- */
+
+function openIan() {
+  if (!bundle || !catalog) return;
+  dailyStandalone = false;
+  shopStandalone = false;
+  garageOpen = false;
+  if (walkOn) setWalk(false);
+  if (viewSession) viewSession.capture();
+  hideSheetRaw();
+  hideOverlayRaw();
+  closePhone();
+  careerReturnFocus = document.activeElement;
+  careerId = null;
+  ianOpen = true;
+  els.careerBackdrop.hidden = false;
+  els.careerDialog.focus({ preventScroll: true });
+  if (city) {
+    const r = mundoianRect();
+    city.camera.jumpTo(r.x + r.w / 2, r.y + r.h / 2, city.camera.clampZoom(0.8));
+  }
+  renderIanPanel();
+}
+
+function renderIanPanel() {
+  if (!ianOpen || !bundle) return;
+  renderIan(els.careerDialog, {
+    view: ianView(bundle, gameplayDate().date),
+    onBack: () => closeCampaign(),
+    onComplete: (missionId) => saveIanAction({ type: "ian.complete", missionId }),
+    onArchive: () => {
+      closeCampaign();
+      closePhone();
+      openDistrictArchive("hub");
+    }
+  });
+}
+
+async function saveIanAction(mutation) {
+  if (ianWritePending) return { text: "Ya hay un registro en curso.", kind: "error" };
+  ianWritePending = true;
+  try {
+    const result = await applyGameplayMutationLocked(storage, catalog, mutation, gameplayDate());
+    if (result.status !== "applied") {
+      const messages = {
+        DUPLICATE: "Esa misión ya estaba registrada hoy; no se pagó otra vez.",
+        QUOTA_EXCEEDED: "No hay espacio para guardar. Exportá un respaldo y liberá espacio antes de continuar.",
+        CONCURRENT_CHANGE: "Otra pestaña cambió el progreso. Revisá el registro antes de volver a intentar."
+      };
+      refresh();
+      setTimeout(renderIanPanel, 1100);
+      return { text: messages[result.error?.code] ||
+        (result.status === "duplicate" ? messages.DUPLICATE :
+          `No se pudo guardar (${result.error?.code || "error"}). No se otorgaron premios.`), kind: "error" };
+    }
+    refresh();
+    setTimeout(renderIanPanel, 500);
+    return null;
+  } catch (error) {
+    return { text: "No se pudo guardar. Tu progreso anterior sigue intacto; exportá un respaldo y reintentá.", kind: "error" };
+  } finally {
+    ianWritePending = false;
   }
 }
 
@@ -1558,6 +1634,7 @@ async function boot() {
     if (event.key === "Escape") {
       if (careerId) closeCampaign();
       else if (garageOpen) closeCampaign();
+      else if (ianOpen) closeCampaign();
       else if (dailyStandalone) closeDailyStandalone();
       else if (shopStandalone) closeShopStandalone();
       else if (!els.phoneBackdrop.hidden) closePhone();

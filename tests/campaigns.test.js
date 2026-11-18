@@ -447,14 +447,8 @@ test("mundoian: las 54 misiones de la ruta de Ian Daniel", () => {
     assert.equal(m.coins, 4);
   }
   assert.ok(fs.existsSync(new URL(`../${c.image}`, import.meta.url)), "la escena del patio de juegos existe");
-  const s = fresh();
-  const view = campaignView(saved(s), "mundoian");
-  assert.equal(view.total, 54);
-  assert.equal(view.next.id, "mundoian-01");
-  assert.equal(complete(s, "mundoian-02").error.code, "MISSION_LOCKED", "la ruta avanza en orden");
-  assert.equal(complete(s, "mundoian-01").status, "applied");
-  for (let i = 2; i <= 54; i++) complete(s, `mundoian-${String(i).padStart(2, "0")}`);
-  const full = campaignView(saved(s), "mundoian");
-  assert.equal(full.done, 54);
-  assert.equal(full.rank, "Pequeño Gran Hombre", "el rango final de la ruta");
+  /* Desde v0.36.0 el Mundo de Ian es un sistema VIVO (todo desbloqueado,
+     rutinas con reloj y proyectos de una vez, como el Garaje): su flujo
+     y su insignia «Pequeño Gran Hombre» se prueban en tests/ian.test.js;
+     aquí solo vive el catálogo. */
 });
