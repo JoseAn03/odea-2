@@ -358,7 +358,7 @@ test("fase 2 (c): el listener de storage solo reacciona a la clave del save", ()
   assert.equal(events.length, 3, "handleEvent directo sigue disponible para tests");
 });
 
-test("fase 2 (c): versión esperando -> aviso, y recarga solo al aceptar", () => {
+test("fase 2 (c): versión esperando -> aviso, y aceptar sigue aplicando la recarga", () => {
   const container = fakeTarget();
   container.controller = {};
   const worker = fakeWorker("installed");
@@ -376,7 +376,7 @@ test("fase 2 (c): versión esperando -> aviso, y recarga solo al aceptar", () =>
   watcher.check(registration);
 
   assert.equal(notified, 1);
-  assert.equal(reloaded, 0, "no debe recargar sin acción del usuario");
+  assert.equal(reloaded, 0, "el aviso solo no recarga; la recarga llega con el controllerchange");
 
   watcher.accept();
   assert.deepEqual(worker.messages, [{ type: SKIP_WAITING }]);
@@ -413,6 +413,45 @@ test("fase 2 (c): una actualización encontrada en uso también avisa", () => {
 
   assert.equal(notified, 1);
   assert.equal(watcher.hasUpdate(), true);
+  watcher.dispose();
+});
+
+test("fase 2 (c): si el SW nuevo se activa solo, la página recarga sin tocar nada", () => {
+  /* Orden de José (2026-11-18): su Chrome nunca mostró el aviso «Recargar»
+   * tras 4 reinicios y la actualización quedó trabada. El SW ahora llama
+   * skipWaiting() al instalar; este controllerchange sin accept() previo es
+   * el camino principal y debe recargar una sola vez. */
+  const container = fakeTarget();
+  container.controller = {};
+  let reloaded = 0;
+
+  const watcher = createUpdateWatcher({
+    container,
+    onUpdateAvailable: () => {},
+    reload: () => { reloaded++; }
+  });
+
+  container.dispatch("controllerchange", {});
+  assert.equal(reloaded, 1, "el cambio de controlador recarga solo, sin acción del usuario");
+
+  container.dispatch("controllerchange", {});
+  assert.equal(reloaded, 1, "la recarga automática ocurre una sola vez");
+  watcher.dispose();
+});
+
+test("fase 2 (c): en la primera instalación no se recarga (no había controlador)", () => {
+  const container = fakeTarget();
+  container.controller = null;
+  let reloaded = 0;
+
+  const watcher = createUpdateWatcher({
+    container,
+    onUpdateAvailable: () => {},
+    reload: () => { reloaded++; }
+  });
+
+  container.dispatch("controllerchange", {});
+  assert.equal(reloaded, 0, "sin controlador previo no hay versión vieja que reemplazar");
   watcher.dispose();
 });
 
@@ -477,14 +516,16 @@ test("fase 2: versión visible, bundle y caché del SW están sincronizados", ()
 
   /* Tripwire deliberado: subir la versión obliga a tocar esta línea, para que
      el bump del SHELL y del CACHE_VERSION del SW nunca pase inadvertido. */
-  assert.equal(APP_VERSION, "0.32.0-fase7");
+  assert.equal(APP_VERSION, "0.32.1-fase7");
   assert.equal(pkg.version, APP_VERSION);
   assert.equal(ODEA2_APP_VERSION, APP_VERSION);
   assert.ok(sw.includes(`"odea2-v${APP_VERSION}"`), "la caché del SW debe usar la versión de la app");
   assert.ok(/fase\d+$/.test(APP_VERSION), "la versión debe declarar su fase");
 
   const install = sw.slice(sw.indexOf('"install"'), sw.indexOf('"activate"'));
-  assert.ok(!install.includes("skipWaiting"), "install no debe aplicar skipWaiting solo");
+  /* Orden de José (2026-11-18): su Chrome nunca mostró el aviso «Recargar» y
+   * la actualización quedó trabada; el SW debe activarse SOLO al instalar. */
+  assert.ok(install.includes("skipWaiting"), "install debe aplicar skipWaiting solo (orden de José, 2026-11-18)");
   assert.ok(sw.includes('"message"') && sw.includes("SKIP_WAITING"));
 });
 

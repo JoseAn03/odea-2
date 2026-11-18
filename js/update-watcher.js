@@ -1,9 +1,12 @@
 /**
  * update-watcher.js — aviso de versión nueva del service worker.
  *
- * Regla de la Fase 1 (F1-1): la actualización se aplica SOLO cuando el usuario
- * toca «Recargar». El service worker ya no llama a skipWaiting() al instalar;
- * espera el mensaje SKIP_WAITING que este módulo envía.
+ * Regla vigente (F1-1 revertida por orden de José, 2026-11-18): el service
+ * worker llama a skipWaiting() al instalar y se activa SOLO, porque en su
+ * Chrome el aviso «Recargar» nunca apareció y la actualización quedó trabada.
+ * Este módulo recarga la página una sola vez cuando el controlador cambia,
+ * haya o no toque del usuario. El aviso y accept() (mensaje SKIP_WAITING) se
+ * conservan como vía compatible, no como requisito.
  *
  * Sin DOM: recibe el contenedor (navigator.serviceWorker) y callbacks, para
  * poder probarse con objetos simulados.
@@ -21,9 +24,15 @@ export function createUpdateWatcher({
   let waiting = null;
   let notified = false;
   let reloadPending = false;
+  let didReload = false;
   let fallbackTimer = null;
 
   const canListen = container && typeof container.addEventListener === "function";
+  /* Si la página ya tenía controlador, un controllerchange significa que un
+   * SW nuevo tomó el mando: hay versión nueva servida y toca recargar. En la
+   * primera instalación no había controlador: no hay nada viejo que
+   * reemplazar y recargar sería un salto gratuito. */
+  const hadController = !!(container && container.controller);
 
   function notify(worker) {
     if (worker) waiting = worker;
@@ -32,14 +41,25 @@ export function createUpdateWatcher({
     onUpdateAvailable();
   }
 
-  function onControllerChange() {
-    if (!reloadPending) return;
-    reloadPending = false;
+  function reloadOnce() {
+    if (didReload) return;
+    didReload = true;
     if (fallbackTimer !== null) {
       clearTimeout(fallbackTimer);
       fallbackTimer = null;
     }
     reload();
+  }
+
+  function onControllerChange() {
+    if (reloadPending) {
+      reloadPending = false;
+      reloadOnce();
+      return;
+    }
+    /* Activación automática (skipWaiting en el SW): recargar sin esperar al
+     * usuario. Orden de José, 2026-11-18. */
+    if (hadController) reloadOnce();
   }
 
   if (canListen) container.addEventListener("controllerchange", onControllerChange);
@@ -67,14 +87,16 @@ export function createUpdateWatcher({
     return registration;
   }
 
-  /** Acción del usuario: aplica la actualización y recarga una sola vez. */
+  /** Acción del usuario (vía compatible): pide aplicar la actualización y
+   * recarga una sola vez. Ya no es el camino principal: el SW se activa solo
+   * y onControllerChange recarga sin intervención. */
   function accept() {
     if (reloadPending) return;
     reloadPending = true;
     const worker = (registration && registration.waiting) || waiting;
     if (!worker || typeof worker.postMessage !== "function") {
       reloadPending = false;
-      reload();
+      reloadOnce();
       return;
     }
     worker.postMessage({ type: SKIP_WAITING });
@@ -83,7 +105,7 @@ export function createUpdateWatcher({
         if (!reloadPending) return;
         reloadPending = false;
         fallbackTimer = null;
-        reload();
+        reloadOnce();
       }, fallbackMs);
     }
   }

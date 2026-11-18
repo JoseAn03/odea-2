@@ -3,16 +3,21 @@
  * El catálogo de juego se cachea en runtime; el progreso del usuario nunca
  * pasa por la caché (vive en localStorage).
  *
- * Actualización a pedido del usuario (decisión F1-1): el install NO llama a
- * skipWaiting(). El SW espera el mensaje SKIP_WAITING que envía la app cuando
- * el usuario toca «Recargar» en el aviso de versión nueva.
+ * Actualización automática (decisión F1-1 REVERTIDA por orden de José,
+ * 2026-11-18): el install SÍ llama a skipWaiting() y el SW nuevo se activa
+ * solo, sin esperar a nadie. Motivo: en su Chrome el aviso «Hay una versión
+ * nueva / Recargar» nunca apareció tras 4 reinicios y la actualización quedó
+ * trabada (su Samsung sí actualizó). Al activarse, `activate` reclama los
+ * clientes y el update-watcher recarga la página ante el controllerchange,
+ * así que la versión nueva entra sola. El mensaje SKIP_WAITING se conserva
+ * como vía compatible para el botón «Recargar» si el aviso llega a verse.
  *
  * CACHE_VERSION debe subir en CADA release que cambie el SHELL. Usar un
  * nombre de caché distinto aísla el release nuevo del viejo: mientras el SW
  * anterior sigue controlando la pestaña, su caché queda intacto y no se
  * mezclan assets de dos versiones. `activate` borra los cachés viejos.
  */
-const CACHE_VERSION = "odea2-v0.32.0-fase7";
+const CACHE_VERSION = "odea2-v0.32.1-fase7";
 
 const SHELL = [
   "./",
@@ -74,6 +79,8 @@ const SHELL = [
 ];
 
 self.addEventListener("install", (event) => {
+  /* Activación inmediata (orden de José, 2026-11-18): no esperar al usuario. */
+  self.skipWaiting();
   event.waitUntil(caches.open(CACHE_VERSION).then((cache) => cache.addAll(SHELL)));
 });
 
@@ -86,7 +93,9 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-/* La app pide aplicar la actualización; nunca se hace sola. */
+/* Vía compatible: si el aviso llega a verse y el usuario toca «Recargar», la
+ * app pide aplicar la actualización. Ya no es el camino principal: el install
+ * activa solo con skipWaiting() (orden de José, 2026-11-18). */
 self.addEventListener("message", (event) => {
   const data = event.data || {};
   if (data.type === "SKIP_WAITING") self.skipWaiting();
