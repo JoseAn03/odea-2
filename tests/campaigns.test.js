@@ -41,7 +41,7 @@ test("partida nueva: cero XP, cero monedas, perfil vacío y campañas listas sin
 });
 
 test("campañas: 96 misiones únicas, 8 capítulos de 6 por ruta y entregables completos", () => {
-  const rutas = Object.entries(CAMPAIGNS).filter(([id]) => !["eventos", "garaje", "academia", "zonaia", "sabiduria", "mundoian"].includes(id));
+  const rutas = Object.entries(CAMPAIGNS).filter(([id]) => !["eventos", "garaje", "academia", "zonaia", "sabiduria", "mundoian", "entrevista"].includes(id));
   const misiones = rutas.flatMap(([, c]) => c.chapters.flatMap((ch) => ch.missions));
   assert.equal(misiones.length, 96);
   assert.equal(new Set(misiones.map((m) => m.id)).size, 96);
@@ -451,4 +451,36 @@ test("mundoian: las 54 misiones de la ruta de Ian Daniel", () => {
      rutinas con reloj y proyectos de una vez, como el Garaje): su flujo
      y su insignia «Pequeño Gran Hombre» se prueban en tests/ian.test.js;
      aquí solo vive el catálogo. */
+});
+
+test("entrevista: Operación Entrevista, 14 misiones libres y el Decision Lab guardado", () => {
+  const c = CAMPAIGNS.entrevista;
+  assert.equal(c.name, "Operación Entrevista");
+  assert.equal(c.freeOrder, true, "todas las misiones habilitadas, sin orden obligatorio");
+  assert.equal(c.image, "assets/slots/eventos.webp", "se queda la imagen del estadio");
+  assert.deepEqual(c.chapters.map((ch) => ch.missions.length), [3, 3, 3, 3, 2]);
+  const ms = c.chapters.flatMap((ch) => ch.missions);
+  assert.equal(ms.length, 14);
+  assert.equal(ms.reduce((a, m) => a + m.xp, 0), 1020);
+  assert.equal(ms.reduce((a, m) => a + m.coins, 0), 68);
+  assert.equal(ms[0].id, "entrevista-01");
+  assert.equal(ms[13].id, "entrevista-14");
+  assert.equal(ms[13].title, "Martes 24: listo a las 10:35");
+  for (const m of ms) {
+    assert.equal(m.campaignId, "entrevista");
+    assert.ok(m.title && m.brief && m.deliverable);
+    assert.equal(m.steps.length, 3);
+  }
+  /* El evento anterior queda guardado, intacto. */
+  assert.equal(CAMPAIGNS.eventos.chapters.flatMap((ch) => ch.missions).length, 14);
+  /* Orden libre de verdad: la última misión se puede completar primero. */
+  const s = fresh();
+  const view = campaignView(saved(s), "entrevista");
+  assert.equal(view.total, 14);
+  assert.ok(view.chapters.every((ch) => ch.missions.every((m) => m.unlocked)), "todo desbloqueado desde el inicio");
+  assert.equal(complete(s, "entrevista-14").status, "applied", "sin candado secuencial");
+  for (let i = 1; i <= 13; i++) complete(s, `entrevista-${String(i).padStart(2, "0")}`);
+  const full = campaignView(saved(s), "entrevista");
+  assert.equal(full.done, 14);
+  assert.equal(full.rank, "Listo para la entrevista", "el rango final del evento");
 });

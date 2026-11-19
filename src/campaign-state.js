@@ -29,7 +29,7 @@ export function campaignView(bundle, id) {
     missions: chapter.missions.map((mission) => {
       const record = records[mission.id];
       const completed = !!record;
-      const unlocked = previousDone;
+      const unlocked = campaign.freeOrder ? true : previousDone;
       previousDone = previousDone && completed;
       if (completed) done++;
       return { ...mission, completed, unlocked, evidence: record?.evidence || "" };
@@ -41,7 +41,7 @@ export function campaignView(bundle, id) {
     ...campaign, chapters, done, total: all.length,
     percent: Math.round(done / Math.max(1, all.length) * 100),
     next: all.find((m) => !m.completed) || null,
-    rank: done === all.length ? (id === "brete" ? "Ruta de analista completada" : id === "eventos" ? "Analista de Decisiones" : id === "garaje" ? "Mecánico de la casa" : id === "academia" ? "Analista Certificado" : id === "zonaia" ? "Arquitecto de Agentes" : id === "sabiduria" ? "Sabio con criterio" : id === "mundoian" ? "Pequeño Gran Hombre" : "Ruta profesional completada") :
+    rank: done === all.length ? (id === "brete" ? "Ruta de analista completada" : id === "eventos" ? "Analista de Decisiones" : id === "entrevista" ? "Listo para la entrevista" : id === "garaje" ? "Mecánico de la casa" : id === "academia" ? "Analista Certificado" : id === "zonaia" ? "Arquitecto de Agentes" : id === "sabiduria" ? "Sabio con criterio" : id === "mundoian" ? "Pequeño Gran Hombre" : "Ruta profesional completada") :
       done >= 36 ? "Profesional en práctica" : done >= 24 ? "Constructor de portafolio" :
       done >= 12 ? "En formación" : "Primeros pasos",
     applications: {
@@ -81,7 +81,7 @@ export function applyCampaignMutation(draft, mutation, { at, date }) {
     const campaign = CAMPAIGNS[mission.campaignId];
     const all = campaign.chapters.flatMap((c) => c.missions);
     const index = all.findIndex((m) => m.id === mission.id);
-    if (!all.slice(0, index).every((m) => current.completions?.[m.id])) return no("MISSION_LOCKED");
+    if (!campaign.freeOrder && !all.slice(0, index).every((m) => current.completions?.[m.id])) return no("MISSION_LOCKED");
     const evidence = clean(mutation.evidence, 2000);
     if (evidence.length < 12) return no("EVIDENCE_REQUIRED");
     const state = ensureState(draft);
@@ -142,6 +142,7 @@ export function campaignProblems(bundle) {
     }
   }
   for (const campaign of Object.values(CAMPAIGNS)) {
+    if (campaign.freeOrder) continue;
     let gap = false;
     for (const m of campaign.chapters.flatMap((c) => c.missions)) {
       if (!state.completions[m.id]) gap = true;
