@@ -356,7 +356,7 @@ function openDistrict(id) {
     /* La manzana del estadio abre el evento vigente (hoy el SJO Decision
        Lab portado de ODEA 1) en el panel de campañas. */
     closePhone();
-    openCampaign("eventos");
+    openCampaign("entrevista");
     return;
   }
   if (id === "gamer" || id === "empleo") {
@@ -571,7 +571,7 @@ function openCampaign(id, inPhone = false) {
   }
   if (city) {
     if (id === "brete") city.focusDistrict("empleo");
-    else if (id === "eventos") {
+    else if (id === "eventos" || id === "entrevista") {
       const r = eventosRect();
       city.camera.jumpTo(r.x + r.w / 2, r.y + r.h / 2, city.camera.clampZoom(0.8));
     } else if (id === "academia") {

@@ -516,7 +516,7 @@ test("fase 2: versión visible, bundle y caché del SW están sincronizados", ()
 
   /* Tripwire deliberado: subir la versión obliga a tocar esta línea, para que
      el bump del SHELL y del CACHE_VERSION del SW nunca pase inadvertido. */
-  assert.equal(APP_VERSION, "0.36.0-fase7");
+  assert.equal(APP_VERSION, "0.37.0-fase7");
   assert.equal(pkg.version, APP_VERSION);
   assert.equal(ODEA2_APP_VERSION, APP_VERSION);
   assert.ok(sw.includes(`"odea2-v${APP_VERSION}"`), "la caché del SW debe usar la versión de la app");

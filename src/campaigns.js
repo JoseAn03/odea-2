@@ -447,6 +447,90 @@ const gamerChapters = [
    su tienda de evento). La zona de la ciudad se llama EVENTOS porque el
    evento rota; esta campaña es el evento vigente. */
 const DL_CRITERION = 'Se completa cuando el entregable real existe: la regla del evento desde ODEA 1, sin XP por nada.';
+const entrevistaChapters = [
+  {
+    id: 'historia', title: '01 · Tu historia', subtitle: 'MIÉRCOLES: TU PITCH, TU ESTRELLA Y TU MOTIVO.',
+    missions: [
+      { title: 'Tu pitch en 60 segundos',
+        brief: 'Escribí tu presentación en inglés, tal como la vas a decir: quién sos (analista de datos en ANC Rent a Car, en el aeropuerto SJO, hace unos dos años), tu caja de herramientas (Python, SQL, Power BI, Tableau, Excel/VBA) y tu sello: construís automatizaciones e inteligencia artificial aplicada que ahorran horas reales. Tiene que sonar a vos, no a un currículum leído. Lista cuando: tu pitch dura cerca de un minuto leído en voz alta y cierra con lo que buscás: crecer hacia la analítica de marketing en una empresa global.',
+        steps: ['Escribilo primero en español, en 4 o 5 frases cortas.', 'Pasalo a inglés simple, con tus palabras: frases cortas que sí puedas pronunciar sin trabarte.', 'Leelo en voz alta dos veces y recortá todo lo que suene a papel.'],
+        deliverable: 'El texto final de tu pitch en inglés.', xp: 70, coins: 4 },
+      { title: 'La historia estrella en inglés',
+        brief: 'Tu mejor historia, en formato STAR y en inglés: Situación (el reporte diario de la operación tomaba unas 2 horas manuales), Tarea (dejarlo confiable y a tiempo), Acción (un agente descarga los datos, Python y VBA limpian y arman, n8n lo automatiza cada mañana hacia Power BI) y Resultado (de 2 horas a 15 minutos, más de 10 horas ahorradas por semana, con más de 500 reservas diarias analizadas). Lista cuando: podés contarla sin leer, con los números claros: 2 horas, 15 minutos, 500 reservas, 10 horas.',
+        steps: ['Escribí las 4 partes en frases cortas, una por renglón.', 'Subrayá los 4 números: sin números la historia no pesa.', 'Contala en voz alta una vez, como si Jose Nunez te acabara de preguntar por un logro.'],
+        deliverable: 'Tu historia STAR escrita en inglés, con los números.', xp: 70, coins: 4 },
+      { title: 'Por qué Envista, por qué DEXIS',
+        brief: 'El reclutador siempre pregunta por qué esta empresa. Tu respuesta honesta tiene tres patas: Envista es una empresa global de productos dentales y DEXIS su marca de imagen digital (radiografías e IA para dentistas); el puesto junta exactamente tus dos mundos, los datos y el marketing que estudiás en la USAM; y querés crecer hacia analítica de marketing con equipos globales. Lista cuando: tenés tus 3 razones escritas y ninguna suena inventada.',
+        steps: ['Escribí una frase por pata: la empresa, el puesto, tu momento.', 'Agregá un dato real de DEXIS que hayas aprendido (qué productos hace).', 'Practicá decirlo en inglés en menos de 30 segundos.'],
+        deliverable: 'Tus 3 razones escritas, listas para decir.', xp: 70, coins: 4 },
+    ],
+  },
+  {
+    id: 'puente', title: '02 · El puesto y tu puente', subtitle: 'JUEVES: ENTENDER EL ROL Y CONECTARLO CON TU EXPERIENCIA.',
+    missions: [
+      { title: 'El puesto en tus palabras',
+        brief: 'Sin mirar ningún anuncio, escribí qué hace este rol día a día: análisis de desempeño y reportes de marketing, auditar el panorama de datos de marketing para encontrar capacidades y brechas, medición digital con GA4 y dashboards que un equipo global usa para decidir. Si podés explicarlo simple, lo entendiste. Lista cuando: tu resumen tiene las 4 piezas (desempeño, auditoría de datos, GA4, dashboards) en tus palabras.',
+        steps: ['Escribí el resumen en español, máximo 6 líneas.', 'Revisá que aparezcan las palabras desempeño, auditoría, medición y dashboards.', 'Decilo en voz alta una vez, como explicándoselo a tu mamá.'],
+        deliverable: 'Tu resumen del puesto, en tus palabras.', xp: 70, coins: 4 },
+      { title: 'Tu puente: del dato operativo al dato de marketing',
+        brief: 'Tu experiencia en ANC es de datos operativos; el puente al marketing se construye con pares: tus dashboards de operación son dashboards de desempeño como los de campañas; tu auditoría del no-show (encontraste un doble conteo que inflaba la cifra) es auditar un panorama de datos y hallar una brecha; el embudo de reservas que se caen es un embudo de conversión. Lista cuando: tenés 3 pares escritos, cada uno en una frase que puedas decir en la llamada.',
+        steps: ['Escribí el par de los dashboards.', 'Escribí el par de la auditoría (el doble conteo del no-show es tu mejor ejemplo).', 'Escribí el par del embudo y practicá decir los 3 en inglés.'],
+        deliverable: 'Tus 3 pares del puente, escritos.', xp: 70, coins: 4 },
+      { title: 'GA4 sin miedo',
+        brief: 'No tenés que ser experto en GA4; tenés que hablar de él sin miedo y con un plan. Lo esencial: un evento es cualquier acción que se mide (un clic, una vista, una conversión); una conversión es el evento que vale plata (un lead, una venta); los UTM son etiquetas en los enlaces para saber de qué campaña vino cada visita; la atribución es decidir qué canal se lleva el crédito de la conversión. Y tu línea de cierre: «en mis primeros 30 días audito las fuentes, documento las definiciones y armo el primer dashboard», que es lo que ya hiciste en ANC. Lista cuando: explicás los 4 conceptos en una frase cada uno y tenés tu línea de 30 días.',
+        steps: ['Escribí la frase de eventos y la de conversiones.', 'Escribí la frase de UTM y la de atribución.', 'Escribí tu línea de los primeros 30 días y decila en inglés.'],
+        deliverable: 'Tus 4 conceptos en una frase + tu línea de 30 días.', xp: 70, coins: 4 },
+    ],
+  },
+  {
+    id: 'screening', title: '03 · Las preguntas del screening', subtitle: 'VIERNES: LAS RESPUESTAS DE VALIDACIÓN, CORTAS Y DIRECTAS.',
+    missions: [
+      { title: 'Preguntas de validación',
+        brief: 'El screening valida datos, no talento: expectativa salarial (₡750.000 brutos al mes), preaviso (una semana), disponibilidad para empezar, por qué estás buscando y tu nivel de inglés (avanzado, y lo estás demostrando en la misma llamada). Respuestas cortas, sin vueltas y sin disculparte. Lista cuando: tenés tus 5 respuestas escritas, cada una en una o dos frases.',
+        steps: ['Escribí salario y preaviso tal como los vas a decir.', 'Escribí tu porqué: crecimiento hacia analítica de marketing, en positivo, sin hablar mal de ANC.', 'Practicá las 5 en inglés, en orden, en menos de un minuto total.'],
+        deliverable: 'Tus 5 respuestas de validación, escritas.', xp: 70, coins: 4 },
+      { title: 'La pregunta de la brecha',
+        brief: 'Va a salir, directa o disfrazada: el puesto pide de 3 a 5 años en analítica de marketing y vos tenés unos 2 en datos. Tu respuesta es honesta y con puente: sí, mi experiencia formal en marketing analytics es menor; lo que traigo es analítica de datos de verdad (Python, SQL, dashboards que la operación usa a diario), una auditoría de datos con hallazgo real, automatización con agentes, y la carrera de Marketing en curso en la USAM. Nada de maquillaje: la brecha se nombra y se cruza con evidencia. Lista cuando: tu respuesta dura 30 segundos y termina en fortaleza, no en disculpa.',
+        steps: ['Escribí la primera frase: la brecha dicha por vos, sin miedo.', 'Escribí las 3 evidencias que la cruzan.', 'Decila en voz alta hasta que suene tranquila.'],
+        deliverable: 'Tu respuesta a la pregunta de la brecha, escrita.', xp: 70, coins: 4 },
+      { title: 'Tus preguntas para ellos',
+        brief: 'Al final siempre preguntan «¿tenés preguntas?» y decir que no resta puntos. Prepará 3 que demuestren cabeza de analista: cómo está formado el equipo y a quién reporta el puesto; qué herramientas usan hoy para medición y dashboards (GA4, Looker Studio, Power BI); y cómo se ve el éxito en este rol a los 6 meses. Lista cuando: tus 3 preguntas están escritas y sabés por qué hacés cada una.',
+        steps: ['Escribí la pregunta del equipo.', 'Escribí la pregunta de herramientas.', 'Escribí la pregunta del éxito a 6 meses y practicá las 3 en inglés.'],
+        deliverable: 'Tus 3 preguntas para el reclutador, escritas.', xp: 70, coins: 4 },
+    ],
+  },
+  {
+    id: 'practica', title: '04 · Práctica en voz alta', subtitle: 'SÁBADO Y DOMINGO: LA ENTREVISTA ES ORAL; SE PRACTICA ORAL.',
+    missions: [
+      { title: 'Simulacro 1: pitch + estrella',
+        brief: 'Poné el cronómetro y decí, en voz alta y en inglés, tu pitch y tu historia estrella seguidos, sin leer el papel. La meta: el pitch en cerca de un minuto y la estrella en menos de dos. Si te trabás, no importa: anotá dónde y repetí solo ese pedazo. Lista cuando: hiciste el simulacro completo cronometrado y anotaste el tiempo y el punto donde te trabaste.',
+        steps: ['Cronómetro listo, papel guardado.', 'Pitch y estrella seguidos, sin parar.', 'Anotá tiempo y trabas: esa nota es tu evidencia.'],
+        deliverable: 'Tu tiempo total y el punto donde más te trabaste.', xp: 70, coins: 4 },
+      { title: 'Simulacro 2: preguntas difíciles',
+        brief: 'En voz alta, como si ya estuvieras en la llamada: la pregunta de la brecha, la del salario y la de por qué salir de ANC. Tres respuestas seguidas, en inglés, con la misma calma. La que más te cueste se repite una vez más al final. Lista cuando: dijiste las 3 respuestas completas y sabés cuál es tu punto débil de la semana.',
+        steps: ['Decí la respuesta de la brecha.', 'Decí salario y porqué, seguidas.', 'Repetí la más floja y anotá cuál fue.'],
+        deliverable: 'Cuál respuesta te costó más y qué ajustaste.', xp: 70, coins: 4 },
+      { title: 'Vocabulario del puesto',
+        brief: '15 términos que un analista de marketing usa en inglés, cada uno con una frase tuya: funnel, conversion rate, attribution, campaign performance, dashboard, stakeholder, insight, forecast, data quality, lead, bounce rate, engagement, KPI, reporting y optimization. No es memorizar un diccionario: es poder usarlos hablando de tu propio trabajo. Lista cuando: tu lista tiene los 15 términos con una frase tuya en cada uno.',
+        steps: ['Escribí los primeros 5 con tu frase (podés usar ejemplos de ANC).', 'Escribí los siguientes 5.', 'Escribí los últimos 5 y leé la lista completa en voz alta.'],
+        deliverable: 'Tu lista de 15 términos con una frase tuya por término.', xp: 70, coins: 4 },
+    ],
+  },
+  {
+    id: 'dia', title: '05 · Día de la entrevista', subtitle: 'LUNES EL ENSAYO GENERAL; MARTES, A LOGRARLA.',
+    missions: [
+      { title: 'Ensayo general (lunes 23)',
+        brief: 'El lunes hacés la entrevista completa en tu casa, en orden y en voz alta: pitch, historia estrella, la brecha, salario y preaviso, y tus 3 preguntas para ellos. Sin papel, con cronómetro, como si Jose Nunez ya estuviera del otro lado. Después ajustás UNA sola cosa: la que más te haya costado. Lista cuando: el ensayo completo está hecho y tenés claro tu único ajuste final.',
+        steps: ['Orden fijo: pitch, estrella, brecha, validación, tus preguntas.', 'Todo en voz alta, sin leer.', 'Anotá el único ajuste que harás para mañana.'],
+        deliverable: 'Ensayo hecho + tu único ajuste final, anotado.', xp: 70, coins: 4 },
+      { title: 'Martes 24: listo a las 10:35',
+        brief: 'El día: lugar tranquilo, teléfono cargado, un vaso de agua, tu CV a mano y tus notas de las 5 respuestas en una hoja. Respirá: es una conversación de validación, no un examen, y llegás con una semana de práctica encima. Esta misión se completa DESPUÉS de la llamada. Lista cuando: la entrevista pasó y contaste cómo te fue, con la verdad.',
+        steps: ['Checklist listo 15 minutos antes: lugar, teléfono, agua, CV.', 'A las 10:35, atendé tranquilo: tu primera frase ya la practicaste toda la semana.', 'Al colgar, escribí cómo te fue antes de que se te olvide.'],
+        deliverable: 'Cómo te fue en la entrevista, contado por vos.', xp: 110, coins: 16 },
+    ],
+  },
+];
+
 const eventosChapters = [
   {
     id: 'eventos-operacion',
@@ -1528,6 +1612,7 @@ export const CAMPAIGNS = {
     districtId: 'gamer',
     image: 'assets/slots/gamer.webp',
   }, gamerChapters),
+
   eventos: buildCampaign({
     id: 'eventos',
     name: 'SJO Decision Lab',
@@ -1537,6 +1622,16 @@ export const CAMPAIGNS = {
     districtId: 'eventos',
     image: 'assets/slots/eventos.webp',
   }, eventosChapters),
+  entrevista: buildCampaign({
+    id: 'entrevista',
+    name: 'Operación Entrevista',
+    subtitle: 'Evento de la semana en la Zona de Eventos: tu preparación para el screening de Envista.',
+    goal: 'Llegar listo al screening con Jose Nunez (Envista · DEXIS, Global Digital Marketing Specialist – Data Analyst) el martes 24 de noviembre a las 10:35 a. m.: tu historia clara, tu puente al marketing, las respuestas de validación y práctica en voz alta en inglés. Todas las misiones están desbloqueadas: hacelas en el orden que querás, a tu ritmo de la semana. Al completar las 14 ganás la insignia «Listo para la entrevista».',
+    accent: '#ffd166',
+    districtId: 'eventos',
+    image: 'assets/slots/eventos.webp',
+    freeOrder: true,
+  }, entrevistaChapters),
   garaje: buildCampaign({
     id: 'garaje',
     name: 'El Garaje',
