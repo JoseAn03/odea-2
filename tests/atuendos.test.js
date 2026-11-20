@@ -1,13 +1,14 @@
 /**
- * atuendos.test.js — v0.40.0: la colección de personajes de la Tienda,
- * el inventario (equipar lo poseído sin volver a pagar) y la geometría
- * del sprite grande 20×26 con caminar de 4 cuadros (charRows es puro).
+ * atuendos.test.js — v0.40.0/v0.40.1: la colección de personajes de la
+ * Tienda, el inventario (equipar lo poseído sin volver a pagar) y la
+ * geometría del sprite grande 18×28 (cuerpo delgado, v0.40.1) con
+ * caminar de 4 cuadros (charRows es puro).
  */
 import test from "node:test";
 import assert from "node:assert/strict";
 
 import { SHOP_ITEMS, shopItem, applyShopMutation, tiendaState } from "../src/shop.js";
-import { charRows, CHAR_W, CHAR_H } from "../js/city/pixel.js";
+import { charRows, CHAR_W, CHAR_H, CHAR_LEG_TOP } from "../js/city/pixel.js";
 
 const NUEVOS = [
   ["la-sele", 90], ["cubico", 120], ["fontanero", 150], ["pirata-paja", 180],
@@ -53,7 +54,7 @@ test("atuendos: todo el catálogo de atuendos trae look completo y paleta cerrad
 
 test("atuendos: el ciclo de caminar cambia las piernas entre cuadros", () => {
   const look = shopItem("clasico").look;
-  const legs = (dir, f) => charRows(dir, f, look).slice(18).join("\n");
+  const legs = (dir, f) => charRows(dir, f, look).slice(CHAR_LEG_TOP).join("\n");
   for (const dir of ["front", "back", "side"]) {
     assert.notEqual(legs(dir, 0), legs(dir, 1), `${dir}: zancada ≠ apoyo`);
     assert.notEqual(legs(dir, 0), legs(dir, 2), `${dir}: zancadas opuestas`);
@@ -64,6 +65,21 @@ test("atuendos: el ciclo de caminar cambia las piernas entre cuadros", () => {
   const front = charRows("front", 1, look);
   assert.ok(front[1].includes("C"), "la gorra va en la cabeza");
   assert.ok(front[12].includes("T"), "el torso va en su zona");
+});
+
+test("atuendos: proporciones delgadas fijadas (v0.40.1, pedido de José)", () => {
+  /* José sobre la v0.40.0: «lo veo muy grueso el personaje; me gustaría
+     un tipo más delgadito». La rejilla nueva es 18×28 (antes 20×26):
+     más alta y más angosta, con torso de 10 px (antes 12) y piernas de
+     3 px por pierna (antes 4). Este test fija esa delgadez. */
+  assert.equal(CHAR_W, 18);
+  assert.equal(CHAR_H, 28);
+  assert.ok(CHAR_H / CHAR_W > 1.5, "la figura es claramente más alta que ancha");
+  const look = shopItem("clasico").look;
+  const front = charRows("front", 1, look);
+  assert.equal((front[16].match(/T/g) || []).length, 10, "torso del clásico de 10 px de ancho");
+  assert.ok(front[CHAR_LEG_TOP].includes("111"), "piernas de 3 px en el cuadro de apoyo");
+  assert.ok(front[19].includes("A"), "cinturón con hebilla en la fila 19 (detalle nuevo)");
 });
 
 test("atuendos: rasgos firma de los icónicos en la rejilla", () => {

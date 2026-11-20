@@ -1127,9 +1127,10 @@ export function createRenderer(canvas) {
           }
         }
         if (pillBottom === null) {
-          /* v0.40.0: el jugador usa los cuadros grandes 20×26 (caminar
-             de 4) del atuendo equipado; el clásico incluido. El juego de
-             cuadros viejo queda solo como respaldo. */
+          /* v0.40.0/v0.40.1: el jugador usa los cuadros grandes 18×28
+             (caminar de 4, cuerpo delgado) del atuendo equipado; el
+             clásico incluido. El juego de cuadros viejo queda solo como
+             respaldo. */
           let set = px.player;
           const outfitItem = look.outfitId ? shopItem(look.outfitId) : null;
           if (outfitItem && outfitItem.look && px.characterFrames2) {
@@ -1149,8 +1150,8 @@ export function createRenderer(canvas) {
           const pstep = st.moving && !reduced
             ? Math.floor(time * 8) % frames.length
             : (frames.length > 2 ? 1 : 0);
-          const pw = set.big ? 50 : 42;
-          const ph = set.big ? 65 : 52;
+          const pw = set.big ? 45 : 42;
+          const ph = set.big ? 70 : 52;
           const bobY = st.moving && !reduced && set.big ? (pstep % 2 ? -2 : 0) : 0;
           ctx.fillStyle = "rgba(6,10,18,0.30)";
           ctx.beginPath();
