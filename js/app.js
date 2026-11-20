@@ -26,16 +26,19 @@ import { buildHud } from "./hud.js";
 import { buildDistrictPanel } from "./district-figures.js";
 import { renderHud, renderSheet, renderTabs } from "./hud-ui.js";
 import { routeForDay } from "../src/gameplay.js";
-import { campaignView } from "../src/campaign-state.js";
+import { campaignStateOf, campaignView } from "../src/campaign-state.js";
+import { CAMPAIGN_MISSIONS } from "../src/campaigns.js";
 import { garageView } from "../src/garage-state.js";
 import { ianView } from "../src/ian-state.js";
+import { buildProgressSummary, jarvisView } from "../src/jarvis-state.js";
 import { renderCampaign, renderDaily } from "./campaign-ui.js";
 import { renderGarage } from "./garage-ui.js";
 import { renderIan } from "./ian-ui.js";
+import { renderJarvis } from "./jarvis-ui.js";
 import { renderShop } from "./shop-ui.js";
 import { equippedLook, shopItem } from "../src/shop.js";
 import { DISTRICTS } from "./districts.js";
-import { academiaRect, cellRect, clipsRect, eventosRect, mundoianRect, sabiduriaRect, zonaiaRect } from "./city/layout.js";
+import { academiaRect, cellRect, clipsRect, eventosRect, jarvisRect, mundoianRect, pointInRect, sabiduriaRect, zonaiaRect } from "./city/layout.js";
 import { newPlayerBundle } from "../src/new-player.js";
 import {
   TAB_MOCHILA,
@@ -188,6 +191,8 @@ let garageOpen = false;
 let garageWritePending = false;
 let ianOpen = false;
 let ianWritePending = false;
+let jarvisOpen = false;
+let jarvisWritePending = false;
 
 if (els.version) {
   els.version.textContent = `v${APP_VERSION}`;
@@ -274,6 +279,9 @@ function initCity() {
       },
       onTapWorld: (pt) => {
         if (!walkOn || !player || !cityWorld) return;
+        /* Jarvis (v0.38.0): caminando, tocar al robotcito abre su diálogo
+           en vez de fijar el destino, igual que en el modo explorar. */
+        if (pointInRect(jarvisRect(), pt.x, pt.y)) { openDistrict("jarvis"); return; }
         const s = cityWorld.size;
         player.setTarget(
           Math.max(-s * 0.04, Math.min(s * 1.04, pt.x)),
@@ -316,6 +324,14 @@ function setWalk(on) {
 }
 
 function openDistrict(id) {
+  if (id === "jarvis") {
+    /* El robotcito de la Zona IA abre su diálogo de compañero: saludo
+       del día, quiz con XP acotado, chat y revisión de evidencias. La
+       campaña de la manzana queda a un botón dentro del diálogo. */
+    closePhone();
+    openJarvis();
+    return;
+  }
   if (id === "academia") {
     /* La manzana de la universidad abre la Academia: la campaña de
        certificaciones portada de ODEA 1, en el panel de campañas. */
@@ -552,6 +568,7 @@ function openCampaign(id, inPhone = false) {
   shopStandalone = false;
   garageOpen = false;
   ianOpen = false;
+  jarvisOpen = false;
   if (walkOn) setWalk(false);
   if (viewSession) viewSession.capture();
   hideSheetRaw();
@@ -598,10 +615,11 @@ function openCampaign(id, inPhone = false) {
 }
 
 function closeCampaign() {
-  if (!careerId && !garageOpen && !ianOpen) return;
+  if (!careerId && !garageOpen && !ianOpen && !jarvisOpen) return;
   careerId = null;
   garageOpen = false;
   ianOpen = false;
+  jarvisOpen = false;
   els.careerBackdrop.hidden = true;
   if (viewSession) viewSession.restore();
   setTab(TAB_CITY);
@@ -613,6 +631,7 @@ function renderActiveCampaign() {
   const inPhone = !els.phoneBackdrop.hidden && ["brete", "gamer"].includes(phoneView);
   if (garageOpen && !inPhone) { renderGaragePanel(); return; }
   if (ianOpen && !inPhone) { renderIanPanel(); return; }
+  if (jarvisOpen && !inPhone) { renderJarvisPanel(); return; }
   const id = inPhone ? phoneView : careerId;
   if (!id || !bundle) return;
   const root = inPhone ? els.phoneMissions : els.careerDialog;
@@ -700,6 +719,7 @@ function openDailyStandalone() {
   careerId = null;
   garageOpen = false;
   ianOpen = false;
+  jarvisOpen = false;
   shopStandalone = false;
   careerReturnFocus = document.activeElement;
   dailyStandalone = true;
@@ -738,6 +758,7 @@ function openShopStandalone() {
   careerId = null;
   garageOpen = false;
   ianOpen = false;
+  jarvisOpen = false;
   dailyStandalone = false;
   careerReturnFocus = document.activeElement;
   shopStandalone = true;
@@ -811,6 +832,7 @@ function openGarage() {
   if (!bundle || !catalog) return;
   dailyStandalone = false;
   shopStandalone = false;
+  jarvisOpen = false;
   if (walkOn) setWalk(false);
   if (viewSession) viewSession.capture();
   hideSheetRaw();
@@ -878,6 +900,7 @@ function openIan() {
   dailyStandalone = false;
   shopStandalone = false;
   garageOpen = false;
+  jarvisOpen = false;
   if (walkOn) setWalk(false);
   if (viewSession) viewSession.capture();
   hideSheetRaw();
@@ -933,6 +956,101 @@ async function saveIanAction(mutation) {
     return { text: "No se pudo guardar. Tu progreso anterior sigue intacto; exportá un respaldo y reintentá.", kind: "error" };
   } finally {
     ianWritePending = false;
+  }
+}
+
+/* ------------------------- Jarvis, el compañero -------------------------
+   El robotcito de la Zona IA (v0.38.0): vive en el mismo #career-dialog
+   de las campañas, con su propia bandera como el Garaje e Ian. La IA es
+   un extra — sin Worker, sin internet o sin clave, el diálogo degrada a
+   un saludo local y el juego sigue completo. Nada de Jarvis escribe el
+   guardado fuera de applyGameplayMutationLocked. */
+
+function openJarvis() {
+  if (!bundle || !catalog) return;
+  dailyStandalone = false;
+  shopStandalone = false;
+  garageOpen = false;
+  ianOpen = false;
+  if (walkOn) setWalk(false);
+  if (viewSession) viewSession.capture();
+  hideSheetRaw();
+  hideOverlayRaw();
+  closePhone();
+  careerReturnFocus = document.activeElement;
+  careerId = null;
+  jarvisOpen = true;
+  els.careerBackdrop.hidden = false;
+  els.careerDialog.focus({ preventScroll: true });
+  if (city) {
+    const r = zonaiaRect();
+    city.camera.jumpTo(r.x + r.w / 2, r.y + r.h / 2, city.camera.clampZoom(0.8));
+  }
+  renderJarvisPanel();
+}
+
+function jarvisCompletedMissions() {
+  const state = campaignStateOf(bundle);
+  const byId = new Map(CAMPAIGN_MISSIONS.map((mission) => [mission.id, mission]));
+  return Object.values(state.completions || {}).flatMap((record) => {
+    const mission = byId.get(record.missionId);
+    if (!mission) return [];
+    return [{
+      campaignId: record.campaignId,
+      missionId: record.missionId,
+      title: mission.title,
+      deliverable: mission.deliverable,
+      criterion: mission.criterion,
+      evidence: record.evidence || ""
+    }];
+  });
+}
+
+function renderJarvisPanel() {
+  if (!jarvisOpen || !bundle) return;
+  const today = gameplayDate().date;
+  renderJarvis(els.careerDialog, {
+    view: jarvisView(bundle, today),
+    summary: buildProgressSummary(bundle, catalog, today),
+    completedMissions: jarvisCompletedMissions(),
+    onQuiz: (xpAwarded) => saveJarvisAction({ type: "jarvis.quiz", xpAwarded }),
+    onUsage: (kind) => saveJarvisAction({ type: "jarvis.usage", kind }),
+    onBriefing: (text) => saveJarvisAction({ type: "jarvis.briefing", text }),
+    onOpenZonaIA: () => { closeCampaign(); openCampaign("zonaia"); },
+    onClose: () => closeCampaign()
+  });
+}
+
+async function saveJarvisAction(mutation) {
+  if (jarvisWritePending) return { status: "rejected", error: { code: "WRITE_PENDING" } };
+  jarvisWritePending = true;
+  try {
+    const result = await applyGameplayMutationLocked(storage, catalog, mutation, gameplayDate());
+    /* Solo se refresca el HUD: el diálogo conserva su sesión (el quiz y
+       el chat en curso no se reinician por registrar un contador). */
+    refresh();
+    return result;
+  } catch (error) {
+    return { status: "rejected", error: { code: "EXCEPTION" } };
+  } finally {
+    jarvisWritePending = false;
+  }
+}
+
+/** ¿Tiene Jarvis algo que contar hoy? (spec §1.4, cálculo 100% local). */
+function jarvisHasNews(bundle2) {
+  try {
+    const today = gameplayDate().date;
+    const garage = garageView(bundle2, today);
+    if (garage.missions.some((mission) => mission.state === "vencida" || mission.state === "por-vencer")) return true;
+    const ian = ianView(bundle2, today);
+    if (ian.missions.some((mission) => mission.state === "vencida" || mission.state === "por-vencer")) return true;
+    const dias = Math.round((Date.parse("2026-11-24T00:00:00.000Z") - Date.parse(`${today}T00:00:00.000Z`)) / 86400000);
+    if (dias >= 0 && dias <= 4) return true;
+    if (!jarvisView(bundle2, today).briefingHoy) return true;
+    return false;
+  } catch (error) {
+    return false;
   }
 }
 
@@ -1273,6 +1391,7 @@ function refresh() {
     if (city) {
       city.setPlayerVisible(true);
       city.setCredit(hud.xpBreakdown.evento + hud.xpBreakdown.farm);
+      city.setJarvisAlert(jarvisHasNews(bundle));
     }
     applyAmbience();
 
@@ -1295,6 +1414,7 @@ function refresh() {
   if (city) {
     city.setPlayerVisible(false);
     city.setCredit(null);
+    city.setJarvisAlert(false);
     city.clearSelection();
   }
   setWalk(false);
@@ -1635,6 +1755,7 @@ async function boot() {
       if (careerId) closeCampaign();
       else if (garageOpen) closeCampaign();
       else if (ianOpen) closeCampaign();
+      else if (jarvisOpen) closeCampaign();
       else if (dailyStandalone) closeDailyStandalone();
       else if (shopStandalone) closeShopStandalone();
       else if (!els.phoneBackdrop.hidden) closePhone();
@@ -1643,7 +1764,7 @@ async function boot() {
       return;
     }
     /* El foco no se escapa de la capa superior mientras esté abierta. */
-    if (careerId || dailyStandalone || shopStandalone) trapTab(event, els.careerDialog);
+    if (careerId || jarvisOpen || dailyStandalone || shopStandalone) trapTab(event, els.careerDialog);
     else if (!els.phoneBackdrop.hidden) trapTab(event, els.phoneBackdrop);
     else if (sheetOpen) trapTab(event, els.sheet);
     else if (overlayOpen) trapTab(event, els.overlay);

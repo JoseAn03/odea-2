@@ -1,0 +1,167 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import {
+  JARVIS_QUIZ_XP,
+  buildProgressSummary,
+  jarvisProblems,
+  jarvisRewards,
+  jarvisView,
+} from "../src/jarvis-state.js";
+import { STORAGE_KEYS, createMemoryStorage, importBundle, applyGameplayMutation } from "../src/storage.js";
+import { derive, sourcesFromMigrated } from "../src/derive.js";
+import { validatePlayState } from "../src/validate.js";
+
+const catalog = JSON.parse(fs.readFileSync(new URL("../data/xp-catalog.json", import.meta.url)));
+const fixture = JSON.parse(fs.readFileSync(new URL("../fixtures/odea-progreso-sintetico.json", import.meta.url)));
+const date = "2026-11-17";
+const nextDate = "2026-11-18";
+
+function fresh() {
+  const storage = createMemoryStorage();
+  const imported = importBundle(structuredClone(fixture), {
+    storage, catalog, referenceDate: "2026-11-10", migratedAt: "2026-11-10T12:00:00.000Z"
+  });
+  assert.equal(imported.status, "active");
+  return storage;
+}
+const saved = (s) => JSON.parse(s.getItem(STORAGE_KEYS.bundle));
+const opts = (d = date, second = 0) => ({
+  date: d, at: new Date(Date.UTC(2026, 10, 17, 12, 0, second)).toISOString()
+});
+const derived = (s) => derive(sourcesFromMigrated(saved(s), catalog), catalog, "2026-11-10");
+const quiz = (s, xp, d = date, second = 0) =>
+  applyGameplayMutation(s, catalog, { type: "jarvis.quiz", xpAwarded: xp }, opts(d, second));
+const usage = (s, kind, d = date, second = 0) =>
+  applyGameplayMutation(s, catalog, { type: "jarvis.usage", kind }, opts(d, second));
+
+test("jarvis: sin play.jarvis previo la vista es válida y no hay problemas", () => {
+  const s = fresh();
+  const view = jarvisView(saved(s), date);
+  assert.equal(view.quizXpToday, 0);
+  assert.equal(view.quizRestantes, 2);
+  assert.equal(view.quizXpDisponible, JARVIS_QUIZ_XP);
+  assert.equal(view.chatRestantes, 20);
+  assert.equal(view.feedbackRestantes, 5);
+  assert.equal(view.briefingHoy, null);
+  assert.deepEqual(jarvisRewards(saved(s)), { xp: 0, coins: 0 });
+  assert.deepEqual(jarvisProblems(saved(s)), []);
+});
+
+test("jarvis: un quiz correcto suma 10 XP al bucket career y 0 monedas", () => {
+  const s = fresh();
+  const before = derived(s);
+  const result = quiz(s, 10);
+  assert.equal(result.status, "applied");
+  const after = derived(s);
+  assert.equal(after.xpBreakdown.career, before.xpBreakdown.career + 10);
+  assert.equal(after.totalXP, before.totalXP + 10);
+  assert.equal(after.coins.balance, before.coins.balance);
+  assert.deepEqual(jarvisRewards(saved(s)), { xp: 10, coins: 0 });
+});
+
+test("jarvis: dos quizzes por día suman máximo 20 XP y el tercero se rechaza", () => {
+  const s = fresh();
+  assert.equal(quiz(s, 10, date, 0).status, "applied");
+  assert.equal(quiz(s, 10, date, 1).status, "applied");
+  const third = quiz(s, 10, date, 2);
+  assert.notEqual(third.status, "applied");
+  assert.equal(derived(s).totalXP, 6915 + 20);
+  const view = jarvisView(saved(s), date);
+  assert.equal(view.quizXpToday, 20);
+  assert.equal(view.quizRestantes, 0);
+  assert.equal(view.quizXpDisponible, 0);
+});
+
+test("jarvis: xpAwarded fuera de rango (50) se rechaza sin tocar el save", () => {
+  const s = fresh();
+  const beforeRaw = s.getItem(STORAGE_KEYS.bundle);
+  const result = quiz(s, 50);
+  assert.notEqual(result.status, "applied");
+  assert.equal(s.getItem(STORAGE_KEYS.bundle), beforeRaw);
+  assert.deepEqual(jarvisRewards(saved(s)), { xp: 0, coins: 0 });
+});
+
+test("jarvis: el chat acepta 20 usos y rechaza el 21; kind inválido se rechaza", () => {
+  const s = fresh();
+  for (let i = 0; i < 20; i++) {
+    assert.equal(usage(s, "chat", date, i).status, "applied", `chat ${i + 1}`);
+  }
+  assert.notEqual(usage(s, "chat", date, 30).status, "applied");
+  assert.equal(jarvisView(saved(s), date).chatRestantes, 0);
+  assert.notEqual(usage(s, "briefing", date, 31).status, "applied");
+  assert.notEqual(usage(s, "quiz", date, 32).status, "applied");
+});
+
+test("jarvis: el briefing se guarda y solo se expone como de hoy ese día", () => {
+  const s = fresh();
+  const result = applyGameplayMutation(s, catalog,
+    { type: "jarvis.briefing", text: "Hola, José. Hoy toca cerrar las diarias." }, opts());
+  assert.equal(result.status, "applied");
+  assert.equal(jarvisView(saved(s), date).briefingHoy, "Hola, José. Hoy toca cerrar las diarias.");
+  assert.equal(jarvisView(saved(s), nextDate).briefingHoy, null);
+  const empty = applyGameplayMutation(s, catalog, { type: "jarvis.briefing", text: "   " }, opts(nextDate));
+  assert.notEqual(empty.status, "applied");
+});
+
+test("jarvis: al día siguiente el cupo de quiz vuelve a estar disponible", () => {
+  const s = fresh();
+  assert.equal(quiz(s, 10, date, 0).status, "applied");
+  assert.equal(quiz(s, 10, date, 1).status, "applied");
+  assert.equal(jarvisView(saved(s), date).quizRestantes, 0);
+  const view = jarvisView(saved(s), nextDate);
+  assert.equal(view.quizRestantes, 2);
+  assert.equal(view.quizXpToday, 0);
+  assert.equal(quiz(s, 0, nextDate, 2).status, "applied");
+  assert.equal(jarvisRewards(saved(s)).xp, 20);
+});
+
+test("jarvis: buildProgressSummary devuelve la forma del spec con el fixture", () => {
+  const s = fresh();
+  const summary = buildProgressSummary(saved(s), catalog, "2026-11-20");
+  assert.equal(typeof summary.nivel, "number");
+  assert.ok(summary.nivel >= 1);
+  assert.equal(typeof summary.xpTotal, "number");
+  assert.equal(typeof summary.xpParaSiguienteNivel, "number");
+  assert.equal(typeof summary.rachaDias, "number");
+  assert.equal(summary.diarias.total, 3);
+  assert.ok(Array.isArray(summary.diarias.pendientes));
+  assert.ok(summary.proximaMisionCampana === null ||
+    (typeof summary.proximaMisionCampana.campana === "string" &&
+     typeof summary.proximaMisionCampana.mision === "string"));
+  assert.ok(Array.isArray(summary.garajePorVencer));
+  assert.ok(Array.isArray(summary.ianPorVencer));
+  assert.deepEqual(summary.entrevistaEnvista, { fecha: "2026-11-24", diasRestantes: 4 });
+  assert.deepEqual(Object.keys(summary.jarvisHoy).sort(),
+    ["chatRestantes", "feedbackRestantes", "quizRestantes", "quizXp"]);
+  const despues = buildProgressSummary(saved(s), catalog, "2026-11-25");
+  assert.equal(despues.entrevistaEnvista, null);
+});
+
+test("jarvis: un play.jarvis corrupto lo reportan jarvisProblems y validatePlayState", () => {
+  const s = fresh();
+  const bundle = saved(s);
+  bundle.play = {
+    version: 3, completions: {}, checkins: {},
+    jarvis: {
+      quizXpByDate: { "2026-11-17": -5 },
+      usage: { "2026-11-17": { quiz: -1, chat: 0, feedback: 0, calls: 0 } },
+      briefing: { date: "no-es-fecha", text: "hola" },
+    },
+  };
+  const problems = jarvisProblems(bundle);
+  assert.ok(problems.length >= 3, problems.join("; "));
+  const report = validatePlayState(bundle, catalog, {});
+  assert.equal(report.ok, false);
+});
+
+test("jarvis: ninguna mutación de Jarvis mueve el saldo de monedas", () => {
+  const s = fresh();
+  const before = derived(s).coins.balance;
+  quiz(s, 10, date, 0);
+  usage(s, "chat", date, 1);
+  usage(s, "feedback", date, 2);
+  applyGameplayMutation(s, catalog, { type: "jarvis.briefing", text: "Saludo de prueba." }, opts(date, 3));
+  assert.equal(derived(s).coins.balance, before);
+  assert.equal(jarvisRewards(saved(s)).coins, 0);
+});

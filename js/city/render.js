@@ -8,7 +8,7 @@
 import { PALETTE, DISTRICTS, alpha, mix } from "../districts.js";
 import { fmt } from "../format.js";
 import { createPixelArt } from "./pixel.js";
-import { clipsRect, cellRect, eventosRect } from "./layout.js";
+import { clipsRect, cellRect, eventosRect, jarvisRect } from "./layout.js";
 import { shopItem } from "../../src/shop.js";
 
 const FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
@@ -57,6 +57,9 @@ export function createRenderer(canvas) {
   let creditXP = null;
   let playerVisible = false;
   let playerState = null;
+  /* Jarvis (v0.38.0): la app avisa si el robotcito tiene algo que contar
+     hoy (su bocadillo «!»); el cálculo es local, en app.js. */
+  let jarvisAlert = false;
   /* Caché del look de la Tienda (atuendo/vehículo): se reconstruye solo
      cuando cambia el id equipado. */
   const lookCache = { outfitId: null, outfitFrames: null, vehicleId: null, vehicleSprites: null };
@@ -1061,6 +1064,36 @@ export function createRenderer(canvas) {
       px.draw(ctx, f3, mx, my + 26, 42, 52, c < 0);
     }
 
+    /* JARVIS (v0.38.0): el robotcito compañero flota en su esquina de la
+       Zona IA con el propulsor titilando; si hoy hay algo que contar,
+       lleva su bocadillo «!» rosa. Al tocarlo habla: input.js resuelve
+       su rect ANTES que la campaña de la manzana. */
+    {
+      const jr = jarvisRect();
+      const jx = jr.x + jr.w / 2;
+      const jy = jr.y + jr.h;
+      if (px.jarvis && visible(view, jr.x - 60, jr.y - 80, jr.w + 120, jr.h + 140)) {
+        const bob = reduced ? 0 : Math.sin(time * 1.8) * 6;
+        const flick = reduced ? 0.7 : 0.55 + 0.25 * Math.sin(time * 9) + 0.2 * Math.sin(time * 23);
+        const grad = ctx.createRadialGradient(jx, jy - 30 + bob, 0, jx, jy - 30 + bob, 66);
+        grad.addColorStop(0, `rgba(0,229,255,${0.10 + 0.07 * flick})`);
+        grad.addColorStop(1, "rgba(0,229,255,0)");
+        ctx.fillStyle = grad;
+        ctx.fillRect(jx - 66, jy - 96 + bob, 132, 132);
+        px.draw(ctx, px.jarvis, jx, jy + bob, 112, 140);
+        if (jarvisAlert) {
+          const bx = jx + 54, by = jy - 140 + bob;
+          ctx.fillStyle = "rgba(11,4,22,0.92)";
+          ctx.beginPath(); ctx.arc(bx, by, 17, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = PALETTE.pink; ctx.lineWidth = 2.5; ctx.stroke();
+          ctx.fillStyle = PALETTE.pink;
+          ctx.font = "800 22px system-ui, sans-serif";
+          ctx.textAlign = "center"; ctx.textBaseline = "middle";
+          ctx.fillText("!", bx, by + 1);
+        }
+      }
+    }
+
     /* El jugador: el avatar único con gorra, del tamaño de los vecinos,
        con su flecha «estás aquí» y la pastilla VOS sobre la cabeza.
        Con atuendo de la Tienda usa su paleta; con vehículo equipado se le
@@ -1514,6 +1547,9 @@ export function createRenderer(canvas) {
     },
     setPlayer(state) {
       playerState = state || null;
+    },
+    setJarvisAlert(value) {
+      jarvisAlert = !!value;
     },
     setSelected(rect, accent = PALETTE.pink) {
       selectedRect = rect || null;
