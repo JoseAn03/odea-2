@@ -27,7 +27,7 @@ import { buildDistrictPanel } from "./district-figures.js";
 import { renderHud, renderSheet, renderTabs } from "./hud-ui.js";
 import { routeForDay } from "../src/gameplay.js";
 import { campaignStateOf, campaignView } from "../src/campaign-state.js";
-import { CAMPAIGN_MISSIONS } from "../src/campaigns.js";
+import { CAMPAIGNS, CAMPAIGN_MISSIONS } from "../src/campaigns.js";
 import { garageView } from "../src/garage-state.js";
 import { ianView } from "../src/ian-state.js";
 import { buildProgressSummary, jarvisView } from "../src/jarvis-state.js";
@@ -628,7 +628,7 @@ function closeCampaign() {
 }
 
 function renderActiveCampaign() {
-  const inPhone = !els.phoneBackdrop.hidden && ["brete", "gamer"].includes(phoneView);
+  const inPhone = !els.phoneBackdrop.hidden && Boolean(CAMPAIGNS[phoneView]);
   if (garageOpen && !inPhone) { renderGaragePanel(); return; }
   if (ianOpen && !inPhone) { renderIanPanel(); return; }
   if (jarvisOpen && !inPhone) { renderJarvisPanel(); return; }
@@ -1233,6 +1233,32 @@ function showPhoneMissions() {
     button.addEventListener("click", () => openCampaign(id, true));
     root.append(button);
   }
+  /* v0.40.2 (auditoría completa, pedido de José): la app de Misiones debe
+     mostrar TODAS las campañas y sistemas activos, no solo El Brete y
+     Zona Gamer. Las demás campañas se abren en el mismo teléfono; los
+     sistemas vivos (Garaje e Ian) abren su panel, como desde la ciudad.
+     El SJO Decision Lab («eventos») queda fuera a propósito: es el evento
+     guardado, no el activo (hoy el activo es Operación Entrevista). */
+  root.append(phoneEl("h4", "phone-screen-group", "Más campañas"));
+  for (const id of ["academia", "zonaia", "sabiduria", "entrevista"]) {
+    const view = campaignView(bundle, id);
+    const button = phoneEl("button", "campaign-phone-route", `${view.name} · ${view.done}/${view.total} · ${view.percent}%`);
+    button.type = "button";
+    button.addEventListener("click", () => openCampaign(id, true));
+    root.append(button);
+  }
+  root.append(phoneEl("h4", "phone-screen-group", "Sistemas vivos"));
+  const garage = garageView(bundle, gameplayDate().date);
+  const garageDone = garage.missions.filter((m) => m.times > 0).length;
+  const garageBtn = phoneEl("button", "campaign-phone-route", `Garaje Vivo · ${garageDone}/${garage.missions.length} rutinas probadas`);
+  garageBtn.type = "button";
+  garageBtn.addEventListener("click", () => { closePhone(); openGarage(); });
+  root.append(garageBtn);
+  const ian = ianView(bundle, gameplayDate().date);
+  const ianBtn = phoneEl("button", "campaign-phone-route", `El Mundo de Ian · ${ian.probadas}/${ian.total} actividades probadas`);
+  ianBtn.type = "button";
+  ianBtn.addEventListener("click", () => { closePhone(); openIan(); });
+  root.append(ianBtn);
   if (els.phoneHome) els.phoneHome.hidden = true;
   root.hidden = false;
 }
