@@ -22,6 +22,7 @@ import {
   JARVIS_FEEDBACK_DAILY_LIMIT,
   JARVIS_QUIZ_DAILY_LIMIT,
   JARVIS_QUIZ_XP,
+  JARVIS_QUIZ_XP_PER_HIT,
 } from "../src/jarvis-state.js";
 import { askJarvis, jarvisConfigured } from "./jarvis-client.js";
 
@@ -178,6 +179,7 @@ export function renderJarvis(root, options = {}) {
   function renderFoot() {
     foot.replaceChildren(
       `Hoy: quiz XP ${session.counts.quizXp}/${JARVIS_QUIZ_XP * JARVIS_QUIZ_DAILY_LIMIT}` +
+      ` · rondas con XP: ${session.counts.quizUsed}/${JARVIS_QUIZ_DAILY_LIMIT}` +
       ` · mensajes ${session.counts.chatUsed}/${JARVIS_CHAT_DAILY_LIMIT}` +
       ` · revisiones ${session.counts.feedbackUsed}/${JARVIS_FEEDBACK_DAILY_LIMIT}`);
   }
@@ -213,9 +215,14 @@ export function renderJarvis(root, options = {}) {
   function showQuizTopics() {
     panel.replaceChildren();
     panel.append(el("h3", "jarvis-panel-title", "Practicar — elegí un tema"));
-    if (session.counts.quizUsed >= JARVIS_QUIZ_DAILY_LIMIT) {
+    const restantes = JARVIS_QUIZ_DAILY_LIMIT - session.counts.quizUsed;
+    if (restantes > 0) {
       panel.append(el("p", "jarvis-note",
-        "Ya usaste tus 2 quizzes con XP de hoy. Podés seguir practicando, pero sin XP."));
+        `Te queda${restantes === 1 ? "" : "n"} ${restantes} ronda${restantes === 1 ? "" : "s"} con XP hoy: ` +
+        `${JARVIS_QUIZ_XP_PER_HIT} XP por acierto, y la ronda cuenta solo cuando la completás.`));
+    } else {
+      panel.append(el("p", "jarvis-note",
+        "Ya usaste tus 2 rondas con XP de hoy. Podés seguir practicando, pero sin XP."));
     }
     const list = el("div", "jarvis-topics");
     for (const topic of QUIZ_TOPICS) {
@@ -237,10 +244,11 @@ export function renderJarvis(root, options = {}) {
       panel.append(actionButton("Volver", showQuizTopics));
       return;
     }
-    /* El Worker devuelve una ronda de 5 preguntas. La economía del
-     * spec no cambia: la ronda cuenta como UN quiz y solo la PRIMERA
-     * pregunta paga los 10 XP (máx. 2 rondas con XP al día); las
-     * demás son práctica, que es justo lo que José necesita. */
+    /* El Worker devuelve una ronda de 5 preguntas. Regla v0.39.1: la
+     * ronda se registra SOLO al completarla (ver showQuestion), paga
+     * 2 XP por acierto (máx. 10 por ronda) y hay hasta 2 rondas con XP
+     * al día; abandonar antes no consume nada y las rondas extra son
+     * práctica sin XP. */
     const round = {
       withXp: session.counts.quizUsed < JARVIS_QUIZ_DAILY_LIMIT,
       hits: 0
@@ -254,7 +262,7 @@ export function renderJarvis(root, options = {}) {
     const isLast = index === questions.length - 1;
     panel.replaceChildren();
     panel.append(el("p", "campaign-eyebrow",
-      `QUIZ · ${topic.label.toUpperCase()} · PREGUNTA ${index + 1} DE ${questions.length}${isFirst && round.withXp ? ` · LA PRIMERA VALE ${JARVIS_QUIZ_XP} XP` : ""}`));
+      `QUIZ · ${topic.label.toUpperCase()} · PREGUNTA ${index + 1} DE ${questions.length}${isFirst ? (round.withXp ? ` · ${JARVIS_QUIZ_XP_PER_HIT} XP POR ACIERTO` : " · PRÁCTICA SIN XP") : ""}`));
     panel.append(el("h3", "jarvis-panel-title", quiz.question));
     const optionsBox = el("div", "jarvis-options");
     const feedback = el("p", "jarvis-note");
@@ -271,20 +279,24 @@ export function renderJarvis(root, options = {}) {
         if (!correct) button.classList.add("jarvis-opt--bad");
 
         let line = correct ? "¡Correcto!" : "Esta vez no: la respuesta correcta está marcada.";
-        if (isFirst && round.withXp) {
-          const xp = correct ? JARVIS_QUIZ_XP : 0;
+        if (quiz.explanation) line += ` ${quiz.explanation}`;
+        if (isLast && round.withXp) {
+          /* Regla v0.39.1: recién AQUÍ, al completar la ronda, se
+           * despacha la ÚNICA mutación del quiz, con el XP de los
+           * aciertos (2 XP c/u). Abandonar antes no consume ni paga. */
+          const xp = round.hits * JARVIS_QUIZ_XP_PER_HIT;
           const recorded = typeof options.onQuiz === "function" ? await options.onQuiz(xp) : null;
           if (recorded && recorded.status === "applied") {
             session.counts.quizUsed += 1;
             session.counts.quizXp += xp;
             renderFoot();
-            line = correct ? `¡Correcto! +${xp} XP para vos.` : "Esta vez no: la respuesta correcta está marcada. El intento quedó registrado.";
+            line += ` Ronda terminada: acertaste ${round.hits} de ${questions.length}. +${xp} XP para vos.`;
           } else {
-            line += " (No se pudo registrar el XP, pero la práctica cuenta.)";
+            line += ` Ronda terminada: acertaste ${round.hits} de ${questions.length}. (No se pudo registrar el XP, pero la práctica cuenta.)`;
           }
+        } else if (isLast) {
+          line += ` Ronda terminada: acertaste ${round.hits} de ${questions.length}.`;
         }
-        if (quiz.explanation) line += ` ${quiz.explanation}`;
-        if (isLast) line += ` Ronda terminada: acertaste ${round.hits} de ${questions.length}.`;
         feedback.replaceChildren(line);
         const nav = el("div", "jarvis-topics");
         if (!isLast) {

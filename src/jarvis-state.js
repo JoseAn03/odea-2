@@ -13,8 +13,11 @@
  *     briefing: { date, text } | null,             // saludo del día en caché
  *   }
  *
- * El XP de quiz suma al bucket «career» vía derive() (jarvisRewards), con
- * tope duro: 2 quizzes con XP por día × 10 XP = 20 XP/día, sin monedas.
+ * El XP de quiz suma al bucket «career» vía derive() (jarvisRewards):
+ * 2 XP por acierto en una ronda de 5 (máx. 10 por ronda), con tope duro
+ * de 2 rondas con XP por día = 20 XP/día, sin monedas. La ronda se
+ * registra SOLO al completarla (regla v0.39.1): abandonar antes de la
+ * 5.ª pregunta no consume cupo ni paga nada.
  * Los contadores de uso ponen los límites diarios del Worker (chat 20,
  * feedback 5) del lado del cliente; el Worker impone los suyos propios.
  */
@@ -27,6 +30,7 @@ import { planDayFor, routeForDay } from "./gameplay.js";
 import { CAMPAIGNS } from "./campaigns.js";
 
 export const JARVIS_QUIZ_XP = 10;
+export const JARVIS_QUIZ_XP_PER_HIT = 2;
 export const JARVIS_QUIZ_DAILY_LIMIT = 2;
 export const JARVIS_CHAT_DAILY_LIMIT = 20;
 export const JARVIS_FEEDBACK_DAILY_LIMIT = 5;
@@ -189,8 +193,13 @@ export function applyJarvisMutation(draft, mutation, { date } = {}) {
   const state = ensureState(draft);
 
   if (mutation.type === "jarvis.quiz") {
+    /* La despacha la UI UNA sola vez, al completar la ronda: xpAwarded
+     * son los aciertos × JARVIS_QUIZ_XP_PER_HIT (0, 2, 4, 6, 8 o 10).
+     * Recién aquí se consume la ronda con XP del día. */
     const xp = mutation.xpAwarded;
-    if (!Number.isInteger(xp) || xp < 0 || xp > JARVIS_QUIZ_XP) return no("BAD_QUIZ_XP");
+    if (!Number.isInteger(xp) || xp < 0 || xp > JARVIS_QUIZ_XP || xp % JARVIS_QUIZ_XP_PER_HIT !== 0) {
+      return no("BAD_QUIZ_XP");
+    }
     const usage = usageOf(state, date);
     if (usage.quiz >= JARVIS_QUIZ_DAILY_LIMIT) return no("JARVIS_QUIZ_LIMIT");
     usage.quiz += 1;

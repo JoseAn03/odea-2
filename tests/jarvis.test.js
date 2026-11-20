@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import {
   JARVIS_QUIZ_XP,
+  JARVIS_QUIZ_XP_PER_HIT,
   buildProgressSummary,
   jarvisProblems,
   jarvisRewards,
@@ -71,6 +72,43 @@ test("jarvis: dos quizzes por día suman máximo 20 XP y el tercero se rechaza",
   assert.equal(view.quizXpToday, 20);
   assert.equal(view.quizRestantes, 0);
   assert.equal(view.quizXpDisponible, 0);
+});
+
+test("jarvis: una ronda completada con 3 aciertos paga 6 XP y consume UNA ronda (regla v0.39.1)", () => {
+  const s = fresh();
+  const xp = 3 * JARVIS_QUIZ_XP_PER_HIT;
+  assert.equal(xp, 6);
+  assert.equal(quiz(s, xp).status, "applied");
+  const view = jarvisView(saved(s), date);
+  assert.equal(view.quizXpToday, 6);
+  assert.equal(view.quizRestantes, 1);
+  assert.deepEqual(jarvisRewards(saved(s)), { xp: 6, coins: 0 });
+});
+
+test("jarvis: completar una ronda sin aciertos consume la ronda y paga 0 XP", () => {
+  const s = fresh();
+  assert.equal(quiz(s, 0).status, "applied");
+  const view = jarvisView(saved(s), date);
+  assert.equal(view.quizRestantes, 1);
+  assert.equal(view.quizXpToday, 0);
+});
+
+test("jarvis: xpAwarded que no son 2 XP por acierto (impar) se rechaza sin tocar el save", () => {
+  const s = fresh();
+  const beforeRaw = s.getItem(STORAGE_KEYS.bundle);
+  assert.notEqual(quiz(s, 5).status, "applied");
+  assert.notEqual(quiz(s, 7).status, "applied");
+  assert.equal(s.getItem(STORAGE_KEYS.bundle), beforeRaw);
+});
+
+test("jarvis: la UI registra el quiz SOLO al completar la ronda (regla v0.39.1)", () => {
+  const ui = fs.readFileSync(new URL("../js/jarvis-ui.js", import.meta.url), "utf8");
+  assert.ok(ui.includes("JARVIS_QUIZ_XP_PER_HIT"), "la UI paga 2 XP por acierto");
+  assert.ok(ui.includes("round.hits * JARVIS_QUIZ_XP_PER_HIT"), "el XP se calcula con los aciertos al cierre de la ronda");
+  assert.equal((ui.match(/options\.onQuiz\(/g) || []).length, 1, "hay UN solo despacho de quiz: el del cierre");
+  assert.ok(!ui.includes("LA PRIMERA VALE"), "la regla vieja (la 1.ª pregunta paga) quedó abolida");
+  assert.ok(!ui.includes("El intento quedó registrado"), "ya no se registra nada al responder la 1.ª pregunta");
+  assert.ok(ui.includes("rondas con XP:"), "el pie muestra las rondas con XP del día");
 });
 
 test("jarvis: xpAwarded fuera de rango (50) se rechaza sin tocar el save", () => {
