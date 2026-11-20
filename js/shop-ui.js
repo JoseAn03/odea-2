@@ -22,7 +22,7 @@ function node(tag, cls, text) {
 function itemCard(item, state, balance, actions) {
   const card = node("article", "shop-card");
   const preview = node("div", "shop-preview");
-  const canvas = item.kind === "outfit" ? outfitSprite(item.pal, item.gorra) : vehicleSprite(item.spec);
+  const canvas = item.kind === "outfit" ? outfitSprite(item.pal, item.gorra, item.look) : vehicleSprite(item.spec);
   if (canvas) {
     canvas.className = item.kind === "outfit" ? "shop-sprite-outfit" : "shop-sprite-vehicle";
     preview.append(canvas);
@@ -113,6 +113,20 @@ export function renderShop(root, { bundle, actions, standalone = false }) {
     root.append(node("p", "phone-screen-sub", "Bienvenido a los precios bajos · El Mercado, manzana este"));
   }
   root.append(node("p", "shop-balance", `Tu saldo: ₡${fmt(balance)} ODEA virtuales`));
+
+  /* v0.40.0 · Mi inventario: todo lo que ya es tuyo, listo para cambiar
+     el atuendo equipado cuando quieras, sin volver a pagar. */
+  const ownedOutfits = SHOP_ITEMS.filter((i) => i.kind === "outfit" && ownsItem(state, i.id));
+  if (ownedOutfits.length) {
+    root.append(node("h4", "shop-section", "Mi inventario · Atuendos"));
+    root.append(node(
+      "p", "shop-note",
+      "Esto ya es tuyo: tocalo para cambiar de atuendo cuando quieras. No se vuelve a pagar."
+    ));
+    const inv = node("div", "shop-grid");
+    for (const item of ownedOutfits) inv.append(itemCard(item, state, balance, actions));
+    root.append(inv);
+  }
 
   for (const [kind, title] of [["outfit", "Atuendos"], ["vehicle", "Vehículos"]]) {
     root.append(node("h4", "shop-section", title));

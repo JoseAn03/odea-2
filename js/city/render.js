@@ -1094,8 +1094,8 @@ export function createRenderer(canvas) {
       }
     }
 
-    /* El jugador: el avatar único con gorra, del tamaño de los vecinos,
-       con su flecha «estás aquí» y la pastilla VOS sobre la cabeza.
+    /* El jugador: el avatar único con gorra, un poco más grande que los
+       vecinos (v0.40.0), con su flecha «estás aquí» y la pastilla VOS.
        Con atuendo de la Tienda usa su paleta; con vehículo equipado se le
        ve montado (la moto trae piloto; en el carro manda la pastilla VOS). */
     if (playerVisible && playerState) {
@@ -1127,14 +1127,18 @@ export function createRenderer(canvas) {
           }
         }
         if (pillBottom === null) {
-          ctx.fillStyle = "rgba(6,10,18,0.30)";
-          ctx.beginPath();
-          ctx.ellipse(st.x, st.y + 24, 17, 6, 0, 0, Math.PI * 2);
-          ctx.fill();
-          const pstep = st.moving && !reduced ? Math.floor(time * 7) % 2 : 0;
+          /* v0.40.0: el jugador usa los cuadros grandes 20×26 (caminar
+             de 4) del atuendo equipado; el clásico incluido. El juego de
+             cuadros viejo queda solo como respaldo. */
           let set = px.player;
-          const outfitItem = look.outfitId && look.outfitId !== "clasico" ? shopItem(look.outfitId) : null;
-          if (outfitItem && px.characterFrames) {
+          const outfitItem = look.outfitId ? shopItem(look.outfitId) : null;
+          if (outfitItem && outfitItem.look && px.characterFrames2) {
+            if (lookCache.outfitId !== outfitItem.id) {
+              lookCache.outfitId = outfitItem.id;
+              lookCache.outfitFrames = px.characterFrames2(outfitItem.look);
+            }
+            if (lookCache.outfitFrames) set = lookCache.outfitFrames;
+          } else if (outfitItem && outfitItem.id !== "clasico" && px.characterFrames) {
             if (lookCache.outfitId !== outfitItem.id) {
               lookCache.outfitId = outfitItem.id;
               lookCache.outfitFrames = px.characterFrames(outfitItem.pal, outfitItem.gorra);
@@ -1142,8 +1146,18 @@ export function createRenderer(canvas) {
             if (lookCache.outfitFrames) set = lookCache.outfitFrames;
           }
           const frames = st.dir === "back" ? set.back : st.dir === "side" ? set.side : set.front;
-          px.draw(ctx, frames[pstep], st.x, st.y + 26, 42, 52, st.flip);
-          pillBottom = st.y - 36 + bob;
+          const pstep = st.moving && !reduced
+            ? Math.floor(time * 8) % frames.length
+            : (frames.length > 2 ? 1 : 0);
+          const pw = set.big ? 50 : 42;
+          const ph = set.big ? 65 : 52;
+          const bobY = st.moving && !reduced && set.big ? (pstep % 2 ? -2 : 0) : 0;
+          ctx.fillStyle = "rgba(6,10,18,0.30)";
+          ctx.beginPath();
+          ctx.ellipse(st.x, st.y + 24, set.big ? 20 : 17, 6, 0, 0, Math.PI * 2);
+          ctx.fill();
+          px.draw(ctx, frames[pstep], st.x, st.y + 26 + bobY, pw, ph, st.flip);
+          pillBottom = st.y + 26 - ph - 10 + bob;
         }
         if (px.vos) px.draw(ctx, px.vos, st.x, pillBottom, 56, 25);
         ctx.fillStyle = PALETTE.cyan;
