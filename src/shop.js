@@ -25,8 +25,8 @@
 const S = "#F2B183"; // tono de piel del avatar (el mismo de pixel.js)
 const SS = "#D98E5F"; // sombra de piel
 
-/* v0.40.0: los atuendos traen `look`, la receta del sprite grande
-   (20×26, caminar de 4 cuadros) que pinta js/city/pixel.js: cabeza,
+/* v0.40.0/v0.40.1: los atuendos traen `look`, la receta del sprite
+   grande (18×28, caminar de 4 cuadros) que pinta js/city/pixel.js: cabeza,
    cara, torso, brazos, piernas, detalle (overlay) y la paleta completa
    con las claves de pierna 1/2/3 (zonas alta/media/baja), 4/5/6 (sus
    sombras para la pierna lejana en vista lateral) y z (sombra del

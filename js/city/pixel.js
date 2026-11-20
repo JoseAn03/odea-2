@@ -9,7 +9,7 @@
  * cuadros; carros y moto con piloto bien dibujados. Es SOLO una capa visual
  * sobre el render existente: no toca datos, progreso ni lógica.
  *
- * El avatar del jugador es único (v0.40.0): se pinta aparte en 20×26 con
+ * El avatar del jugador es único (v0.40.0, delgado en v0.40.1): se pinta aparte en 18×28 con
  * caminar de 4 cuadros desde el diseño aprobado por José — gorra azul,
  * hawaiana rosada, jeans y tenis — y cada atuendo de la Tienda trae su
  * receta `look`. Los NPC se generan sin gorra a propósito.
@@ -439,20 +439,34 @@ export function outfitSprite(pal, gorra, look) {
   return spriteCanvas(FRENTE_A, pal, gorra);
 }
 
-/* ================= v0.40.0: el jugador grande (20×26) ===================
- * El avatar de José se redibuja desde el diseño aprobado (gorra azul,
- * hawaiana rosada con palmeras, jeans, tenis blancos) en una rejilla de
- * 20×26 — un poco más grande que los vecinos de 16×20 — con caminar de
- * 4 cuadros por dirección: zancada, apoyo, zancada contraria y apoyo
- * con el pie saliendo, más balanceo de brazos y de cuerpo (en el
- * render). Cada atuendo de la Tienda es una receta `look` (src/shop.js)
- * que estos pintores traducen a píxeles: cabeza, cara, torso, brazos y
- * piernas por zonas, con un detalle final por atuendo (palmeras,
- * telarañas, reactor, parche de la Sele). charRows() es puro (sin DOM)
- * para que los tests validen geometría, paletas y ciclo de caminata. */
+/* ================= v0.40.1: el jugador delgado (18×28) =================
+ * José sobre la v0.40.0: «lo veo muy grueso el personaje; me gustaría un
+ * tipo más delgadito» y «hazlo mejor detallado». Tenía dos causas: el
+ * cuerpo 20×26 era ancho (torso de 12, piernas de 4) y, peor, el lienzo
+ * salía de spriteCanvas() — fijo en 16×20 — así que la rejilla se
+ * RECORTABA: en pantalla no se veían las piernas bajas ni los zapatos y
+ * el torso se estiraba a 50×65. Un torso flotante y ancho: «muy grueso».
+ *
+ * v0.40.1 rehace el cuerpo sobre el diseño aprobado (gorra azul con
+ * estrellita, hawaiana rosada con palmeras, jeans, tenis blancos) en una
+ * rejilla de 18×28 — más alta y más angosta — con lienzo propio del
+ * tamaño exacto de la rejilla (charCanvas ya no usa spriteCanvas).
+ * Proporciones delgadas: cabeza de 8, torso de 10, brazos de 2 (el
+ * Gigante Verde conserva sus brazos musculosos de 3 y el Rey Caparazón
+ * su caparazón, montados sobre la misma figura), piernas de 3. Más
+ * detalle: pecas, nariz y boca, sombra de mandíbula, cuello en V con
+ * botones y bolsillo en la camisa, cinturón con hebilla, sombras de
+ * torso y brazos, cresta en el casco, costuras en el overol. El caminar
+ * sigue siendo de 4 cuadros por dirección (zancada, apoyo, zancada
+ * contraria, apoyo con pie saliendo) con balanceo de brazos contrario.
+ * Cada atuendo de la Tienda es una receta `look` (src/shop.js) que estos
+ * pintores traducen a píxeles por zonas. charRows() es puro (sin DOM)
+ * para que los tests validen geometría, paletas, proporciones y ciclo. */
 
-export const CHAR_W = 20;
-export const CHAR_H = 26;
+export const CHAR_W = 18;
+export const CHAR_H = 28;
+/** Fila donde empiezan las piernas (0–9 cabeza, 10 cuello, 11–19 torso). */
+export const CHAR_LEG_TOP = 20;
 
 function gridBlank() {
   return Array.from({ length: CHAR_H }, () => Array(CHAR_W).fill("."));
@@ -464,133 +478,138 @@ function gRect(g, x, y, w, h, ch) {
   for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) gSet(g, i, j, ch);
 }
 
-/* Piernas por cuadro (filas 18–25). Claves: 1/2/3 = zonas alta, media y
- * baja de la pierna cercana (o de ambas en frente/espalda); 4/5/6 y z =
+/* Piernas por cuadro (filas 20–27, 3 de ancho por pierna). Claves: 1/2/3
+ * = zonas alta, media y baja de la pierna (en la receta `look` dan
+ * pantalón largo, short + piel o medias según el atuendo); 4/5/6 y z =
  * las mismas zonas en sombra para la pierna lejana en vista lateral. */
 const LEGS_FRONT = [
   [ // zancada izquierda: la derecha va levantada atrás
-    ".....1111..1111.....", ".....1111..1111.....", ".....2222..2222.....", ".....2222...........",
-    ".....3333...ZZZZ....", ".....3333...ZZZZ....", "....ZZZZZ...........", "....ZZZZZ..........."
+    ".....111..111.....", ".....111..111.....", ".....222..222.....", ".....222..ZZZZ....",
+    ".....333..ZZZ.....", ".....333..........", "....zZZZ..........", "....ZZZZ.........."
   ],
-  [ // apoyo: piernas juntas
-    "......11111111......", "......11111111......", "......22222222......", "......22222222......",
-    "......33333333......", "......33333333......", ".....ZZZZZZZZZZ.....", ".....ZZZZZZZZZZ....."
+  [ // apoyo: piernas juntas, con la costura central en sombra
+    ".....11141111.....", ".....11141111.....", ".....22242222.....", ".....22222222.....",
+    ".....33333333.....", ".....33333333.....", "....zZZZ..ZZZz....", "....ZZZZ..ZZZZ...."
   ],
   [ // zancada derecha (espejo)
-    ".....1111..1111.....", ".....1111..1111.....", ".....2222..2222.....", "...........2222.....",
-    "....ZZZZ...3333.....", "....ZZZZ...3333.....", "...........ZZZZZ....", "...........ZZZZZ...."
+    ".....111..111.....", ".....111..111.....", ".....222..222.....", "....ZZZZ..222.....",
+    ".....ZZZ..333.....", "..........333.....", "..........ZZZz....", "..........ZZZZ...."
   ],
   [ // apoyo con el pie derecho saliendo
-    ".....1111..1111.....", ".....1111..1111.....", ".....2222..2222.....", ".....2222..2222.....",
-    ".....3333..3333.....", ".....3333...ZZZZ....", "....ZZZZZ...........", "....ZZZZZ..........."
+    ".....111..111.....", ".....111..111.....", ".....222..222.....", ".....222..222.....",
+    ".....333..333.....", ".....333...ZZZ....", "....zZZZ..........", "....ZZZZ.........."
   ]
 ];
 const LEGS_SIDE = [
   [ // zancada: cercana adelante, lejana atrás
-    ".....4444..1111.....", "....4444...1111.....", "...5555....2222.....", "...5555.....2222....",
-    "..6666.......3333...", "..6666.......3333...", ".zzzzz.......ZZZZZ..", ".zzzzz.......ZZZZZ.."
+    "....444..111......", "...444....111.....", "...555.....222....", "...555......222...",
+    "..666.......333...", "..666.......333...", ".zzzz.......ZZZZ..", ".zzzz.......ZZZZ.."
   ],
   [ // apoyo: piernas juntas
-    ".......444111.......", ".......444111.......", ".......555222.......", ".......555222.......",
-    ".......666333.......", ".......666333.......", "......zzzzZZZZ......", "......zzzzZZZZ......"
+    "......444111......", "......444111......", "......555222......", "......555222......",
+    "......666333......", "......666333......", ".....zzzzZZZZ.....", ".....zzzzZZZZ....."
   ],
   [ // zancada contraria: cercana atrás, lejana adelante
-    ".....4444..1111.....", "....1111...4444.....", "...2222....5555.....", "...2222.....5555....",
-    "..3333.......6666...", "..3333.......6666...", ".ZZZZZ.......zzzzz..", ".ZZZZZ.......zzzzz.."
+    "....111..444......", ".....111....444...", "....222.....555...", "...222......555...",
+    "...333.......666..", "...333.......666..", "..ZZZZ.......zzzz.", "..ZZZZ.......zzzz."
   ],
   [ // apoyo: cercana recta, lejana saliendo de puntillas
-    ".....4444..1111.....", "......44441111......", ".....5555..2222.....", "....5555...2222.....",
-    "...6666...3333......", "..zzzzz...3333......", ".........ZZZZZ......", ".........ZZZZZ......"
+    "....444..111......", ".....444.111......", "....555...222.....", "....555....222....",
+    "...666.....333....", "...zzz.....333....", "...........ZZZZ...", "...........ZZZZ..."
   ]
 ];
 
 /* ------------------------------ cabezas ------------------------------ */
 function faceExtrasFront(g, look) {
-  if (look.face === "sunglasses") { gRect(g, 6, 6, 8, 2, "K"); gSet(g, 7, 6, "W"); }
-  if (look.face === "mustache") gRect(g, 7, 8, 6, 1, "K");
-  if (look.face === "scar") { gSet(g, 12, 7, "s"); gSet(g, 12, 8, "s"); }
-  if (look.face === "angry") { gRect(g, 6, 5, 3, 1, "K"); gRect(g, 11, 5, 3, 1, "K"); }
+  if (look.face === "sunglasses") { gRect(g, 6, 5, 6, 2, "K"); gSet(g, 7, 5, "W"); }
+  if (look.face === "mustache") gRect(g, 7, 7, 4, 1, "K");
+  if (look.face === "scar") { gSet(g, 11, 6, "s"); gSet(g, 11, 7, "s"); }
+  if (look.face === "angry") { gRect(g, 6, 4, 2, 1, "K"); gRect(g, 10, 4, 2, 1, "K"); }
 }
 function eyesFront(g) {
-  gSet(g, 7, 6, "E"); gSet(g, 12, 6, "E");
-  gSet(g, 10, 7, "s");
-  gSet(g, 9, 8, "s"); gSet(g, 10, 8, "s");
+  gSet(g, 7, 5, "E"); gSet(g, 10, 5, "E");
+  gSet(g, 6, 6, "s"); gSet(g, 11, 6, "s"); /* pecas en las mejillas */
+  gSet(g, 8, 6, "s");                      /* nariz */
+  gSet(g, 8, 7, "s"); gSet(g, 9, 7, "s");  /* boca */
+  gSet(g, 6, 8, "s"); gSet(g, 11, 8, "s"); /* sombra de la mandíbula */
 }
 
 function headFront(g, look) {
   const head = look.head;
   if (head === "cube") {
-    gRect(g, 4, 1, 12, 2, "H");
-    gRect(g, 4, 3, 12, 6, "S");
-    gRect(g, 15, 3, 1, 6, "s");
-    gSet(g, 7, 5, "W"); gSet(g, 8, 5, "E"); gSet(g, 11, 5, "W"); gSet(g, 12, 5, "E");
-    gRect(g, 9, 7, 2, 1, "s");
-    gRect(g, 8, 8, 4, 1, "s");
+    gRect(g, 4, 1, 10, 2, "H");
+    gRect(g, 4, 3, 10, 7, "S");
+    gRect(g, 13, 3, 1, 7, "s");
+    gSet(g, 6, 5, "W"); gSet(g, 7, 5, "E"); gSet(g, 10, 5, "W"); gSet(g, 11, 5, "E");
+    gRect(g, 8, 7, 2, 1, "s");
+    gRect(g, 7, 8, 4, 1, "s");
     return;
   }
   if (head === "mask") {
-    gRect(g, 5, 1, 10, 8, "M");
-    for (const [x, y] of [[6, 4], [7, 4], [6, 5], [7, 5], [7, 6], [12, 4], [13, 4], [12, 5], [13, 5], [12, 6]]) gSet(g, x, y, "W");
+    gRect(g, 5, 1, 8, 9, "M");
+    gRect(g, 12, 2, 1, 7, "s");
+    for (const [x, y] of [[6, 4], [7, 4], [6, 5], [7, 5], [7, 6], [10, 4], [11, 4], [10, 5], [11, 5], [10, 6]]) gSet(g, x, y, "W");
     return;
   }
   if (head === "helmet") {
-    gRect(g, 5, 1, 10, 8, "C");
-    gRect(g, 6, 4, 8, 5, "A");
-    gRect(g, 7, 5, 2, 1, "W"); gRect(g, 11, 5, 2, 1, "W");
-    gRect(g, 8, 8, 4, 1, "K");
+    gRect(g, 5, 1, 8, 9, "C");
+    gRect(g, 8, 1, 2, 3, "t"); /* cresta dorada */
+    gRect(g, 6, 4, 6, 6, "A");
+    gRect(g, 7, 5, 2, 1, "W"); gRect(g, 10, 5, 2, 1, "W");
+    gRect(g, 8, 8, 2, 1, "K"); /* ranura de la boca */
     return;
   }
   if (head === "horns") {
-    gSet(g, 8, 0, "H"); gSet(g, 10, 0, "H"); gSet(g, 12, 0, "H");
-    gRect(g, 7, 1, 6, 1, "H");
+    gSet(g, 6, 0, "H"); gSet(g, 8, 0, "H"); gSet(g, 10, 0, "H");
+    gRect(g, 6, 1, 6, 1, "H");
     gSet(g, 3, 2, "W"); gSet(g, 4, 2, "W"); gSet(g, 4, 3, "W");
-    gSet(g, 16, 2, "W"); gSet(g, 15, 2, "W"); gSet(g, 15, 3, "W");
-    gRect(g, 5, 2, 10, 7, "S");
-    gRect(g, 6, 4, 3, 1, "K"); gRect(g, 11, 4, 3, 1, "K");
-    gSet(g, 7, 5, "E"); gSet(g, 12, 5, "E");
-    gRect(g, 7, 7, 6, 2, "t");
-    gSet(g, 8, 7, "K"); gSet(g, 11, 7, "K");
-    gSet(g, 7, 8, "W"); gSet(g, 12, 8, "W");
+    gSet(g, 13, 2, "W"); gSet(g, 14, 2, "W"); gSet(g, 13, 3, "W");
+    gRect(g, 5, 2, 8, 8, "S");
+    gRect(g, 6, 4, 2, 1, "K"); gRect(g, 10, 4, 2, 1, "K");
+    gSet(g, 7, 5, "E"); gSet(g, 10, 5, "E");
+    gRect(g, 6, 7, 6, 2, "t");
+    gSet(g, 7, 7, "K"); gSet(g, 10, 7, "K");
+    gSet(g, 6, 8, "W"); gSet(g, 11, 8, "W");
     return;
   }
   if (head === "cap") {
-    gRect(g, 6, 0, 8, 1, "C");
-    gRect(g, 5, 1, 10, 2, "C");
+    gRect(g, 6, 0, 6, 1, "C");
+    gRect(g, 5, 1, 8, 2, "C");
     if (look.emblem === "star") {
-      gSet(g, 10, 0, "A"); gSet(g, 9, 1, "A"); gSet(g, 10, 1, "A"); gSet(g, 11, 1, "A"); gSet(g, 10, 2, "A");
+      gSet(g, 8, 0, "A"); gSet(g, 7, 1, "A"); gSet(g, 8, 1, "A"); gSet(g, 9, 1, "A"); gSet(g, 8, 2, "A");
     }
-    if (look.emblem === "circle") gRect(g, 9, 1, 2, 2, "W");
-    gRect(g, 4, 3, 12, 1, "c");
-    gRect(g, 5, 4, 1, 2, "H"); gRect(g, 14, 4, 1, 2, "H");
-    gRect(g, 6, 4, 8, 5, "S");
+    if (look.emblem === "circle") gRect(g, 8, 1, 2, 2, "W");
+    gRect(g, 4, 3, 10, 1, "c");
+    gRect(g, 5, 4, 1, 2, "H"); gRect(g, 12, 4, 1, 2, "H");
+    gRect(g, 6, 4, 6, 6, "S");
     eyesFront(g);
     faceExtrasFront(g, look);
     return;
   }
   if (head === "straw") {
-    gRect(g, 7, 0, 6, 1, "C");
-    gRect(g, 6, 1, 8, 1, "C");
-    gRect(g, 6, 2, 8, 1, "c");
-    gRect(g, 2, 3, 16, 1, "C");
-    gRect(g, 5, 4, 1, 2, "H"); gRect(g, 14, 4, 1, 2, "H");
-    gRect(g, 6, 4, 8, 5, "S");
+    gRect(g, 6, 0, 6, 1, "C");
+    gRect(g, 5, 1, 8, 1, "C");
+    gRect(g, 5, 2, 8, 1, "c");
+    gRect(g, 1, 3, 16, 1, "C");
+    gRect(g, 5, 4, 1, 2, "H"); gRect(g, 12, 4, 1, 2, "H");
+    gRect(g, 6, 4, 6, 6, "S");
     eyesFront(g);
     faceExtrasFront(g, look);
     return;
   }
   if (head === "spiky") {
-    gSet(g, 5, 0, "H"); gSet(g, 8, 0, "H"); gSet(g, 11, 0, "H"); gSet(g, 14, 0, "H");
-    gRect(g, 5, 1, 10, 2, "H");
-    gRect(g, 5, 3, 1, 2, "H"); gRect(g, 14, 3, 1, 2, "H");
-    gRect(g, 6, 3, 8, 6, "S");
+    gSet(g, 5, 0, "H"); gSet(g, 7, 0, "H"); gSet(g, 10, 0, "H"); gSet(g, 12, 0, "H");
+    gRect(g, 5, 1, 8, 2, "H");
+    gRect(g, 5, 3, 1, 2, "H"); gRect(g, 12, 3, 1, 2, "H");
+    gRect(g, 6, 3, 6, 7, "S");
     eyesFront(g);
     faceExtrasFront(g, look);
     return;
   }
   /* hair */
-  gRect(g, 5, 1, 10, 2, "H");
-  gRect(g, 5, 3, 1, 3, "H"); gRect(g, 14, 3, 1, 3, "H");
-  gRect(g, 6, 3, 8, 6, "S");
+  gRect(g, 5, 1, 8, 2, "H");
+  gRect(g, 5, 3, 1, 3, "H"); gRect(g, 12, 3, 1, 3, "H");
+  gRect(g, 6, 3, 6, 7, "S");
   eyesFront(g);
   faceExtrasFront(g, look);
 }
@@ -598,275 +617,302 @@ function headFront(g, look) {
 function headBack(g, look) {
   const head = look.head;
   if (head === "cube") {
-    gRect(g, 4, 1, 12, 3, "H");
-    gRect(g, 4, 4, 12, 5, "S");
-    gRect(g, 15, 4, 1, 5, "s");
+    gRect(g, 4, 1, 10, 3, "H");
+    gRect(g, 4, 4, 10, 6, "S");
+    gRect(g, 13, 4, 1, 6, "s");
     return;
   }
-  if (head === "mask") { gRect(g, 5, 1, 10, 8, "M"); return; }
+  if (head === "mask") { gRect(g, 5, 1, 8, 9, "M"); gRect(g, 12, 2, 1, 7, "s"); return; }
   if (head === "helmet") {
-    gRect(g, 5, 1, 10, 8, "C");
-    gRect(g, 9, 2, 2, 6, "t");
+    gRect(g, 5, 1, 8, 9, "C");
+    gRect(g, 8, 2, 2, 7, "t");
     return;
   }
   if (head === "horns") {
-    gSet(g, 8, 0, "H"); gSet(g, 10, 0, "H"); gSet(g, 12, 0, "H");
-    gRect(g, 7, 1, 6, 1, "H");
+    gSet(g, 6, 0, "H"); gSet(g, 8, 0, "H"); gSet(g, 10, 0, "H");
+    gRect(g, 6, 1, 6, 1, "H");
     gSet(g, 3, 2, "W"); gSet(g, 4, 2, "W"); gSet(g, 4, 3, "W");
-    gSet(g, 16, 2, "W"); gSet(g, 15, 2, "W"); gSet(g, 15, 3, "W");
-    gRect(g, 5, 2, 10, 7, "S");
+    gSet(g, 13, 2, "W"); gSet(g, 14, 2, "W"); gSet(g, 13, 3, "W");
+    gRect(g, 5, 2, 8, 8, "S");
     return;
   }
   if (head === "cap") {
-    gRect(g, 6, 0, 8, 1, "C");
-    gRect(g, 5, 1, 10, 2, "C");
-    gRect(g, 5, 3, 10, 1, "c");
-    gRect(g, 5, 4, 10, 5, "H");
+    gRect(g, 6, 0, 6, 1, "C");
+    gRect(g, 5, 1, 8, 2, "C");
+    gRect(g, 5, 3, 8, 1, "c");
+    gRect(g, 5, 4, 8, 6, "H");
     return;
   }
   if (head === "straw") {
-    gRect(g, 7, 0, 6, 1, "C");
-    gRect(g, 6, 1, 8, 1, "C");
-    gRect(g, 6, 2, 8, 1, "c");
-    gRect(g, 2, 3, 16, 1, "C");
-    gRect(g, 5, 4, 10, 5, "H");
+    gRect(g, 6, 0, 6, 1, "C");
+    gRect(g, 5, 1, 8, 1, "C");
+    gRect(g, 5, 2, 8, 1, "c");
+    gRect(g, 1, 3, 16, 1, "C");
+    gRect(g, 5, 4, 8, 6, "H");
     return;
   }
   if (head === "spiky") {
-    gSet(g, 5, 0, "H"); gSet(g, 8, 0, "H"); gSet(g, 11, 0, "H"); gSet(g, 14, 0, "H");
-    gRect(g, 5, 1, 10, 8, "H");
+    gSet(g, 5, 0, "H"); gSet(g, 7, 0, "H"); gSet(g, 10, 0, "H"); gSet(g, 12, 0, "H");
+    gRect(g, 5, 1, 8, 9, "H");
     return;
   }
-  gRect(g, 5, 1, 10, 8, "H");
+  gRect(g, 5, 1, 8, 9, "H");
 }
 
 function headSide(g, look) {
   const head = look.head;
   if (head === "cube") {
-    gRect(g, 5, 1, 11, 2, "H");
-    gRect(g, 5, 3, 11, 6, "S");
-    gRect(g, 5, 3, 1, 6, "s");
-    gSet(g, 13, 5, "W"); gSet(g, 14, 5, "E");
-    gRect(g, 11, 8, 3, 1, "s");
+    gRect(g, 5, 1, 10, 2, "H");
+    gRect(g, 5, 3, 10, 7, "S");
+    gRect(g, 5, 3, 1, 7, "s");
+    gSet(g, 11, 5, "W"); gSet(g, 12, 5, "E");
+    gRect(g, 10, 8, 3, 1, "s");
     return;
   }
   if (head === "mask") {
-    gRect(g, 6, 1, 9, 8, "M");
-    for (const [x, y] of [[12, 4], [13, 4], [13, 5], [13, 6]]) gSet(g, x, y, "W");
+    gRect(g, 6, 1, 8, 9, "M");
+    gRect(g, 6, 2, 1, 7, "s");
+    for (const [x, y] of [[11, 4], [12, 4], [12, 5], [12, 6]]) gSet(g, x, y, "W");
     return;
   }
   if (head === "helmet") {
-    gRect(g, 6, 1, 9, 8, "C");
-    gRect(g, 11, 3, 4, 6, "A");
-    gSet(g, 12, 5, "W"); gSet(g, 13, 5, "W");
+    gRect(g, 8, 0, 2, 1, "t");
+    gRect(g, 6, 1, 8, 9, "C");
+    gRect(g, 10, 3, 4, 7, "A");
+    gSet(g, 11, 5, "W"); gSet(g, 12, 5, "W");
     return;
   }
   if (head === "horns") {
-    gSet(g, 9, 0, "H"); gSet(g, 11, 0, "H");
-    gRect(g, 8, 1, 5, 1, "H");
+    gSet(g, 8, 0, "H"); gSet(g, 10, 0, "H");
+    gRect(g, 7, 1, 5, 1, "H");
     gSet(g, 4, 2, "W"); gSet(g, 5, 2, "W"); gSet(g, 5, 3, "W");
-    gRect(g, 6, 2, 9, 7, "S");
-    gRect(g, 11, 4, 3, 1, "K");
-    gSet(g, 12, 5, "E");
-    gRect(g, 11, 7, 4, 2, "t");
-    gSet(g, 13, 7, "K");
-    gSet(g, 14, 8, "W");
+    gRect(g, 6, 2, 8, 8, "S");
+    gRect(g, 10, 4, 3, 1, "K");
+    gSet(g, 11, 5, "E");
+    gRect(g, 10, 7, 4, 2, "t");
+    gSet(g, 12, 7, "K");
+    gSet(g, 13, 8, "W");
     return;
   }
   if (head === "cap") {
-    gRect(g, 7, 0, 8, 1, "C");
-    gRect(g, 6, 1, 9, 2, "C");
-    if (look.emblem === "star") gSet(g, 10, 1, "A");
-    if (look.emblem === "circle") gRect(g, 10, 1, 2, 1, "W");
-    gRect(g, 12, 3, 7, 1, "c");
+    gRect(g, 7, 0, 6, 1, "C");
+    gRect(g, 6, 1, 8, 2, "C");
+    if (look.emblem === "star") gSet(g, 9, 1, "A");
+    if (look.emblem === "circle") gRect(g, 9, 1, 2, 1, "W");
+    gRect(g, 10, 3, 7, 1, "c");
     gRect(g, 6, 4, 2, 3, "H");
-    gRect(g, 8, 4, 7, 5, "S");
-    gSet(g, 12, 6, "E");
-    gSet(g, 13, 8, "s");
+    gRect(g, 8, 4, 6, 6, "S");
+    gSet(g, 11, 6, "E");
+    gSet(g, 12, 8, "s");
     faceExtrasSide(g, look);
     return;
   }
   if (head === "straw") {
-    gRect(g, 8, 0, 5, 1, "C");
-    gRect(g, 7, 1, 7, 1, "C");
-    gRect(g, 7, 2, 7, 1, "c");
-    gRect(g, 3, 3, 16, 1, "C");
+    gRect(g, 7, 0, 5, 1, "C");
+    gRect(g, 6, 1, 7, 1, "C");
+    gRect(g, 6, 2, 7, 1, "c");
+    gRect(g, 2, 3, 16, 1, "C");
     gRect(g, 6, 4, 2, 3, "H");
-    gRect(g, 8, 4, 7, 5, "S");
-    gSet(g, 12, 6, "E");
-    gSet(g, 13, 8, "s");
+    gRect(g, 8, 4, 6, 6, "S");
+    gSet(g, 11, 6, "E");
+    gSet(g, 12, 8, "s");
     faceExtrasSide(g, look);
     return;
   }
   if (head === "spiky") {
-    gSet(g, 6, 0, "H"); gSet(g, 9, 0, "H"); gSet(g, 12, 0, "H"); gSet(g, 14, 0, "H");
-    gRect(g, 6, 1, 9, 2, "H");
+    gSet(g, 6, 0, "H"); gSet(g, 8, 0, "H"); gSet(g, 11, 0, "H"); gSet(g, 13, 0, "H");
+    gRect(g, 6, 1, 8, 2, "H");
     gRect(g, 6, 3, 3, 5, "H");
-    gRect(g, 9, 3, 6, 6, "S");
-    gSet(g, 13, 6, "E");
-    gSet(g, 13, 8, "s");
+    gRect(g, 9, 3, 5, 7, "S");
+    gSet(g, 12, 6, "E");
+    gSet(g, 12, 8, "s");
     faceExtrasSide(g, look);
     return;
   }
   /* hair */
-  gRect(g, 6, 1, 9, 2, "H");
+  gRect(g, 6, 1, 8, 2, "H");
   gRect(g, 6, 3, 3, 6, "H");
-  gRect(g, 9, 3, 6, 6, "S");
-  gSet(g, 13, 6, "E");
-  gSet(g, 15, 7, "S");
-  gSet(g, 13, 8, "s");
+  gRect(g, 9, 3, 5, 7, "S");
+  gSet(g, 12, 6, "E");
+  gSet(g, 12, 8, "s");
   faceExtrasSide(g, look);
 }
 function faceExtrasSide(g, look) {
-  if (look.face === "sunglasses") { gRect(g, 10, 6, 5, 2, "K"); gRect(g, 8, 6, 2, 1, "K"); }
-  if (look.face === "mustache") gRect(g, 12, 8, 3, 1, "K");
-  if (look.face === "scar") gSet(g, 12, 7, "s");
+  if (look.face === "sunglasses") { gRect(g, 9, 6, 5, 2, "K"); gRect(g, 7, 6, 2, 1, "K"); }
+  if (look.face === "mustache") gRect(g, 11, 8, 3, 1, "K");
+  if (look.face === "scar") gSet(g, 11, 7, "s");
 }
 
 /* ------------------------------ torsos ------------------------------- */
 function torsoFront(g, look) {
   const t = look.torso;
-  gRect(g, 4, 10, 12, 8, "T");
-  if (t === "shirt") { gSet(g, 8, 10, "S"); gSet(g, 11, 10, "S"); }
-  if (t === "vest") { gRect(g, 8, 10, 4, 7, "S"); gRect(g, 4, 17, 12, 1, "K"); }
-  if (t === "gi") {
-    gRect(g, 8, 10, 4, 1, "U"); gRect(g, 9, 11, 2, 1, "U");
-    gRect(g, 4, 16, 12, 2, "B");
+  gRect(g, 4, 11, 10, 9, "T");
+  if (t === "shirt") {
+    /* Cuello en V, botones, bolsillo y cinturón con hebilla. */
+    gSet(g, 8, 11, "S"); gSet(g, 9, 11, "S"); gSet(g, 8, 12, "S");
+    for (const y of [13, 15, 17]) gSet(g, 8, y, "U");
+    gRect(g, 11, 13, 2, 1, "t"); gRect(g, 11, 14, 2, 1, "U");
+    gRect(g, 4, 19, 10, 1, "K"); gRect(g, 8, 19, 2, 1, "A");
   }
-  if (t === "armor") gRect(g, 4, 10, 12, 1, "t");
+  if (t === "vest") {
+    gRect(g, 7, 11, 4, 8, "S");
+    gRect(g, 4, 19, 10, 1, "K"); gRect(g, 8, 19, 2, 1, "A");
+  }
+  if (t === "gi") {
+    gRect(g, 7, 11, 4, 1, "U"); gRect(g, 8, 12, 2, 1, "U");
+    gRect(g, 4, 18, 10, 2, "B");
+  }
+  if (t === "armor") {
+    gRect(g, 4, 11, 10, 1, "t");
+    gRect(g, 4, 19, 10, 1, "t");
+  }
   if (t === "suit") {
-    gRect(g, 8, 10, 4, 1, "U"); gRect(g, 9, 11, 2, 2, "U");
-    if (look.tie) { gRect(g, 9, 11, 2, 1, "K"); gRect(g, 9, 12, 2, 3, "K"); }
+    gRect(g, 7, 11, 4, 1, "U"); gRect(g, 8, 12, 2, 1, "U");
+    gSet(g, 6, 12, "t"); gSet(g, 11, 12, "t");
+    if (look.tie) { gRect(g, 8, 11, 2, 1, "K"); gRect(g, 8, 12, 2, 3, "K"); }
   }
   if (t === "bare") {
-    gRect(g, 4, 10, 12, 8, "S");
-    for (const x of [6, 7, 12, 13]) gSet(g, x, 13, "s");
-    gSet(g, 9, 15, "s"); gSet(g, 10, 15, "s"); gSet(g, 9, 16, "s"); gSet(g, 10, 16, "s");
+    gRect(g, 4, 11, 10, 9, "S");
+    gRect(g, 4, 12, 1, 7, "s"); gRect(g, 13, 12, 1, 7, "s");
+    gSet(g, 6, 14, "s"); gSet(g, 11, 14, "s");
+    gSet(g, 8, 16, "s"); gSet(g, 9, 16, "s"); gSet(g, 8, 17, "s"); gSet(g, 9, 17, "s");
   }
   if (t === "overol") {
-    gRect(g, 5, 10, 2, 3, "P"); gRect(g, 13, 10, 2, 3, "P");
-    gRect(g, 4, 13, 12, 5, "P");
-    gSet(g, 6, 13, "A"); gSet(g, 13, 13, "A");
+    gRect(g, 5, 11, 2, 3, "P"); gRect(g, 11, 11, 2, 3, "P");
+    gRect(g, 4, 14, 10, 6, "P");
+    gSet(g, 5, 14, "A"); gSet(g, 12, 14, "A");
+    gRect(g, 7, 17, 4, 1, "K");
   }
   if (t === "cream") {
-    gRect(g, 4, 10, 2, 8, "U"); gRect(g, 14, 10, 2, 8, "U");
-    for (const x of [8, 9, 10, 11]) { gSet(g, x, 13, "s"); gSet(g, x, 15, "s"); }
+    gRect(g, 4, 11, 2, 9, "U"); gRect(g, 12, 11, 2, 9, "U");
+    gRect(g, 6, 14, 6, 1, "s"); gRect(g, 6, 17, 6, 1, "s");
   }
-  if (t === "jersey") { gRect(g, 4, 10, 2, 1, "t"); gRect(g, 14, 10, 2, 1, "t"); }
+  if (t === "jersey") {
+    gRect(g, 4, 11, 2, 1, "t"); gRect(g, 12, 11, 2, 1, "t");
+    gRect(g, 4, 19, 10, 1, "t");
+  }
 }
 
 function torsoBack(g, look) {
   const t = look.torso;
   if (t === "cream") {
     /* El caparazón: borde crema y cúpula verde con púas blancas. */
-    gRect(g, 3, 9, 14, 9, "t");
-    gRect(g, 4, 10, 12, 7, "G");
-    for (const [x, y] of [[6, 11], [10, 10], [14, 11], [8, 14], [12, 14]]) {
+    gRect(g, 3, 10, 12, 10, "t");
+    gRect(g, 4, 11, 10, 8, "G");
+    for (const [x, y] of [[5, 12], [8, 11], [11, 12], [6, 15], [10, 15]]) {
       gSet(g, x, y, "W"); gSet(g, x, y + 1, "W");
     }
     return;
   }
-  gRect(g, 4, 10, 12, 8, "T");
-  if (t === "vest") gRect(g, 4, 17, 12, 1, "K");
-  if (t === "gi") gRect(g, 4, 16, 12, 2, "B");
-  if (t === "armor") gRect(g, 9, 10, 2, 8, "t");
+  gRect(g, 4, 11, 10, 9, "T");
+  if (t === "shirt") gRect(g, 4, 19, 10, 1, "K");
+  if (t === "vest") gRect(g, 4, 19, 10, 1, "K");
+  if (t === "gi") gRect(g, 4, 18, 10, 2, "B");
+  if (t === "armor") gRect(g, 8, 11, 2, 9, "t");
   if (t === "bare") {
-    gRect(g, 4, 10, 12, 8, "S");
-    gSet(g, 6, 12, "s"); gSet(g, 13, 12, "s");
+    gRect(g, 4, 11, 10, 9, "S");
+    gSet(g, 8, 13, "s"); gSet(g, 8, 14, "s"); gSet(g, 8, 15, "s"); gSet(g, 8, 16, "s");
+    gSet(g, 5, 13, "s"); gSet(g, 12, 13, "s");
   }
   if (t === "overol") {
-    gRect(g, 5, 10, 2, 3, "P"); gRect(g, 13, 10, 2, 3, "P");
-    gRect(g, 4, 13, 12, 5, "P");
+    gRect(g, 5, 11, 2, 3, "P"); gRect(g, 11, 11, 2, 3, "P");
+    gRect(g, 4, 14, 10, 6, "P");
   }
+  if (t === "jersey") { gRect(g, 6, 13, 6, 1, "t"); gRect(g, 6, 16, 6, 1, "t"); }
 }
 
 function torsoSide(g, look) {
   const t = look.torso;
   if (t === "cream") {
     /* El caparazón se asoma detrás del torso. */
-    gRect(g, 3, 9, 7, 1, "t");
-    gRect(g, 3, 10, 7, 7, "G");
-    gSet(g, 5, 11, "W"); gSet(g, 4, 12, "W");
+    gRect(g, 2, 10, 6, 1, "t");
+    gRect(g, 2, 11, 6, 8, "G");
+    gSet(g, 4, 12, "W"); gSet(g, 3, 13, "W");
   }
-  gRect(g, 6, 10, 9, 8, "T");
-  if (t === "shirt") gSet(g, 13, 10, "S");
-  if (t === "vest") { gRect(g, 13, 10, 2, 6, "S"); gRect(g, 6, 17, 9, 1, "K"); }
-  if (t === "gi") { gSet(g, 13, 10, "U"); gSet(g, 13, 11, "U"); gRect(g, 6, 16, 9, 2, "B"); }
-  if (t === "armor") { gRect(g, 6, 10, 9, 1, "t"); gSet(g, 13, 12, "A"); }
+  gRect(g, 6, 11, 8, 9, "T");
+  if (t === "shirt") { gSet(g, 12, 11, "S"); gRect(g, 6, 19, 8, 1, "K"); }
+  if (t === "vest") { gRect(g, 11, 11, 3, 6, "S"); gRect(g, 6, 19, 8, 1, "K"); }
+  if (t === "gi") { gSet(g, 12, 11, "U"); gSet(g, 12, 12, "U"); gRect(g, 6, 18, 8, 2, "B"); }
+  if (t === "armor") { gRect(g, 6, 11, 8, 1, "t"); gSet(g, 12, 13, "A"); }
   if (t === "suit") {
-    gRect(g, 13, 10, 2, 3, "U");
-    if (look.tie) { gSet(g, 13, 11, "K"); gSet(g, 13, 12, "K"); }
+    gRect(g, 12, 11, 2, 3, "U");
+    if (look.tie) { gSet(g, 12, 12, "K"); gSet(g, 12, 13, "K"); }
   }
-  if (t === "bare") gRect(g, 6, 10, 9, 8, "S");
-  if (t === "overol") { gRect(g, 6, 13, 9, 5, "P"); gRect(g, 8, 10, 2, 3, "P"); gSet(g, 8, 13, "A"); }
+  if (t === "bare") { gRect(g, 6, 11, 8, 9, "S"); gRect(g, 6, 12, 1, 7, "s"); }
+  if (t === "overol") { gRect(g, 6, 14, 8, 6, "P"); gRect(g, 7, 11, 2, 3, "P"); gSet(g, 7, 14, "A"); }
+  if (t === "jersey") gRect(g, 6, 19, 8, 1, "t");
 }
 
 /* ------------------------------ brazos ------------------------------- */
 function armsPair(g, look, frame, isBack) {
   const a = look.arms;
   const handKey = look.handKey || "S";
-  const swingKey = a === "gloves" ? "W" : a === "armor" ? handKey : "S";
   if (a === "muscle") {
-    gRect(g, 1, 10, 3, 8, "S"); gRect(g, 16, 10, 3, 8, "S");
+    /* El Gigante conserva el volumen: brazos de 3 con sombra de músculo. */
+    gRect(g, 1, 11, 3, 9, "S"); gRect(g, 14, 11, 3, 9, "S");
+    gRect(g, 3, 13, 1, 6, "s"); gRect(g, 14, 13, 1, 6, "s");
   } else if (a === "armor") {
-    gRect(g, 2, 10, 2, 6, "T"); gRect(g, 16, 10, 2, 6, "T");
-    gRect(g, 2, 16, 2, 2, handKey); gRect(g, 16, 16, 2, 2, handKey);
+    gRect(g, 1, 11, 3, 1, "T"); gRect(g, 14, 11, 3, 1, "T");
+    gRect(g, 2, 12, 2, 5, "T"); gRect(g, 14, 12, 2, 5, "T");
+    gRect(g, 2, 17, 2, 3, handKey); gRect(g, 14, 17, 2, 3, handKey);
   } else if (a === "gloves") {
-    gRect(g, 2, 10, 2, 6, "T"); gRect(g, 16, 10, 2, 6, "T");
-    gRect(g, 2, 16, 2, 2, "W"); gRect(g, 16, 16, 2, 2, "W");
+    gRect(g, 2, 11, 2, 6, "T"); gRect(g, 14, 11, 2, 6, "T");
+    gRect(g, 2, 17, 2, 3, "W"); gRect(g, 14, 17, 2, 3, "W");
   } else if (a === "bare") {
-    gRect(g, 2, 10, 2, 8, "S"); gRect(g, 16, 10, 2, 8, "S");
+    gRect(g, 2, 11, 2, 9, "S"); gRect(g, 14, 11, 2, 9, "S");
+    gRect(g, 3, 14, 1, 5, "s"); gRect(g, 14, 14, 1, 5, "s");
   } else {
-    gRect(g, 2, 10, 2, 3, "T"); gRect(g, 16, 10, 2, 3, "T");
-    gRect(g, 2, 13, 2, 5, "S"); gRect(g, 16, 13, 2, 5, "S");
-    if (look.wrist) { gRect(g, 2, 14, 2, 2, "U"); gRect(g, 16, 14, 2, 2, "U"); }
+    gRect(g, 2, 11, 2, 3, "T"); gRect(g, 14, 11, 2, 3, "T");
+    gRect(g, 2, 14, 2, 6, "S"); gRect(g, 14, 14, 2, 6, "S");
+    if (look.wrist) { gRect(g, 2, 15, 2, 2, "U"); gRect(g, 14, 15, 2, 2, "U"); }
   }
-  if (look.watch && !isBack) gSet(g, 17, 15, "A");
+  if (look.watch && !isBack) gSet(g, 15, 16, "A");
   /* Balanceo: en cada zancada baja la mano del lado contrario. */
-  if (frame === 0) gRect(g, 2, 18, 2, 1, swingKey);
-  if (frame === 2) gRect(g, 16, 18, 2, 1, swingKey);
+  const swingKey = a === "gloves" ? "W" : a === "armor" ? handKey : "S";
+  if (frame === 0) gRect(g, 2, 20, 2, 1, swingKey);
+  if (frame === 2) gRect(g, 14, 20, 2, 1, swingKey);
 }
 
 function armSide(g, look, frame) {
   const a = look.arms;
   const handKey = look.handKey || "S";
-  const ax = 10 + (frame === 0 ? 1 : frame === 2 ? -1 : 0);
-  if (a === "muscle") gRect(g, ax - 1, 10, 3, 8, "S");
-  else if (a === "armor") { gRect(g, ax, 10, 2, 6, "T"); gRect(g, ax, 16, 2, 2, handKey); }
-  else if (a === "gloves") { gRect(g, ax, 10, 2, 6, "T"); gRect(g, ax, 16, 2, 2, "W"); }
-  else if (a === "bare") gRect(g, ax, 10, 2, 8, "S");
+  const ax = 9 + (frame === 0 ? 1 : frame === 2 ? -1 : 0);
+  if (a === "muscle") { gRect(g, ax - 1, 11, 3, 9, "S"); gRect(g, ax + 1, 13, 1, 6, "s"); }
+  else if (a === "armor") { gRect(g, ax, 11, 2, 6, "T"); gRect(g, ax, 17, 2, 3, handKey); }
+  else if (a === "gloves") { gRect(g, ax, 11, 2, 6, "T"); gRect(g, ax, 17, 2, 3, "W"); }
+  else if (a === "bare") { gRect(g, ax, 11, 2, 9, "S"); gRect(g, ax + 1, 14, 1, 5, "s"); }
   else {
-    gRect(g, ax, 10, 2, 3, "T");
-    gRect(g, ax, 13, 2, 5, "S");
-    if (look.wrist) gRect(g, ax, 14, 2, 2, "U");
+    gRect(g, ax, 11, 2, 3, "T");
+    gRect(g, ax, 14, 2, 6, "S");
+    if (look.wrist) gRect(g, ax, 15, 2, 2, "U");
   }
-  if (look.watch) gSet(g, ax + 1, 15, "A");
+  if (look.watch) gSet(g, ax + 1, 16, "A");
 }
 
 /* ------------------------- filas del personaje ------------------------ */
-/** Rejilla de caracteres (20×26) de un atuendo. Pura: sin DOM. */
+/** Rejilla de caracteres (18×28) de un atuendo. Pura: sin DOM. */
 export function charRows(dir, frame, look) {
   const g = gridBlank();
   const neckKey = look.head === "mask" ? "M" : look.head === "helmet" ? "C" : "S";
   if (dir === "back") {
     headBack(g, look);
-    gRect(g, 8, 9, 4, 1, neckKey);
+    gRect(g, 8, 10, 2, 1, neckKey);
     torsoBack(g, look);
     armsPair(g, look, frame, true);
   } else if (dir === "side") {
     headSide(g, look);
-    gRect(g, 9, 9, 3, 1, neckKey);
+    gRect(g, 9, 10, 2, 1, neckKey);
     torsoSide(g, look);
     armSide(g, look, frame);
   } else {
     headFront(g, look);
-    gRect(g, 8, 9, 4, 1, neckKey);
+    gRect(g, 8, 10, 2, 1, neckKey);
     torsoFront(g, look);
     armsPair(g, look, frame, false);
   }
   const legs = dir === "side" ? LEGS_SIDE[frame] : LEGS_FRONT[frame];
   legs.forEach((row, i) => {
-    [...row].forEach((ch, x) => { if (ch !== ".") g[18 + i][x] = ch; });
+    [...row].forEach((ch, x) => { if (ch !== ".") g[CHAR_LEG_TOP + i][x] = ch; });
   });
   return g.map((r) => r.join(""));
 }
@@ -878,7 +924,7 @@ function paintOverlay(g, dir, look) {
   const rect = (x, y, w, h, col) => { g.fillStyle = col; g.fillRect(x, y, w, h); };
   const px1 = (x, y, col) => { g.fillStyle = col; g.fillRect(x, y, 1, 1); };
   if (look.overlay === "palms") {
-    const spots = dir === "front" ? [[6, 12], [13, 11], [9, 15]] : dir === "back" ? [[7, 12], [12, 14]] : [[9, 12], [12, 15]];
+    const spots = dir === "front" ? [[6, 13], [9, 14], [11, 16]] : dir === "back" ? [[6, 13], [10, 16]] : [[8, 13], [11, 16]];
     for (const [cx, cy] of spots) {
       rect(cx, cy, 1, 3, pal.t);
       px1(cx - 1, cy - 1, pal.t); px1(cx + 1, cy - 1, pal.t);
@@ -889,30 +935,39 @@ function paintOverlay(g, dir, look) {
     g.save();
     g.globalAlpha = 0.5;
     if (dir === "side") {
-      for (const x of [8, 12]) rect(x, 10, 1, 8, pal.K);
-      for (const y of [12, 15]) rect(6, y, 9, 1, pal.K);
+      for (const x of [8, 11]) rect(x, 11, 1, 9, pal.K);
+      for (const y of [13, 16]) rect(6, y, 8, 1, pal.K);
     } else {
-      for (const x of [6, 10, 14]) rect(x, 10, 1, 8, pal.K);
-      for (const y of [12, 15]) rect(4, y, 12, 1, pal.K);
+      for (const x of [6, 9, 12]) rect(x, 11, 1, 9, pal.K);
+      for (const y of [13, 16]) rect(4, y, 10, 1, pal.K);
       if (dir === "front") {
-        for (const x of [7, 10, 13]) rect(x, 1, 1, 8, pal.K);
-        for (const y of [3, 6]) rect(5, y, 10, 1, pal.K);
+        for (const x of [6, 9, 12]) rect(x, 1, 1, 9, pal.K);
+        for (const y of [3, 6]) rect(5, y, 8, 1, pal.K);
       }
     }
     g.restore();
   }
   if (look.overlay === "reactor" && dir === "front") {
-    rect(9, 12, 3, 1, pal.A); rect(8, 13, 5, 1, pal.A); rect(9, 14, 3, 1, pal.A);
-    rect(9, 13, 3, 1, pal.W); px1(10, 12, pal.W); px1(10, 14, pal.W);
+    rect(8, 12, 2, 1, pal.A); rect(7, 13, 4, 1, pal.A); rect(8, 14, 2, 1, pal.A);
+    rect(8, 13, 2, 1, pal.W); px1(9, 12, pal.W); px1(8, 14, pal.W);
   }
   if (look.overlay === "flag" && dir === "front") {
-    rect(12, 11, 3, 1, pal.W); rect(12, 12, 3, 1, "#2456C8"); rect(12, 13, 3, 1, "#D7263D");
+    rect(10, 12, 3, 1, pal.W); rect(10, 13, 3, 1, "#2456C8"); rect(10, 14, 3, 1, "#D7263D");
   }
 }
 
+/* Lienzo del personaje: EXACTAMENTE la rejilla (18×28). No usar
+   spriteCanvas(), que es fijo 16×20 para los sprites heredados y en
+   v0.40.0 recortaba las piernas del jugador. */
 function charCanvas(dir, frame, look) {
-  const c = spriteCanvas(charRows(dir, frame, look), look.pal, true);
-  paintOverlay(c.getContext("2d"), dir, look);
+  const c = mkCanvas(CHAR_W, CHAR_H);
+  const g = c.getContext("2d");
+  charRows(dir, frame, look).forEach((row, y) => {
+    [...row].forEach((ch, x) => {
+      if (look.pal[ch]) { g.fillStyle = look.pal[ch]; g.fillRect(x, y, 1, 1); }
+    });
+  });
+  paintOverlay(g, dir, look);
   return c;
 }
 
@@ -921,7 +976,7 @@ function buildFrames(look) {
   return { front: frames("front"), back: frames("back"), side: frames("side"), big: true };
 }
 
-/** Cuadros grandes (20×26, caminar de 4) de un atuendo con `look`. */
+/** Cuadros grandes (18×28, caminar de 4) de un atuendo con `look`. */
 export function outfitFrames(look) {
   if (typeof document === "undefined" || !look) return null;
   return buildFrames(look);
@@ -983,8 +1038,8 @@ export function createPixelArt() {
     /* Tienda: cuadros del jugador con cualquier paleta (atuendos) y los
        sprites de un vehículo en horizontal y vertical. */
     characterFrames: (pal, gorra) => frames(pal, gorra),
-    /* v0.40.0: cuadros grandes 20×26 con caminar de 4 para los atuendos
-       con receta `look` (el avatar base incluido). */
+    /* v0.40.0/v0.40.1: cuadros grandes 18×28 con caminar de 4 para los
+       atuendos con receta `look` (el avatar base incluido). */
     characterFrames2: (look) => outfitFrames(look),
     shopVehicle: (spec) => {
       const side = vehicleSprite(spec);
