@@ -155,6 +155,15 @@ test("jarvis: un play.jarvis corrupto lo reportan jarvisProblems y validatePlayS
   assert.equal(report.ok, false);
 });
 
+test("jarvis: el teléfono lo abre como app con su retrato (segunda puerta al mismo Jarvis)", () => {
+  const html = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  assert.ok(html.includes('data-app="jarvis"'), "la pantalla principal del teléfono tiene la app de Jarvis");
+  assert.ok(html.includes("assets/jarvis.webp"), "el ícono de la app es el retrato del robot");
+  const app = fs.readFileSync(new URL("../js/app.js", import.meta.url), "utf8");
+  assert.ok(app.includes('app === "jarvis")'), "el teléfono despacha la app de Jarvis");
+  assert.ok(app.includes("openJarvis()"), "la app abre el mismo diálogo de siempre");
+});
+
 test("jarvis: ninguna mutación de Jarvis mueve el saldo de monedas", () => {
   const s = fresh();
   const before = derived(s).coins.balance;

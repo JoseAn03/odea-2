@@ -1281,6 +1281,7 @@ body.no-city #city-canvas { display: none; }
   display: flex; align-items: center; justify-content: center;
   font-size: 1.3rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
+.phone-app-icon img { width: 100%; height: 100%; display: block; object-fit: cover; border-radius: inherit; }
 .phone-soon {
   font-size: 0.52rem; color: var(--cyan);
   text-transform: uppercase; letter-spacing: 0.08em;

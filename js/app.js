@@ -1739,6 +1739,7 @@ async function boot() {
       appBtn.addEventListener("click", () => {
         const app = appBtn.dataset.app;
         if (app === "missions") showPhoneMissions();
+        else if (app === "jarvis") openJarvis();
         else if (app === "brete" || app === "gamer") openCampaign(app, true);
         else if (app === "tienda") showPhoneShop();
         else if (app === "map") showPhoneMap();
