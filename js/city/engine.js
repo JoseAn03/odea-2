@@ -206,6 +206,11 @@ export function createCityView({ canvas, world, onSelectDistrict, onFrame, onTap
       playerPos = state || null;
       renderer.setPlayer(state);
     },
+    /* Jarvis (v0.38.0): muestra u oculta el bocadillo «!» del robotcito. */
+    setJarvisAlert(value) {
+      renderer.setJarvisAlert(value);
+      drawNow();
+    },
     setWalkMode(on) {
       walkMode = !!on;
     },

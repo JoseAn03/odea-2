@@ -85,6 +85,19 @@ export function mundoianRect() {
   return cellRect(MUNDOIAN_CELL.col, MUNDOIAN_CELL.row);
 }
 
+/* JARVIS (v0.38.0): el robotcito compañero vive DENTRO de la manzana de
+   la Zona IA, anclado a su esquina noroeste para no tapar el rótulo
+   «ZONA IA» (que va en la franja superior de la manzana) y dejar libre
+   casi toda la imagen de la base de operaciones. Su rect de toque es
+   generoso a propósito: en el teléfono tiene que ser fácil de atinar.
+   El sprite se dibuja del mismo tamaño (140 de lado, ver render.js). */
+export const JARVIS_SIZE = 140;
+
+export function jarvisRect() {
+  const z = zonaiaRect();
+  return { x: z.x + 24, y: z.y + 150, w: JARVIS_SIZE, h: JARVIS_SIZE };
+}
+
 /** Rectángulo de una manzana (col, row) con row 0 = norte. */
 export function cellRect(col, row) {
   return {

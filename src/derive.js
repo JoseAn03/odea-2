@@ -19,6 +19,7 @@
 import { campaignRewards } from "./campaign-state.js";
 import { garageRewards } from "./garage-state.js";
 import { ianRewards } from "./ian-state.js";
+import { jarvisRewards } from "./jarvis-state.js";
 
 export const BALANCE_BONUS = 30;
 export const FARM_XP_PER = 2;
@@ -219,6 +220,7 @@ export function sourcesFromMigrated(bundle2, catalog = null) {
     campaignRewards: campaignRewards(bundle2),
     garageRewards: garageRewards(bundle2),
     ianRewards: ianRewards(bundle2),
+    jarvisRewards: jarvisRewards(bundle2),
     identity: { streak: streakInfo.streak },
     progress: {
       completedMissions: clone(s.progress && s.progress.completedMissions || []),
@@ -564,7 +566,10 @@ export function derive(sources, catalog, referenceDate) {
   const extraCampaign = sources.campaignRewards || {};
   const garaje = (sources.garageRewards && sources.garageRewards.xp) || 0;
   const ian = (sources.ianRewards && sources.ianRewards.xp) || 0;
-  const career = campaign + daily + weekly + jobs + b2b + (extraCampaign.career || 0);
+  /* Jarvis (v0.38.0): su XP de quiz (tope 20/día) suma al bucket career,
+     con el mismo patrón que campaignRewards. Sin monedas. */
+  const jarvis = (sources.jarvisRewards && sources.jarvisRewards.xp) || 0;
+  const career = campaign + daily + weekly + jobs + b2b + (extraCampaign.career || 0) + jarvis;
 
   const ach = sumXpForIds(catalog.achievements, p.unlockedAch);
   const vida = vidaCompute(sources).total;

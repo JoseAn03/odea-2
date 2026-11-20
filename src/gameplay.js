@@ -19,6 +19,7 @@ import { PLAY_VERSION, RULES_VERSION } from "./shape.js";
 import { applyCampaignMutation } from "./campaign-state.js";
 import { applyGarageMutation } from "./garage-state.js";
 import { applyIanMutation } from "./ian-state.js";
+import { applyJarvisMutation } from "./jarvis-state.js";
 import { applyShopMutation } from "./shop.js";
 
 export const ROUTE_SIZE = 3;
@@ -400,6 +401,13 @@ export function applyMutation(draft, mutation, catalog, { at, date } = {}) {
 
   if (mutation && mutation.type === "ian.complete") {
     return applyIanMutation(draft, mutation, { at: atIso, date: dateKey });
+  }
+
+  /* Jarvis (v0.38.0): quiz con XP acotado, contadores de uso del Worker
+     y el saludo del día en caché. La IA nunca escribe por su cuenta:
+     todo pasa por aquí y por applyGameplayMutation. */
+  if (mutation && ["jarvis.quiz", "jarvis.usage", "jarvis.briefing"].includes(mutation.type)) {
+    return applyJarvisMutation(draft, mutation, { at: atIso, date: dateKey });
   }
 
   if (mutation && (mutation.type === "shop.buy" || mutation.type === "shop.equip")) {

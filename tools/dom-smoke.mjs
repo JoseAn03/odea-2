@@ -219,6 +219,7 @@ const { buildDistrictPanel } = await cargar("js/district-figures.js");
 const { renderTabs, renderChips, renderHud, renderSheet } = await cargar("js/hud-ui.js");
 const { renderMochila, renderToday, renderMenu } = await cargar("js/ui.js");
 const { ambienceFor } = await cargar("js/ambience.js");
+const { renderJarvis, jarvisLocalGreeting } = await cargar("js/jarvis-ui.js");
 const { DISTRICTS } = await cargar("js/districts.js");
 const catalogo = await cargar("src/catalog.js");
 
@@ -403,6 +404,60 @@ await run("ambiente sin perfil", () => {
   const sinPerfil = ambienceFor(null);
   const noche = ambienceFor({ hour: 23, weather: "clear", progress: 0.5 });
   return { pass: Boolean(sinPerfil) && Boolean(noche), detail: "noche y sin perfil" };
+});
+
+/* -------------------------------- jarvis --------------------------------- */
+
+await run("renderJarvis con el saludo en caché", () => {
+  const root = montar();
+  renderJarvis(root, {
+    view: {
+      quizXpToday: 10, quizRestantes: 1, quizXpDisponible: 10,
+      chatRestantes: 19, feedbackRestantes: 5,
+      briefingHoy: "Hola, José. Saludo en caché de prueba."
+    },
+    summary: {
+      nivel: 15, diaDelPlan: 25, rachaDias: 3,
+      diarias: { hechas: 1, total: 3, pendientes: ["Cerrar procesos"] },
+      garajePorVencer: [], ianPorVencer: [],
+      entrevistaEnvista: { fecha: "2026-11-24", diasRestantes: 4 },
+      proximaMisionCampana: { campana: "Operación Entrevista", mision: "Tu pitch en 60 segundos" }
+    },
+    completedMissions: [],
+    onQuiz() {}, onUsage() {}, onBriefing() {}, onOpenZonaIA() {}, onClose() {}
+  });
+  const texto = root.textContent;
+  const botones = root.querySelectorAll("button").length;
+  return {
+    pass:
+      texto.includes("JARVIS") &&
+      texto.includes("Saludo en caché de prueba") &&
+      texto.includes("¿Qué hago hoy?") &&
+      texto.includes("Practicar (quiz)") &&
+      texto.includes("Campaña Zona IA") &&
+      texto.includes("quiz XP 10/20") &&
+      texto.includes("mensajes 1/20") &&
+      botones === 6,
+    detail: `${botones} botones · saludo en caché sin red`
+  };
+});
+
+await run("el saludo local de Jarvis se arma sin red", () => {
+  const saludo = jarvisLocalGreeting({
+    nivel: 15, diaDelPlan: 25,
+    diarias: { hechas: 0, total: 3, pendientes: ["Cerrar procesos"] },
+    garajePorVencer: ["Accent: cambio de aceite"], ianPorVencer: [],
+    entrevistaEnvista: { fecha: "2026-11-24", diasRestantes: 4 },
+    proximaMisionCampana: { campana: "Operación Entrevista", mision: "Tu pitch en 60 segundos" }
+  });
+  return {
+    pass:
+      saludo.includes("nivel 15") &&
+      saludo.includes("Cerrar procesos") &&
+      saludo.includes("Accent: cambio de aceite") &&
+      saludo.includes("4 días"),
+    detail: "nivel, diarias, garaje y cuenta regresiva"
+  };
 });
 
 /* ------------------------- el render no escribe nada ---------------------- */

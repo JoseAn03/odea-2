@@ -72,6 +72,19 @@ const PAL_JUGADOR = { C: "#2255FF", H: "#2A1A2E", S: "#F2B183", T: "#00B8CC", P:
 const PAL_NPC1 = { H: "#141018", S: "#C68658", T: ROSA, P: "#181828", Z: "#F0F0F5" };
 const PAL_NPC2 = { H: "#5A3C28", S: "#FFCDA0", T: "#F0F0F5", P: "#00788C", Z: CIAN };
 
+/* JARVIS (v0.38.0): el robotcito compañero de la Zona IA, en la misma
+   rejilla 16×20 de los personajes: cuerpo redondo blanco flotante, cara
+   de pantalla oscura con ojos cian, antena con luz rosada y propulsor
+   cian. Las dos filas inferiores van vacías: flota sobre su ancla. */
+const JARVIS_GRID = [
+  ".......AA.......", ".......PP.......", ".......AA.......", "....WWWWWWWW....",
+  "..WWWWWWWWWWWW..", "..WWWWWWWWWWWW..", "..WWFFFFFFFFWW..", "..WWFEEFFEEFWW..",
+  "..WWFFFFFFFFWW..", "..WWFFFFFFFFWW..", "..WWFFFEEFFFWW..", "...WWWWWWWWWW...",
+  "....WWWWWWWW....", ".....DDDDDD.....", "....DTTTTTTD....", ".....TTTTTT.....",
+  "......TTTT......", ".......TT.......", "................", "................"
+];
+const PAL_JARVIS = { W: "#E8F4F8", D: "#39465C", F: "#0B1520", E: CIAN, P: ROSA, A: "#8A97A8", T: "#00B8CC" };
+
 /* Íconos de distrito (8×8): X = color del distrito, o = blanco. */
 const ICONOS = {
   hub: ["...XX...", "...XX...", "XXXXXXXX", ".XXXXXX.", "..XXXX..", ".XX..XX.", "XX....XX", "........"],
@@ -458,6 +471,7 @@ export function createPixelArt() {
     mando: mandoCanvas(),
     tienda: tiendaCanvas(),
     banca: bancaCanvas(),
+    jarvis: spriteCanvas(JARVIS_GRID, PAL_JARVIS, false),
     carro: carroCian,
     carroRosa,
     carroV: rotar90(carroRosa),
