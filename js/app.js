@@ -318,7 +318,7 @@ function setWalk(on) {
     walkTabBtn.setAttribute("aria-pressed", walkOn ? "true" : "false");
     const icon = walkTabBtn.querySelector(".tab-icon");
     const label = walkTabBtn.querySelector(".tab-label");
-    if (icon) icon.textContent = walkOn ? "⏹" : "🚶";
+    if (icon) icon.replaceChildren(tabIconImg(walkOn ? "assets/tab-parar.svg" : "assets/tab-caminar.svg"));
     if (label) label.textContent = walkOn ? "Parar" : "Caminar";
   }
   if (walkOn && player && city) {
@@ -1193,6 +1193,17 @@ function renderTabbar() {
   mountWalkTabButton();
 }
 
+/** Pixel art de la barra (v0.42.0): los iconos son SVG de rects como el de
+ *  la Libreta, nunca emojis. El span `.tab-icon` envuelve la imagen. */
+function tabIconImg(src) {
+  const img = document.createElement("img");
+  img.className = "tab-icon-img";
+  img.src = src;
+  img.alt = "";
+  img.draggable = false;
+  return img;
+}
+
 /** Caminar vive en la barra, en el puesto que dejó Menú (v0.19.0, pedido
  *  de José): el botón flotante estorbaba sobre el mapa en su teléfono.
  *  Menú no desaparece: sigue abriéndose desde Ajustes del teléfono. */
@@ -1206,7 +1217,7 @@ function mountWalkTabButton() {
   const icon = document.createElement("span");
   icon.className = "tab-icon";
   icon.setAttribute("aria-hidden", "true");
-  icon.textContent = "🚶";
+  icon.append(tabIconImg("assets/tab-caminar.svg"));
   const label = document.createElement("span");
   label.className = "tab-label";
   label.textContent = "Caminar";
@@ -1232,7 +1243,7 @@ function mountPhoneTabButton() {
   const icon = document.createElement("span");
   icon.className = "tab-icon";
   icon.setAttribute("aria-hidden", "true");
-  icon.textContent = "📱";
+  icon.append(tabIconImg("assets/tab-telefono.svg"));
   const label = document.createElement("span");
   label.className = "tab-label";
   label.textContent = "Teléfono";
