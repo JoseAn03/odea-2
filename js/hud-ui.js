@@ -30,11 +30,15 @@ function h(tag, attrs = {}, ...children) {
 
 /* ---------------------------------- HUD ----------------------------------- */
 
-function hudChip(className, label, value, title, prefix = "") {
+function hudChip(className, iconSrc, value, title, prefix = "") {
   return h(
     "span",
     { class: `hud-chip ${className}`, title: title || null },
-    h("span", { class: "hud-chip-icon", "aria-hidden": "true" }, label),
+    h(
+      "span",
+      { class: "hud-chip-icon", "aria-hidden": "true" },
+      h("img", { class: "hud-chip-img", src: iconSrc, alt: "", draggable: "false" })
+    ),
     h("span", { class: "hud-chip-value" }, `${prefix}${fmt(value)}`)
   );
 }
@@ -68,15 +72,27 @@ export function renderHud(root, hud, actions) {
     h(
       "div",
       { class: "hud-top" },
-      h("span", { class: "hud-avatar", "aria-hidden": "true" }, "★"),
+      /* Retrato pixel del atuendo equipado (v0.43.0): el SVG se genera de
+       * la misma rejilla que pinta el sprite en la ciudad. El modelo ya
+       * trae el id normalizado; el respaldo es el clásico. */
+      h(
+        "span",
+        { class: "hud-avatar", "aria-hidden": "true" },
+        h("img", {
+          class: "hud-avatar-img",
+          src: `assets/hud-look-${hud.outfitId || "clasico"}.svg`,
+          alt: "",
+          draggable: "false"
+        })
+      ),
       h("span", { class: "hud-name", title: hud.playerName }, hud.playerName),
       h("span", { class: "hud-level", title: "Nivel de campaña" }, `Nv ${fmt(hud.level)}`),
       h("span", { class: "hud-odea", title: "Nivel ODEA" }, `ODEA ${fmt(hud.odeLevel)}`),
       h(
         "div",
         { class: "hud-meta" },
-        hudChip("coins", "●", hud.coins.balance, `Saldo virtual ODEA · ganadas ${fmt(hud.coins.earned)} · gastadas ${fmt(hud.coins.spent)} · se gastan en la Tienda, no es dinero real`, "₡"),
-        hudChip("streak", "★", hud.streak, "Racha actual de metas en días")
+        hudChip("coins", "assets/hud-coin.svg", hud.coins.balance, `Saldo virtual ODEA · ganadas ${fmt(hud.coins.earned)} · gastadas ${fmt(hud.coins.spent)} · se gastan en la Tienda, no es dinero real`, "₡"),
+        hudChip("streak", "assets/hud-star.svg", hud.streak, "Racha actual de metas en días")
       )
     ),
     h(

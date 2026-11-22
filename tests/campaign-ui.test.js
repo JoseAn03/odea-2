@@ -87,19 +87,26 @@ const date = "2026-11-17";
 const options = { date, at: "2026-11-17T12:00:00Z" };
 globalThis.Node = Element;
 
-test("HUD: usa estrella dorada, saldo ₡ con economía canónica y racha", () => {
+test("HUD: retrato pixel del atuendo, saldo ₡ con economía canónica y racha con estrella pixel", () => {
   const root = new Element("header");
   renderHud(root, {
     playerName: "Mira", level: 2, odeLevel: 3, totalXP: 125,
     xp: { atMax: false, ratio: 0.5, current: 25, next: 50 },
     coins: { balance: 12, earned: 20, spent: 8 }, streak: 5
   }, {});
-  assert.equal(root.querySelector(".hud-avatar").textContent, "★");
+  /* v0.43.0: el chip de estrella genérico es ahora el retrato pixel del
+   * atuendo equipado (sin outfitId en el modelo → respaldo clásico). */
+  const avatarImg = root.querySelector(".hud-avatar").querySelector("img");
+  assert.equal(avatarImg.getAttribute("src"), "assets/hud-look-clasico.svg");
   assert.ok(root.textContent.includes("₡12"));
-  assert.ok(root.textContent.includes("★5"));
   const coinsChip = root.querySelector(".hud-chip");
   assert.ok(coinsChip.className.includes("coins"));
+  assert.equal(coinsChip.querySelector("img").getAttribute("src"), "assets/hud-coin.svg");
   assert.ok(coinsChip.getAttribute("title").includes("Saldo virtual ODEA"));
+  const streakChip = root.querySelectorAll(".hud-chip")[1];
+  assert.ok(streakChip.className.includes("streak"));
+  assert.equal(streakChip.querySelector("img").getAttribute("src"), "assets/hud-star.svg");
+  assert.equal(streakChip.querySelector(".hud-chip-value").textContent, "5");
 });
 
 test("Personaje: renderCharacter existe y pinta la tarjeta con el saldo ₡", () => {

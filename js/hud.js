@@ -9,6 +9,7 @@
 
 import { derive, deriveStreak, sourcesFromMigrated, odeLevelFor } from "../src/derive.js";
 import { routeForDay } from "../src/gameplay.js";
+import { tiendaState } from "../src/shop.js";
 
 function clamp01(n) {
   return Math.max(0, Math.min(1, n));
@@ -45,6 +46,9 @@ export function buildHud(bundle2, catalog) {
 
   return {
     playerName: identity.playerName || "Jugador",
+    /* Atuendo equipado (ya normalizado por tiendaState: id válido o el
+     * clásico). Solo alimenta el retrato pixel del HUD (v0.43.0). */
+    outfitId: tiendaState(bundle2).outfit,
     startDate: identity.startDate || null,
     lastDailyDate: identity.lastDailyDate || null,
     referenceDate: referenceDateOf(bundle2),

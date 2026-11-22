@@ -17,7 +17,7 @@
  * anterior sigue controlando la pestaña, su caché queda intacto y no se
  * mezclan assets de dos versiones. `activate` borra los cachés viejos.
  */
-const CACHE_VERSION = "odea2-v0.42.0-fase7";
+const CACHE_VERSION = "odea2-v0.43.0-fase7";
 
 const SHELL = [
   "./",
@@ -46,6 +46,24 @@ const SHELL = [
   "./assets/tab-caminar.svg",
   "./assets/tab-parar.svg",
   "./assets/tab-menu.svg",
+  "./assets/hud-coin.svg",
+  "./assets/hud-star.svg",
+  "./assets/hud-look-clasico.svg",
+  "./assets/hud-look-gorra-rosa.svg",
+  "./assets/hud-look-camiseta-dorada.svg",
+  "./assets/hud-look-oficina.svg",
+  "./assets/hud-look-neon-gamer.svg",
+  "./assets/hud-look-vice-city.svg",
+  "./assets/hud-look-la-sele.svg",
+  "./assets/hud-look-cubico.svg",
+  "./assets/hud-look-fontanero.svg",
+  "./assets/hud-look-pirata-paja.svg",
+  "./assets/hud-look-ejecutivo-vc.svg",
+  "./assets/hud-look-guerrero-naranja.svg",
+  "./assets/hud-look-gigante-verde.svg",
+  "./assets/hud-look-heroe-aracnido.svg",
+  "./assets/hud-look-rey-caparazon.svg",
+  "./assets/hud-look-armadura-carmesi.svg",
   "./icons/icon.svg",
   "./js/app.js",
   "./js/campaign-ui.js",
