@@ -31,11 +31,13 @@ import { CAMPAIGNS, CAMPAIGN_MISSIONS } from "../src/campaigns.js";
 import { garageView } from "../src/garage-state.js";
 import { ianView } from "../src/ian-state.js";
 import { buildProgressSummary, jarvisView } from "../src/jarvis-state.js";
+import { libretaView } from "../src/libreta-state.js";
 import { renderCampaign, renderDaily } from "./campaign-ui.js";
 import { renderGarage } from "./garage-ui.js";
 import { renderIan } from "./ian-ui.js";
 import { renderJarvis } from "./jarvis-ui.js";
 import { renderShop } from "./shop-ui.js";
+import { renderLibreta } from "./libreta-ui.js";
 import { equippedLook, shopItem } from "../src/shop.js";
 import { DISTRICTS } from "./districts.js";
 import { academiaRect, cellRect, clipsRect, eventosRect, jarvisRect, mundoianRect, pointInRect, sabiduriaRect, zonaiaRect } from "./city/layout.js";
@@ -193,6 +195,8 @@ let ianOpen = false;
 let ianWritePending = false;
 let jarvisOpen = false;
 let jarvisWritePending = false;
+let libretaUi = { mode: "list", noteId: null };
+let libretaWritePending = false;
 
 if (els.version) {
   els.version.textContent = `v${APP_VERSION}`;
@@ -539,6 +543,88 @@ function showPhoneShop() {
       onBack: () => showPhoneHome()
     }
   });
+}
+
+/* -------------------------------- Libreta --------------------------------
+   La libreta de espiral del teléfono (v0.41.0): notas personales de José
+   dentro del mismo save. Sin XP, sin monedas y sin misiones: el texto es
+   suyo y solo pasa por applyGameplayMutationLocked, como todo lo demás. */
+
+function showPhoneLibreta() {
+  if (!els.phoneMissions || !bundle || !catalog) return;
+  phoneView = "libreta";
+  els.phoneMissions.classList.remove("is-campaign");
+  if (els.phoneHome) els.phoneHome.hidden = true;
+  els.phoneMissions.hidden = false;
+  renderLibreta(els.phoneMissions, {
+    notes: libretaView(bundle).notes,
+    ui: libretaUi,
+    actions: {
+      onBack: () => showPhoneHome(),
+      onCompose: () => { libretaUi = { mode: "new", noteId: null }; showPhoneLibreta(); },
+      onEdit: (id) => { libretaUi = { mode: "edit", noteId: id }; showPhoneLibreta(); },
+      onCancel: () => { libretaUi = { mode: "list", noteId: null }; showPhoneLibreta(); },
+      onSave: (data) => saveLibretaNote(data),
+      onAskDelete: (id) => { libretaUi = { mode: "confirm", noteId: id }; showPhoneLibreta(); },
+      onDelete: (id) => deleteLibretaNote(id)
+    }
+  });
+}
+
+function afterLibreta(result, okMessage) {
+  if (result.status === "rejected") {
+    const code = result.error && result.error.code;
+    const friendly =
+      code === "EMPTY_NOTE" ? "La nota quedó vacía: escribí algo antes de guardar."
+      : code === "LIBRETA_FULL" ? "Tu libreta llegó al máximo de notas. Borrá alguna vieja para seguir."
+      : `No se pudo guardar: ${code}`;
+    if (toasts) toasts.show(friendly, { tone: "error" });
+    return;
+  }
+  if (result.status === "duplicate") {
+    if (toasts) toasts.show("Sin cambios en la nota.", { tone: "info" });
+  } else if (toasts) {
+    toasts.show(okMessage, { tone: "ok" });
+  }
+  libretaUi = { mode: "list", noteId: null };
+  refresh();
+  if (phoneView === "libreta" && !els.phoneBackdrop.hidden) showPhoneLibreta();
+}
+
+async function saveLibretaNote({ id, titulo, texto }) {
+  if (!storage || !catalog || libretaWritePending) return;
+  libretaWritePending = true;
+  try {
+    const mutation = id
+      ? { type: "libreta.update", id, titulo, texto }
+      : {
+          type: "libreta.create",
+          id: globalThis.crypto?.randomUUID?.() || `nota_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+          titulo,
+          texto
+        };
+    const result = await applyGameplayMutationLocked(storage, catalog, mutation, gameplayDate());
+    afterLibreta(result, id ? "Nota actualizada." : "Nota guardada en tu libreta.");
+  } catch (error) {
+    if (toasts) toasts.show("No se pudo guardar la nota.", { tone: "error" });
+  } finally {
+    libretaWritePending = false;
+  }
+}
+
+async function deleteLibretaNote(id) {
+  if (!storage || !catalog || libretaWritePending) return;
+  libretaWritePending = true;
+  try {
+    const result = await applyGameplayMutationLocked(
+      storage, catalog, { type: "libreta.delete", id }, gameplayDate()
+    );
+    afterLibreta(result, "Nota borrada.");
+  } catch (error) {
+    if (toasts) toasts.show("No se pudo borrar la nota.", { tone: "error" });
+  } finally {
+    libretaWritePending = false;
+  }
 }
 
 function afterGameplay(result, okMessage, duplicateMessage) {
@@ -1766,6 +1852,7 @@ async function boot() {
         const app = appBtn.dataset.app;
         if (app === "missions") showPhoneMissions();
         else if (app === "jarvis") openJarvis();
+        else if (app === "libreta") { libretaUi = { mode: "list", noteId: null }; showPhoneLibreta(); }
         else if (app === "brete" || app === "gamer") openCampaign(app, true);
         else if (app === "tienda") showPhoneShop();
         else if (app === "map") showPhoneMap();
