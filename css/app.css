@@ -642,10 +642,19 @@ body.no-city #city-canvas { display: none; }
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 2px;
-  padding: 5px 6px calc(env(safe-area-inset-bottom, 0px) + 5px);
-  background: linear-gradient(180deg, rgba(12, 15, 26, 0.98), rgba(5, 7, 12, 0.99));
-  border-top: 1px solid rgba(255, 209, 102, 0.45);
-  box-shadow: 0 -10px 32px rgba(0, 0, 0, 0.35);
+  padding: 7px 8px calc(env(safe-area-inset-bottom, 0px) + 7px);
+  /* Panel azul marino profundo con scanlines sutiles (v0.42.0): la barra
+   * habla el mismo idioma neón que los paneles del teléfono, no es un
+   * bloque oscuro pegado debajo del juego. */
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.028) 0 1px, transparent 1px 3px),
+    linear-gradient(180deg, #0B1030 0%, #070B22 55%, #04061A 100%);
+  border-top: 2px solid rgba(49, 235, 221, 0.85);
+  border-radius: 16px 16px 0 0;
+  box-shadow:
+    0 -2px 14px rgba(49, 235, 221, 0.35),
+    0 -12px 34px rgba(0, 0, 0, 0.45),
+    inset 0 -2px 0 rgba(255, 43, 157, 0.55);
   backdrop-filter: blur(12px);
 }
 
@@ -663,31 +672,49 @@ body.no-city #city-canvas { display: none; }
   color: rgba(243, 236, 255, 0.6);
   background: none;
   border: 0;
-  border-radius: 10px;
+  border-radius: 12px;
   cursor: pointer;
-  transition: color 0.15s ease, background 0.15s ease;
+  transition: color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
 }
 .tab-icon {
+  display: grid;
+  place-items: center;
   font-size: 1.02rem;
   line-height: 1;
+}
+/* Pixel art de la barra (v0.42.0): SVG de rects con píxeles crujientes,
+ * legible a 26 px. Sin esto el navegador suaviza el SVG y se ve borroso. */
+.tab-icon-img {
+  width: 26px;
+  height: 26px;
+  image-rendering: pixelated;
+  pointer-events: none;
 }
 .tab:hover { color: var(--text); }
 .tab:focus-visible {
   outline: 2px solid var(--cyan);
   outline-offset: -2px;
 }
+/* Activa: recuadro neón rosado con brillo y subrayado, como la maqueta
+ * aprobada por José. El icono ya trae sus colores; el resplandor lo ata
+ * al recuadro. */
 .tab[aria-current="page"] {
-  color: var(--cyan);
-  background: linear-gradient(180deg, rgba(49, 235, 221, 0.13), rgba(255, 43, 157, 0.08));
-  box-shadow: inset 0 1px 0 rgba(255, 209, 102, 0.4);
+  color: #fff;
+  background: linear-gradient(180deg, rgba(255, 43, 157, 0.16), rgba(49, 235, 221, 0.07));
+  box-shadow:
+    inset 0 0 0 1.5px var(--pink),
+    0 0 12px rgba(255, 43, 157, 0.35),
+    inset 0 0 12px rgba(255, 43, 157, 0.12);
 }
-.tab:nth-child(2) .tab-icon { color: var(--orange); }
-.tab:nth-child(3) .tab-icon { color: var(--pink); }
-.tab:nth-child(4) .tab-icon { color: var(--cyan); }
-.tab[aria-current="page"] .tab-icon { filter: drop-shadow(0 0 5px currentColor); }
+.tab[aria-current="page"] .tab-label {
+  border-bottom: 2px solid var(--pink);
+  padding-bottom: 1px;
+}
+.tab[aria-current="page"] .tab-icon-img { filter: drop-shadow(0 0 5px rgba(255, 113, 206, 0.65)); }
 .tab.walk-tab.on {
   color: #fff;
   background: rgba(255, 43, 157, 0.28);
+  box-shadow: inset 0 0 0 1.5px var(--pink), 0 0 12px rgba(255, 43, 157, 0.35);
 }
 
 /* -------------------------------- chips --------------------------------- */

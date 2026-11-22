@@ -15,12 +15,14 @@ export const TAB_TODAY = "hoy";
 export const TAB_MOCHILA = "mochila";
 export const TAB_MENU = "menu";
 
-/** Orden fijo de la barra. `hint` alimenta el aria-label de cada botón. */
+/** Orden fijo de la barra. `hint` alimenta el aria-label de cada botón.
+ *  `icon` queda como glifo de respaldo; `iconSrc` es el pixel art oficial
+ *  de la barra desde v0.42.0 (SVG de rects, estilo Libreta). */
 export const TABS = [
-  { id: TAB_CITY, label: "Ciudad", icon: "⌖", hint: "Mapa de Costa Neón y distritos" },
-  { id: TAB_TODAY, label: "Hoy", icon: "★", hint: "Ruta del día, misiones y racha" },
-  { id: TAB_MOCHILA, label: "Mochila", icon: "✧", hint: "Nivel, XP, inventario y saldo virtual" },
-  { id: TAB_MENU, label: "Menú", icon: "☰", hint: "Respaldo, importar y versión" }
+  { id: TAB_CITY, label: "Ciudad", icon: "⌖", iconSrc: "assets/tab-ciudad.svg", hint: "Mapa de Costa Neón y distritos" },
+  { id: TAB_TODAY, label: "Hoy", icon: "★", iconSrc: "assets/tab-hoy.svg", hint: "Ruta del día, misiones y racha" },
+  { id: TAB_MOCHILA, label: "Mochila", icon: "✧", iconSrc: "assets/tab-mochila.svg", hint: "Nivel, XP, inventario y saldo virtual" },
+  { id: TAB_MENU, label: "Menú", icon: "☰", iconSrc: "assets/tab-menu.svg", hint: "Respaldo, importar y versión" }
 ];
 
 export const DEFAULT_TAB = TAB_CITY;

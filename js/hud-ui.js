@@ -108,7 +108,13 @@ export function renderTabs(root, { active, onSelect, exclude = [] } = {}) {
             "aria-label": tab.hint,
             onclick: () => onSelect && onSelect(tab.id)
           },
-          h("span", { class: "tab-icon", "aria-hidden": "true" }, tab.icon),
+          h(
+            "span",
+            { class: "tab-icon", "aria-hidden": "true" },
+            tab.iconSrc
+              ? h("img", { class: "tab-icon-img", src: tab.iconSrc, alt: "", draggable: "false" })
+              : tab.icon
+          ),
           h("span", { class: "tab-label" }, tab.label)
         )
       )
