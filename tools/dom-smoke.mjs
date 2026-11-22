@@ -220,6 +220,7 @@ const { renderTabs, renderChips, renderHud, renderSheet } = await cargar("js/hud
 const { renderMochila, renderToday, renderMenu } = await cargar("js/ui.js");
 const { ambienceFor } = await cargar("js/ambience.js");
 const { renderJarvis, jarvisLocalGreeting } = await cargar("js/jarvis-ui.js");
+const { renderLibreta } = await cargar("js/libreta-ui.js");
 const { DISTRICTS } = await cargar("js/districts.js");
 const catalogo = await cargar("src/catalog.js");
 
@@ -457,6 +458,58 @@ await run("el saludo local de Jarvis se arma sin red", () => {
       saludo.includes("Accent: cambio de aceite") &&
       saludo.includes("4 días"),
     detail: "nivel, diarias, garaje y cuenta regresiva"
+  };
+});
+
+/* -------------------------------- libreta -------------------------------- */
+
+const libretaActions = {
+  onBack() {}, onCompose() {}, onEdit() {}, onCancel() {},
+  onSave() {}, onAskDelete() {}, onDelete() {}
+};
+
+await run("renderLibreta vacía muestra la libreta en blanco", () => {
+  const root = montar();
+  renderLibreta(root, { notes: [], ui: { mode: "list", noteId: null }, actions: libretaActions });
+  const texto = root.textContent;
+  return {
+    pass:
+      texto.includes("Libreta") &&
+      texto.includes("Tu libreta está en blanco: escribí tu primera nota") &&
+      texto.includes("Nueva nota"),
+    detail: "estado vacío de la maqueta aprobada"
+  };
+});
+
+await run("renderLibreta lista las notas con título, extracto y fecha", () => {
+  const root = montar();
+  renderLibreta(root, {
+    notes: [{
+      id: "n1", titulo: "Ideas para la ciudad", texto: "Un faro nuevo en el muelle",
+      ts: "2026-11-22T12:00:00.000Z",
+      displayTitle: "Ideas para la ciudad", excerpt: "Un faro nuevo en el muelle"
+    }],
+    ui: { mode: "list", noteId: null },
+    actions: libretaActions
+  });
+  const texto = root.textContent;
+  return {
+    pass:
+      texto.includes("Ideas para la ciudad") &&
+      texto.includes("Un faro nuevo en el muelle") &&
+      texto.includes("1 nota"),
+    detail: "una nota pintada en la hoja"
+  };
+});
+
+await run("renderLibreta editor trae textarea real y botones de guardar", () => {
+  const root = montar();
+  renderLibreta(root, { notes: [], ui: { mode: "new", noteId: null }, actions: libretaActions });
+  const textareas = root.querySelectorAll("textarea").length;
+  const inputs = root.querySelectorAll("input").length;
+  return {
+    pass: textareas === 1 && inputs === 1 && root.textContent.includes("Guardar nota"),
+    detail: `${inputs} input · ${textareas} textarea`
   };
 });
 
