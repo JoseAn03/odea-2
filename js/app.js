@@ -47,6 +47,7 @@ import { renderJarvis } from "./jarvis-ui.js";
 import { renderShop } from "./shop-ui.js";
 import { renderInventory } from "./inventory-ui.js";
 import { nearestCollectible, paquetesView } from "../src/paquetes-state.js";
+import { legendarioView } from "../src/legendario-state.js";
 import { renderLibreta } from "./libreta-ui.js";
 import { fmt } from "./format.js";
 import { equippedLook, shopItem } from "../src/shop.js";
@@ -1035,6 +1036,14 @@ function renderActiveCampaign() {
   const view = campaignView(bundle, id);
   renderCampaign(root, {
     view, compact: inPhone,
+    /* Set Legendario (v0.49.0): la vitrina del panel solo aparece si
+       la campaña tiene set definido y está completa; el reclamo va
+       por saveCampaignAction (la puerta única) como todo lo demás. */
+    legendary: legendarioView(bundle, id),
+    onClaimLegendary: (campaignId) => saveCampaignAction({ type: "legendario.claim", campaignId }).then((r) => {
+      if (r.ok && toasts) toasts.show("✨ ¡Set EXO//AUTÓMATA en tu inventario! El atuendo ya está equipado.", { tone: "ok" });
+      return r;
+    }),
     onBack: () => inPhone ? showPhoneHome() : closeCampaign(),
     onComplete: (missionId, evidence) => saveCampaignAction({ type: "campaign.complete", missionId, evidence }),
     onApply: (details) => saveCampaignAction({
