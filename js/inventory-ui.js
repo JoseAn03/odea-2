@@ -28,7 +28,8 @@
 import { SHOP_ITEMS, shopItem, tiendaState, ownsItem } from "../src/shop.js";
 import { rachaView } from "../src/racha-state.js";
 import { PAQUETE_PALETTES, paquetesView } from "../src/paquetes-state.js";
-import { outfitSprite, vehicleSprite } from "./city/pixel.js";
+import { legendarioViews } from "../src/legendario-state.js";
+import { outfitSprite, vehicleSprite, relicCanvas } from "./city/pixel.js";
 import { shopItemCard } from "./shop-ui.js";
 import { fmt } from "./format.js";
 
@@ -122,8 +123,10 @@ function renderHub(root, { bundle, actions, standalone, backLabel }) {
   const derived = (bundle && bundle.core && bundle.core.derived) || {};
   const balance = Number(derived.coins && derived.coins.balance) || 0;
   const state = tiendaState(bundle);
-  const outfits = SHOP_ITEMS.filter((i) => i.kind === "outfit");
-  const vehicles = SHOP_ITEMS.filter((i) => i.kind === "vehicle");
+  /* Lo legendario (grantOnly) no cuenta en los totales comprables:
+     vive en su vitrina de la Colección, no en estas dos secciones. */
+  const outfits = SHOP_ITEMS.filter((i) => i.kind === "outfit" && !i.grantOnly);
+  const vehicles = SHOP_ITEMS.filter((i) => i.kind === "vehicle" && !i.grantOnly);
   const ownedOutfits = outfits.filter((i) => ownsItem(state, i.id));
   const ownedVehicles = vehicles.filter((i) => ownsItem(state, i.id));
   const outfitItem = shopItem(state.outfit);
@@ -154,11 +157,12 @@ function renderHub(root, { bundle, actions, standalone, backLabel }) {
 
   const shields = rachaView(bundle);
   const tapes = paquetesView(bundle);
+  const legendary = legendarioViews(bundle)[0] || null;
   root.append(sectionCard({
     icon: cassetteCanvas(false),
     title: "COLECCIÓN",
     count: "La vitrina de las dinámicas",
-    status: `Cassettes ${tapes.foundCount}/${tapes.total} · Escudos ×${shields.available} · Set legendario`,
+    status: `Cassettes ${tapes.foundCount}/${tapes.total} · Escudos ×${shields.available} · Set legendario ${legendary && legendary.claimed ? "ganado 🏆" : "por ganar"}`,
     onOpen: () => actions.onSection("coleccion")
   }));
 }
@@ -168,7 +172,7 @@ function renderOutfits(root, { bundle, actions }) {
   const balance = Number(derived.coins && derived.coins.balance) || 0;
   const state = tiendaState(bundle);
   const outfitItem = shopItem(state.outfit);
-  const owned = SHOP_ITEMS.filter((i) => i.kind === "outfit" && ownsItem(state, i.id));
+  const owned = SHOP_ITEMS.filter((i) => i.kind === "outfit" && !i.grantOnly && ownsItem(state, i.id));
 
   root.append(backRow("← Volver", () => actions.onSection("hub")));
   root.append(node("h3", "phone-screen-title", "Atuendos"));
@@ -202,7 +206,7 @@ function renderVehicles(root, { bundle, actions }) {
   const balance = Number(derived.coins && derived.coins.balance) || 0;
   const state = tiendaState(bundle);
   const vehicleItem = state.vehicle ? shopItem(state.vehicle) : null;
-  const owned = SHOP_ITEMS.filter((i) => i.kind === "vehicle" && ownsItem(state, i.id));
+  const owned = SHOP_ITEMS.filter((i) => i.kind === "vehicle" && !i.grantOnly && ownsItem(state, i.id));
 
   root.append(backRow("← Volver", () => actions.onSection("hub")));
   root.append(node("h3", "phone-screen-title", "Vehículos"));
@@ -237,9 +241,44 @@ function renderVehicles(root, { bundle, actions }) {
   root.append(toShop);
 }
 
+/* Una pieza de la Vitrina Legendaria: a color si es tuya (atuendo y
+   vehículo con su sprite real y «Equipar» directo vía shop.equip;
+   reliquias con su pixel art, solo exhibidas) y en silueta oscura
+   con «Se gana, no se compra» si todavía no la ganaste. */
+function legendaryPieceCard(piece, state, balance, actions) {
+  const { item, owned } = piece;
+  if (owned) {
+    if (item.kind === "reliquia") {
+      const card = node("article", "shop-card inv-legend-piece is-owned");
+      const preview = node("div", "shop-preview");
+      const canvas = relicCanvas(item);
+      if (canvas) { canvas.className = "shop-sprite-relic"; preview.append(canvas); }
+      card.append(preview, node("h4", "shop-name", item.name), node("p", "shop-tag", "RELIQUIA · SOLO SE EXHIBE"));
+      return card;
+    }
+    return shopItemCard(item, state, balance, actions);
+  }
+  const card = node("article", "shop-card inv-legend-piece is-silhouette");
+  const preview = node("div", "shop-preview");
+  const canvas = item.kind === "outfit" ? outfitSprite(item.pal, item.gorra, item.look)
+    : item.kind === "reliquia" ? relicCanvas(item, true)
+    : vehicleSprite(item.spec);
+  if (canvas) {
+    canvas.className = item.kind === "outfit" ? "shop-sprite-outfit" : item.kind === "reliquia" ? "shop-sprite-relic" : "shop-sprite-vehicle";
+    canvas.style.filter = "brightness(0.22) saturate(0.4)";
+    preview.append(canvas);
+  }
+  card.append(preview, node("h4", "shop-name", item.name), node("p", "shop-tag", "SE GANA, NO SE COMPRA"));
+  return card;
+}
+
 function renderCollection(root, { bundle, actions }) {
   const shields = rachaView(bundle);
   const tapes = paquetesView(bundle);
+  const legendary = legendarioViews(bundle)[0] || null;
+  const derived = (bundle && bundle.core && bundle.core.derived) || {};
+  const balance = Number(derived.coins && derived.coins.balance) || 0;
+  const state = tiendaState(bundle);
   root.append(backRow("← Volver", () => actions.onSection("hub")));
   root.append(node("h3", "phone-screen-title", "Colección"));
   root.append(node("p", "phone-screen-sub", "La vitrina de las dinámicas nuevas"));
@@ -248,7 +287,7 @@ function renderCollection(root, { bundle, actions }) {
   for (const [canvas, label, live] of [
     [cassetteCanvas(tapes.foundCount <= 0), "CASSETTES NEÓN", tapes.foundCount > 0],
     [shieldCanvas(shields.available <= 0), "ESCUDOS DE RACHA", shields.available > 0],
-    [trophyCanvas(true), "SET LEGENDARIO", false]
+    [trophyCanvas(!(legendary && legendary.claimed)), "SET LEGENDARIO", Boolean(legendary && legendary.claimed)]
   ]) {
     const slot = node("div", `inv-vitrina-slot${live ? " is-live" : ""}`);
     canvas.className = "inv-vitrina-sprite";
@@ -304,6 +343,39 @@ function renderCollection(root, { bundle, actions }) {
   }
   root.append(tapesBox);
 
+  /* Vitrina LEGENDARIA encendida (Fase 5, §6 + §12.2③): las 5 piezas
+     EXO//AUTÓMATA del evento Operación Confirmación. Ganadas: a
+     color, con Equipar directo en atuendo/vehículo y las reliquias
+     solo exhibidas. Sin ganar: siluetas con «Se gana, no se
+     compra». El reclamo NO vive acá: se hace en la vitrina del
+     panel de la campaña al completarla (§6.2). */
+  if (legendary) {
+    const box = node("section", "inv-legend");
+    const head = node("div", "inv-escudos-head");
+    const trophy = trophyCanvas(!legendary.claimed);
+    trophy.className = "inv-escudos-sprite";
+    const titles = node("div", "inv-escudos-titles");
+    titles.append(
+      node("h4", "inv-escudos-title", "VITRINA LEGENDARIA"),
+      node("p", "inv-tapes-count", `🏆 SET ${legendary.name}`)
+    );
+    head.append(trophy, titles);
+    box.append(head);
+    box.append(node(
+      "p", "inv-escudos-text",
+      legendary.claimed
+        ? "¡Set ganado! Completaste Operación Confirmación y el set es tuyo para siempre. El atuendo y el vehículo se equipan desde acá; las reliquias solo se exhiben, como buen trofeo."
+        : "Completaste… todavía no. Este set es el premio de Operación Confirmación: se gana completando las 14 misiones del evento y reclamándolo en su panel. No está en la Tienda y ningún ₡ lo compra."
+    ));
+    const grid = node("div", "shop-grid");
+    for (const piece of legendary.pieces) grid.append(legendaryPieceCard(piece, state, balance, actions));
+    box.append(grid);
+    if (!legendary.claimed) {
+      box.append(node("p", "shop-note", "Se gana, no se compra."));
+    }
+    root.append(box);
+  }
+
   /* Vitrina de ESCUDOS encendida (Fase 3, §12.2③): exhibición y
      estado, SIN botones a propósito — se ganan jugando (Contrato
      Semanal y rachas de 14/30 días) y el consumo es automático. */
@@ -344,12 +416,8 @@ function renderCollection(root, { bundle, actions }) {
   root.append(escudos);
 
   root.append(node(
-    "p", "inv-vitrina-text",
-    "Aquí vivirá también el set legendario de los eventos."
-  ));
-  root.append(node(
     "p", "shop-note",
-    "Se gana, no se compra: cada vitrina se enciende jugando, cuando su dinámica llegue a Costa Neón."
+    "Se gana, no se compra: cada vitrina de esta Colección se enciende jugando."
   ));
 }
 
