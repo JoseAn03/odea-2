@@ -100,6 +100,27 @@ export function createRenderer(canvas) {
     w: 2048 * CITY_MAP_SCALE_X,
     h: 2048 * CITY_MAP_SCALE_Y
   };
+
+  /* Registro fino del Estudio Neón (v0.44.1): la deformación global del
+     mapa deja el interior PINTADO de la manzana (0,1) corrido al sureste
+     respecto a su celda de layout. Medido sobre city-map.webp (perfiles
+     de color por los cuatro lados), el marco de acera pintado encierra
+     el rectángulo (278,655)–(577,948) en píxeles de la imagen, mientras
+     el interior de layout cae en (202,604)–(522,926): la escena dibujada
+     por celda dejaba ver una franja residencial a la derecha y abajo, y
+     se montaba a la calle arriba y a la izquierda. Como la piel de marca
+     es la única que se dibuja SOBRE el mapa, en esa ruta se dibuja — con
+     su letrero — sobre el interior pintado, convertido con la misma
+     transformada del mapa y expandido 22 por lado (el inset que resta
+     drawVenueSkin). Sin mapa, la ruta procedural usa la celda de layout
+     como siempre; los toques siguen mandando por celda en las dos. */
+  const MARCA_PAINTED_SRC = { x: 278, y: 655, w: 299, h: 293 };
+  const MARCA_MAP_RECT = {
+    x: 120 + (MARCA_PAINTED_SRC.x - CITY_MAP_SRC.x) * CITY_MAP_SCALE_X - 22,
+    y: 120 + (MARCA_PAINTED_SRC.y - CITY_MAP_SRC.y) * CITY_MAP_SCALE_Y - 22,
+    w: MARCA_PAINTED_SRC.w * CITY_MAP_SCALE_X + 44,
+    h: MARCA_PAINTED_SRC.h * CITY_MAP_SCALE_Y + 44
+  };
   let cityMapPicture = null;
   if (typeof Image !== "undefined") {
     cityMapPicture = new Image();
@@ -1463,8 +1484,9 @@ export function createRenderer(canvas) {
          dibuja TAMBIÉN sobre el mapa imagen: city-map.webp pinta esa
          manzana como residencial porque el estudio nació después del
          rediseño del mapa, así que la piel aprobada manda en las dos
-         rutas. */
-      const marcaCell = marcaRect();
+         rutas. En la ruta con mapa manda el interior PINTADO de la
+         manzana (MARCA_MAP_RECT, v0.44.1), no la celda de layout. */
+      const marcaCell = useMap ? MARCA_MAP_RECT : marcaRect();
       if (visible(view, marcaCell.x, marcaCell.y, marcaCell.w, marcaCell.h)) {
         drawVenueSkin("marca", marcaCell);
         drawVenueSign("ESTUDIO NEÓN", marcaCell, "#FFC53D");
