@@ -340,6 +340,13 @@ function mercadoPanel(b, catalog, d) {
   const equipped = s.equipped ? Object.keys(s.equipped) : [];
   const custom = Array.isArray(canje.custom) ? canje.custom : [];
   const log = Array.isArray(canje.log) ? canje.log : [];
+  /* v0.45.0: los canjes de ODEA 2 viven en play.reales (solo lectura
+     acá, como todo este panel): se suman a los conteos heredados. */
+  const reales = (b && b.play && typeof b.play.reales === "object" && b.play.reales) || {};
+  const realesCustom = Array.isArray(reales.custom) ? reales.custom : [];
+  const realesLog = Array.isArray(reales.log) ? reales.log : [];
+  const realesHidden = new Set(Array.isArray(reales.hidden) ? reales.hidden : []);
+  const customVisibles = custom.filter((item) => !(item && realesHidden.has(item.id)));
 
   return {
     id: "mercado",
@@ -362,8 +369,8 @@ function mercadoPanel(b, catalog, d) {
       row("tesoro_streak", "Racha del tesoro", `${fmt(t.racha || 0)} (mejor ${fmt(t.mejorRacha || 0)})`),
       row("tesoro_shields", "Escudos", fmt(t.escudos || 0), { raw: Number(t.escudos) || 0 }),
 
-      row("real_rewards", "Recompensas reales", `${fmt(custom.length)} personalizada(s)`, { group: "Canjes" }),
-      row("real_history", "Historial de canjes", `${fmt(log.length)}`, { raw: log.length })
+      row("real_rewards", "Recompensas reales", `${fmt(customVisibles.length + realesCustom.length)} personalizada(s)`, { group: "Canjes" }),
+      row("real_history", "Historial de canjes", `${fmt(log.length + realesLog.length)}`, { raw: log.length + realesLog.length })
     ])
   };
 }
