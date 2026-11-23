@@ -419,8 +419,8 @@ export function applyMutation(draft, mutation, catalog, { at, date } = {}) {
   /* Jarvis (v0.38.0): quiz con XP acotado, contadores de uso del Worker
      y el saludo del día en caché. La IA nunca escribe por su cuenta:
      todo pasa por aquí y por applyGameplayMutation. */
-  if (mutation && ["jarvis.quiz", "jarvis.usage", "jarvis.briefing"].includes(mutation.type)) {
-    return applyJarvisMutation(draft, mutation, { at: atIso, date: dateKey });
+  if (mutation && ["jarvis.quiz", "jarvis.usage", "jarvis.briefing", "jarvis.act", "jarvis.actUndo"].includes(mutation.type)) {
+    return applyJarvisMutation(draft, mutation, { at: atIso, date: dateKey, catalog });
   }
 
   /* Libreta (v0.41.0): notas personales del teléfono. Sin XP, sin

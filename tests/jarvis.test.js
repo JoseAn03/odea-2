@@ -171,7 +171,7 @@ test("jarvis: buildProgressSummary devuelve la forma del spec con el fixture", (
   assert.ok(Array.isArray(summary.ianPorVencer));
   assert.deepEqual(summary.entrevistaEnvista, { fecha: "2026-11-24", diasRestantes: 4 });
   assert.deepEqual(Object.keys(summary.jarvisHoy).sort(),
-    ["chatRestantes", "feedbackRestantes", "quizRestantes", "quizXp"]);
+    ["acciones", "chatRestantes", "feedbackRestantes", "quizRestantes", "quizXp"]);
   const despues = buildProgressSummary(saved(s), catalog, "2026-11-25");
   assert.equal(despues.entrevistaEnvista, null);
 });

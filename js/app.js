@@ -31,7 +31,8 @@ import { CAMPAIGNS, CAMPAIGN_MISSIONS } from "../src/campaigns.js";
 import { garageView } from "../src/garage-state.js";
 import { ianView } from "../src/ian-state.js";
 import { marcaView } from "../src/marca-state.js";
-import { buildProgressSummary, jarvisView } from "../src/jarvis-state.js";
+import { buildProgressSummary, dailyPlanView, jarvisView } from "../src/jarvis-state.js";
+import { newJarvisRequestId } from "../src/jarvis-actions.js";
 import { libretaView } from "../src/libreta-state.js";
 import { renderCampaign, renderDaily } from "./campaign-ui.js";
 import { renderContrato } from "./contrato-ui.js";
@@ -1265,6 +1266,47 @@ function paintContrato(host, root, { compact, onBack }) {
   });
 }
 
+/* La ⭐ manual del panel Hoy: la MISMA mutación jarvis.act que usa la
+   tarjeta de Jarvis, con origen manual y SIN pasar por la API — el
+   panel es la segunda puerta del ajuste. Si la diaria ya es el foco,
+   tocarla de nuevo no hace nada (el reducer respondería ACTION_STALE). */
+async function toggleDailyFocus(missionId, root, { compact, onBack }) {
+  if (!storage || !catalog || !bundle) return;
+  const today = localDateKey();
+  if (dailyPlanView(bundle, catalog, today).focusId === missionId) return;
+  const result = await applyGameplayMutationLocked(
+    storage, catalog,
+    { type: "jarvis.act", requestId: newJarvisRequestId(), name: "set_daily_focus", args: { dailyId: missionId } },
+    gameplayDate()
+  );
+  if (result.status === "applied") {
+    refresh();
+    if (toasts) toasts.show("⭐ Foco de hoy actualizado.", { tone: "ok" });
+  } else if (result.status === "rejected" && toasts) {
+    toasts.show("No se pudo marcar el foco. Intentá de nuevo.", { tone: "error" });
+  }
+  if (bundle && catalog) paintDaily(root, { compact, onBack });
+}
+
+/* «Volver al día completo»: apaga el modo día ocupado deshaciendo la
+   acción que lo sostiene (jarvis.actUndo), sin API. Si el modo ya no
+   está sostenido por una acción (no debería pasar), no toca nada. */
+async function clearBusyDay(plan, root, { compact, onBack }) {
+  if (!storage || !catalog || !bundle) return;
+  if (plan.busyRequestId) {
+    const result = await applyGameplayMutationLocked(
+      storage, catalog, { type: "jarvis.actUndo", requestId: plan.busyRequestId }, gameplayDate()
+    );
+    if (result.status === "applied") {
+      refresh();
+      if (toasts) toasts.show("⏱️ Día completo de nuevo: las 3 diarias están en tu lista.", { tone: "ok" });
+    } else if (toasts) {
+      toasts.show("El día ocupado ya había cambiado; revisá tu lista.", { tone: "info" });
+    }
+  }
+  if (bundle && catalog) paintDaily(root, { compact, onBack });
+}
+
 /* El panel de Diarias se pinta igual en sus dos casas (el teléfono y la
    pestaña «Hoy»): mismo root intercambiable, misma ruta, mismo registro. */
 function paintDaily(root, { compact, onBack }) {
@@ -1275,14 +1317,33 @@ function paintDaily(root, { compact, onBack }) {
      falló y hoy ya hubo actividad, el escudo se gasta solo. */
   detectRachaShield();
   const route = routeForDay(bundle, catalog);
+  /* Jarvis con manos (v0.50.0): el panel REFLEJA el plan del día que
+     vive en play.jarvis — foco (⭐ + pastilla), orden guardado y día
+     ocupado (elegidas hoy, diferidas en «Para mañana»). Es estado de
+     vista puro: la ruta, la racha y el multiplicador no se enteran. */
+  const plan = dailyPlanView(bundle, catalog, route.date);
+  const byId = new Map(route.missions.map((m) => [m.id, m]));
+  const ordered = plan.order.map((id) => byId.get(id)).filter(Boolean);
+  const deferredIds = new Set(plan.busy ? plan.busy.deferred : []);
+  const missions = ordered.map((m) => ({
+    ...m,
+    focus: plan.focusId === m.id,
+    deferred: deferredIds.has(m.id)
+  }));
+  /* Con día ocupado, las diferidas van AL FINAL (su sección); el resto
+     conserva el orden guardado, con el foco en su posición. */
+  missions.sort((a, b) => Number(a.deferred) - Number(b.deferred));
   renderDaily(hosts.daily, {
     compact,
     view: {
       day: route.catalogDay,
       date: route.date,
-      missions: route.missions
+      missions,
+      busy: plan.busy ? { minutes: plan.busy.minutes } : null
     },
     onBack,
+    onToggleFocus: (missionId) => toggleDailyFocus(missionId, root, { compact, onBack }),
+    onClearBusy: () => clearBusyDay(plan, root, { compact, onBack }),
     onComplete: async (missionId) => {
       await completeMission(missionId, "hub");
       const fresh = routeForDay(bundle, catalog);
@@ -1678,6 +1739,9 @@ function renderJarvisPanel() {
     onQuiz: (xpAwarded) => saveJarvisAction({ type: "jarvis.quiz", xpAwarded }),
     onUsage: (kind) => saveJarvisAction({ type: "jarvis.usage", kind }),
     onBriefing: (text) => saveJarvisAction({ type: "jarvis.briefing", text }),
+    /* v0.50.0 — manos: la tarjeta despacha por la ruta única de siempre. */
+    onAct: (mutation) => saveJarvisAction(mutation),
+    onActUndo: (mutation) => saveJarvisAction(mutation),
     onOpenZonaIA: () => { closeCampaign(); openCampaign("zonaia"); },
     onClose: () => closeCampaign()
   });
