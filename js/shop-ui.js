@@ -9,6 +9,7 @@
  */
 
 import { SHOP_ITEMS, tiendaState, ownsItem } from "../src/shop.js";
+import { realesView } from "../src/reales-state.js";
 import { outfitSprite, vehicleSprite } from "./city/pixel.js";
 import { fmt } from "./format.js";
 
@@ -19,7 +20,10 @@ function node(tag, cls, text) {
   return el;
 }
 
-function itemCard(item, state, balance, actions) {
+/* Exportada como shopItemCard: el Inventario (js/inventory-ui.js)
+   reutiliza EXACTAMENTE estas tarjetas para lo poseído, con los mismos
+   botones Equipar / Equipado ✓ / Ir a pie vía shop.equip. */
+export function itemCard(item, state, balance, actions) {
   const card = node("article", "shop-card");
   const preview = node("div", "shop-preview");
   const canvas = item.kind === "outfit" ? outfitSprite(item.pal, item.gorra, item.look) : vehicleSprite(item.spec);
@@ -92,7 +96,121 @@ function shopHero(actions) {
   return hero;
 }
 
-export function renderShop(root, { bundle, actions, standalone = false }) {
+export { itemCard as shopItemCard };
+
+/* ------------------------- Recompensas Reales -------------------------
+   v0.45.0: el puerto de ODEA 1 v5.93. Orden de la sección (§2.1 del
+   diseño): franja «Por disfrutar», contador de disfrutadas, grilla del
+   catálogo efectivo y el formulario «Creá la tuya». El CANJEAR no
+   dispara la mutación: abre la confirmación con el saldo resultante
+   (actions.redeem pide confirmación; actions.confirmRedeem canjea). */
+function realesCard(item, balance, actions) {
+  const card = node("article", "shop-card reales-card");
+  if (item.custom) {
+    const del = node("button", "reales-del", "✕");
+    del.type = "button";
+    del.setAttribute("aria-label", `Borrar recompensa ${item.n}`);
+    del.addEventListener("click", () => actions.removeReales(item.id));
+    card.append(del);
+  }
+  card.append(node("div", "reales-ico", item.ico || "🎁"));
+  card.append(node("h4", "shop-name", item.n));
+  card.append(node("p", "shop-tag", item.custom ? "TUYA · RECOMPENSA REAL" : "RECOMPENSA REAL"));
+  if (balance >= item.price) {
+    const btn = node("button", "shop-btn is-buy", `CANJEAR · ₡${fmt(item.price)}`);
+    btn.type = "button";
+    btn.addEventListener("click", () => actions.redeem(item));
+    card.append(btn);
+  } else {
+    const btn = node("button", "shop-btn is-disabled", `Te faltan ₡${fmt(item.price - balance)}`);
+    btn.type = "button";
+    btn.disabled = true;
+    card.append(btn);
+  }
+  return card;
+}
+
+function renderReales(root, { bundle, actions, confirmReward }) {
+  const balance = Number(bundle?.core?.derived?.coins?.balance) || 0;
+  const view = realesView(bundle);
+
+  root.append(node("h4", "shop-section", "🎁 RECOMPENSAS REALES"));
+  root.append(node(
+    "p", "shop-note",
+    "Premios de la vida real, pagados con tus ₡ ODEA. Canjeás acá y lo disfrutás afuera."
+  ));
+
+  if (view.pending.length) {
+    const box = node("div", "reales-pending");
+    box.append(node("p", "reales-pending-title", `🎉 Por disfrutar (${view.pending.length}):`));
+    for (const entry of view.pending) {
+      const row = node("div", "reales-pending-row");
+      row.append(
+        node("span", "reales-pending-ico", entry.ico || "🎁"),
+        node("b", "reales-pending-name", entry.n),
+        node("small", "reales-pending-date", entry.date || "")
+      );
+      const enjoy = node("button", "shop-btn reales-enjoy", "✓ YA LA DISFRUTÉ");
+      enjoy.type = "button";
+      enjoy.addEventListener("click", () => actions.enjoyReales(entry.key));
+      row.append(enjoy);
+      box.append(row);
+    }
+    root.append(box);
+  }
+
+  if (view.enjoyedCount) {
+    root.append(node("p", "reales-done-count", `✅ Recompensas disfrutadas: ${view.enjoyedCount}`));
+  }
+
+  if (confirmReward) {
+    const box = node("div", "reales-confirm");
+    box.append(node(
+      "p", "reales-confirm-text",
+      `¿Canjear "${confirmReward.n}" por ₡${fmt(confirmReward.price)}? Te quedan ₡${fmt(balance - confirmReward.price)}.`
+    ));
+    const yes = node("button", "shop-btn is-buy", "Sí, canjear");
+    yes.type = "button";
+    yes.addEventListener("click", () => actions.confirmRedeem());
+    const noBtn = node("button", "shop-btn is-ghost", "Cancelar");
+    noBtn.type = "button";
+    noBtn.addEventListener("click", () => actions.cancelRedeem());
+    box.append(yes, noBtn);
+    root.append(box);
+  }
+
+  const grid = node("div", "shop-grid");
+  for (const item of view.catalog) grid.append(realesCard(item, balance, actions));
+  root.append(grid);
+
+  /* Formulario «Creá la tuya»: el mismo trío de ODEA 1 (nombre, emoji,
+     precio), con los topes del diseño (nombre ≤ 48, precio 1–999). */
+  const form = node("div", "reales-form");
+  form.append(node("h5", "reales-form-title", "Creá la tuya"));
+  const name = node("input", "reales-input");
+  name.type = "text"; name.maxLength = 48;
+  name.placeholder = "Nombre de tu recompensa";
+  name.setAttribute("aria-label", "Nombre de tu recompensa");
+  const ico = node("input", "reales-input is-ico");
+  ico.type = "text"; ico.maxLength = 8;
+  ico.placeholder = "🎁";
+  ico.setAttribute("aria-label", "Emoji de tu recompensa");
+  const price = node("input", "reales-input is-price");
+  price.type = "number"; price.min = "1"; price.max = "999";
+  price.placeholder = "₡";
+  price.setAttribute("aria-label", "Precio en ₡ ODEA");
+  const create = node("button", "shop-btn is-buy", "Crear recompensa");
+  create.type = "button";
+  create.addEventListener("click", () => {
+    actions.createReales({ n: name.value, ico: ico.value, price: Number(price.value) });
+  });
+  const fields = node("div", "reales-form-fields");
+  fields.append(ico, name, price);
+  form.append(fields, create);
+  root.append(form);
+}
+
+export function renderShop(root, { bundle, actions, standalone = false, confirmReward = null }) {
   const derived = (bundle && bundle.core && bundle.core.derived) || {};
   const balance = Number(derived.coins && derived.coins.balance) || 0;
   const state = tiendaState(bundle);
@@ -114,18 +232,14 @@ export function renderShop(root, { bundle, actions, standalone = false }) {
   }
   root.append(node("p", "shop-balance", `Tu saldo: ₡${fmt(balance)} ODEA virtuales`));
 
-  /* v0.40.0 · Mi inventario: todo lo que ya es tuyo, listo para cambiar
-     el atuendo equipado cuando quieras, sin volver a pagar. */
-  const ownedOutfits = SHOP_ITEMS.filter((i) => i.kind === "outfit" && ownsItem(state, i.id));
-  if (ownedOutfits.length) {
-    root.append(node("h4", "shop-section", "Mi inventario · Atuendos"));
-    root.append(node(
-      "p", "shop-note",
-      "Esto ya es tuyo: tocalo para cambiar de atuendo cuando quieras. No se vuelve a pagar."
-    ));
-    const inv = node("div", "shop-grid");
-    for (const item of ownedOutfits) inv.append(itemCard(item, state, balance, actions));
-    root.append(inv);
+  /* v0.45.0 · El panel «Mi inventario · Atuendos» se eliminó (Adenda
+     §12): lo tuyo vive en el Inventario, con sus 3 secciones. Acá
+     queda UNA tarjeta de acceso bajo el saldo. */
+  if (actions.onInventory) {
+    const access = node("button", "shop-btn is-ghost inv-access", "🎒 INVENTARIO — Atuendos · Vehículos · Colección →");
+    access.type = "button";
+    access.addEventListener("click", () => actions.onInventory());
+    root.append(access);
   }
 
   for (const [kind, title] of [["outfit", "Atuendos"], ["vehicle", "Vehículos"]]) {
@@ -136,6 +250,10 @@ export function renderShop(root, { bundle, actions, standalone = false }) {
     }
     root.append(grid);
   }
+
+  /* v0.45.0 · Recompensas Reales: la sección cierra la Tienda, debajo
+     de los vehículos (diseño §2.1). */
+  renderReales(root, { bundle, actions, confirmReward });
 
   root.append(node(
     "p", "shop-note",

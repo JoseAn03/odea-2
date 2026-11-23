@@ -261,11 +261,12 @@ export function sourcesFromMigrated(bundle2, catalog = null) {
       eventRL: clone(s.credits && s.credits.eventRL || { log: [] }),
       farm: clone(s.credits && s.credits.farm || { log: [] })
     },
-    /* El gasto suma dos libros: el migrado de ODEA 1 (core.shop.spent) y el
-       de la Tienda de ODEA 2 (play.tienda.spent, vía mergePlaySources). */
+    /* El gasto suma tres libros: el migrado de ODEA 1 (core.shop.spent),
+       el de la Tienda de ODEA 2 (play.tienda.spent) y el de Recompensas
+       Reales (play.reales.spent), ambos vía mergePlaySources. */
     shop: {
       ...clone(s.shop || { spent: 0 }),
-      spent: (Number(s.shop && s.shop.spent) || 0) + (extra.tiendaSpent || 0)
+      spent: (Number(s.shop && s.shop.spent) || 0) + (extra.tiendaSpent || 0) + (extra.realesSpent || 0)
     },
     /* Sagas: los capítulos migrados llevan fecha; los nuevos se registran con
        `true` porque `sagaAreaXP` solo mira la presencia de la clave. */
@@ -316,11 +317,17 @@ function mergePlaySources(bundle2, catalog) {
     frozenVida: {},
     frozenVidaById: {},
     /* Gasto de la Tienda (play.tienda): se lee aunque no haya completaciones. */
-    tiendaSpent: 0
+    tiendaSpent: 0,
+    /* Gasto de Recompensas Reales (play.reales, v0.45.0): el sumidero de
+       la vida real. Sin actividad nueva vale 0 y los totales no cambian. */
+    realesSpent: 0
   };
   const play = bundle2 && bundle2.play;
   if (play && play.tienda && typeof play.tienda === "object") {
     out.tiendaSpent = Number(play.tienda.spent) || 0;
+  }
+  if (play && play.reales && typeof play.reales === "object") {
+    out.realesSpent = Number(play.reales.spent) || 0;
   }
   if (!play || !play.completions) return out;
 

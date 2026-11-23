@@ -22,6 +22,7 @@ import { applyIanMutation } from "./ian-state.js";
 import { applyJarvisMutation } from "./jarvis-state.js";
 import { applyLibretaMutation } from "./libreta-state.js";
 import { applyMarcaMutation } from "./marca-state.js";
+import { applyRealesMutation } from "./reales-state.js";
 import { applyShopMutation } from "./shop.js";
 
 export const ROUTE_SIZE = 3;
@@ -423,6 +424,14 @@ export function applyMutation(draft, mutation, catalog, { at, date } = {}) {
      nunca pasa por derive(). */
   if (mutation && ["libreta.create", "libreta.update", "libreta.delete"].includes(mutation.type)) {
     return applyLibretaMutation(draft, mutation, { at: atIso, date: dateKey });
+  }
+
+  /* Recompensas Reales (v0.45.0): canjes de la vida real contra el
+     saldo ₡. La herencia de ODEA 1 (core.realRewards.canje) solo se
+     lee; todo lo nuevo se escribe en play.reales y su gasto entra al
+     saldo vía derive (mergePlaySources). */
+  if (mutation && ["reales.create", "reales.delete", "reales.redeem", "reales.enjoy"].includes(mutation.type)) {
+    return applyRealesMutation(draft, mutation, { at: atIso, date: dateKey });
   }
 
   if (mutation && (mutation.type === "shop.buy" || mutation.type === "shop.equip")) {

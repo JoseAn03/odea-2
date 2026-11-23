@@ -34,11 +34,22 @@ class NodeStub {
     this.value = "";
     this.id = "";
     this._text = "";
+    /* v0.45.0: los sprites de pixel.js (Tienda/Inventario) piden un
+       contexto 2D; el DOM mínimo lo simula con un proxy que no dibuja. */
+    if (this.tagName === "CANVAS") {
+      this.getContext = () => new Proxy({}, {
+        get: (target, prop) => (prop in target ? target[prop] : () => ({ addColorStop() {} })),
+        set: (target, prop, value) => { target[prop] = value; return true; }
+      });
+    }
   }
 
   get textContent() {
     if (this.tagName === "#TEXT") return this._text;
-    return this.children.map((child) => child.textContent || "").join("");
+    /* El texto propio cuenta, como en el DOM real: sin esto, las vistas
+       que ponen el texto directo en el elemento (shop-ui, inventory-ui)
+       se veían vacías en el smoke. */
+    return (this._text || "") + this.children.map((child) => child.textContent || "").join("");
   }
 
   set textContent(value) {
@@ -510,6 +521,127 @@ await run("renderLibreta editor trae textarea real y botones de guardar", () => 
   return {
     pass: textareas === 1 && inputs === 1 && root.textContent.includes("Guardar nota"),
     detail: `${inputs} input · ${textareas} textarea`
+  };
+});
+
+/* ----------------- tienda: Recompensas Reales e Inventario ----------------- */
+
+const { renderShop } = await cargar("js/shop-ui.js");
+const { renderInventory } = await cargar("js/inventory-ui.js");
+
+const findBtn = (root, text) => root.querySelectorAll("button").find((b) => b.textContent.includes(text));
+const shopActionsStub = (extra = {}) => ({
+  buy() {}, equip() {}, onBack() {}, onInventory() {},
+  redeem() {}, confirmRedeem() {}, cancelRedeem() {},
+  enjoyReales() {}, removeReales() {}, createReales() {}, ...extra
+});
+
+await run("renderShop trae Recompensas Reales y la tarjeta del Inventario, sin el panel viejo", () => {
+  const root = montar();
+  const calls = [];
+  renderShop(root, { bundle, actions: shopActionsStub({ onInventory: () => calls.push("inv") }) });
+  const texto = root.textContent;
+  const access = findBtn(root, "INVENTARIO");
+  if (access) access.click();
+  return {
+    pass:
+      texto.includes("RECOMPENSAS REALES") &&
+      texto.includes("Noche de película con palomitas") &&
+      texto.includes("Por disfrutar") &&
+      texto.includes("Creá la tuya") &&
+      !texto.includes("Mi inventario · Atuendos") &&
+      calls.includes("inv"),
+    detail: "sección §2.1 completa + acceso al hub §12"
+  };
+});
+
+await run("renderShop: CANJEAR abre la confirmación con el saldo resultante", () => {
+  const root = montar();
+  let asked = null;
+  renderShop(root, { bundle, actions: shopActionsStub({ redeem: (item) => { asked = item.id; } }) });
+  const btn = findBtn(root, "CANJEAR");
+  if (btn) btn.click();
+  const root2 = montar();
+  let confirmed = false;
+  renderShop(root2, {
+    bundle,
+    confirmReward: { id: "lr_movie", n: "Noche de película con palomitas", price: 30 },
+    actions: shopActionsStub({ confirmRedeem: () => { confirmed = true; } })
+  });
+  const yes = findBtn(root2, "Sí, canjear");
+  if (yes) yes.click();
+  return {
+    pass: asked === "lr_movie" && root2.textContent.includes("Te quedan ₡11") && confirmed,
+    detail: "confirmación §2.4 antes de la mutación"
+  };
+});
+
+await run("inventario: hub → Atuendos → equipar dispara shop.equip con el id", () => {
+  const root = montar();
+  const invBundle = structuredClone(bundle);
+  invBundle.play = { ...(invBundle.play || {}), tienda: { owned: ["oficina"], outfit: "clasico", vehicle: null, spent: 30 } };
+  const equipped = [];
+  const actions = {
+    equip: (id) => equipped.push(id),
+    onBack() {},
+    onShop() {},
+    onSection: (s) => renderInventory(root, { bundle: invBundle, section: s, actions })
+  };
+  renderInventory(root, { bundle: invBundle, section: "hub", actions });
+  const hubOk = root.textContent.includes("ATUENDOS") && root.textContent.includes("2 de 16 tuyos");
+  const card = findBtn(root, "ATUENDOS");
+  if (card) card.click();
+  const sec = root.textContent;
+  const equipBtn = root.querySelectorAll("button").find((b) => b.textContent.trim() === "Equipar");
+  if (equipBtn) equipBtn.click();
+  return {
+    pass:
+      hubOk &&
+      sec.includes("Puesto ahora: Clásico Vice") &&
+      sec.includes("Esto ya es tuyo: cambialo cuando quieras, no se vuelve a pagar.") &&
+      equipped[0] === "oficina",
+    detail: "el HUD y la ciudad reflejan el cambio vía la misma mutación"
+  };
+});
+
+await run("inventario: hub → Vehículos → equipar y «Ir a pie»", () => {
+  const root = montar();
+  const invBundle = structuredClone(bundle);
+  invBundle.play = { ...(invBundle.play || {}), tienda: { owned: ["accent"], outfit: "clasico", vehicle: null, spent: 120 } };
+  const equipped = [];
+  const actions = {
+    equip: (id) => equipped.push(id),
+    onBack() {},
+    onShop() {},
+    onSection: (s) => renderInventory(root, { bundle: invBundle, section: s, actions })
+  };
+  renderInventory(root, { bundle: invBundle, section: "vehiculos", actions });
+  const aPie = root.textContent.includes("A pie");
+  const equipBtn = root.querySelectorAll("button").find((b) => b.textContent.trim() === "Equipar");
+  if (equipBtn) equipBtn.click();
+  invBundle.play.tienda.vehicle = "accent";
+  renderInventory(root, { bundle: invBundle, section: "vehiculos", actions });
+  const offBtn = findBtn(root, "Ir a pie");
+  if (offBtn) offBtn.click();
+  return {
+    pass: aPie && equipped[0] === "accent" && equipped[1] === null,
+    detail: "equipar vehículo poseído e ir a pie (shop.equip null)"
+  };
+});
+
+await run("inventario: Colección nace como vitrina en preparación", () => {
+  const root = montar();
+  renderInventory(root, {
+    bundle,
+    section: "coleccion",
+    actions: { equip() {}, onBack() {}, onShop() {}, onSection() {} }
+  });
+  const texto = root.textContent;
+  return {
+    pass:
+      texto.includes("Aquí vivirán tus Cassettes Neón, tus escudos y el set legendario de los eventos") &&
+      texto.includes("Se gana, no se compra"),
+    detail: "las fases 3–5 encienden cada vitrina"
   };
 });
 

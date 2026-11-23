@@ -39,7 +39,9 @@ import { renderIan } from "./ian-ui.js";
 import { renderMarca } from "./marca-ui.js";
 import { renderJarvis } from "./jarvis-ui.js";
 import { renderShop } from "./shop-ui.js";
+import { renderInventory } from "./inventory-ui.js";
 import { renderLibreta } from "./libreta-ui.js";
+import { fmt } from "./format.js";
 import { equippedLook, shopItem } from "../src/shop.js";
 import { DISTRICTS } from "./districts.js";
 import { academiaRect, cellRect, clipsRect, eventosRect, jarvisRect, marcaRect, mundoianRect, pointInRect, sabiduriaRect, zonaiaRect } from "./city/layout.js";
@@ -517,6 +519,8 @@ function afterShop(result, okMessage, duplicateMessage) {
   refresh();
   if (phoneView === "tienda" && !els.phoneBackdrop.hidden) showPhoneShop();
   if (shopStandalone) renderStandaloneShop();
+  if (phoneView === "inventario" && !els.phoneBackdrop.hidden) showPhoneInventory();
+  if (inventoryStandalone) renderStandaloneInventory();
 }
 
 function buyShopItem(itemId) {
@@ -543,6 +547,231 @@ function equipShopItem(itemId) {
   );
 }
 
+/* ------------------- Recompensas Reales (v0.45.0) --------------------
+   El canje SIEMPRE pide confirmación con el saldo resultante antes de
+   disparar la mutación (requisito del diseño §2.4): CANJEAR solo abre
+   la confirmación; «Sí, canjear» genera un requestId fresco y canjea. */
+
+let realesConfirm = null;
+
+function rerenderShopHouses() {
+  if (phoneView === "tienda" && !els.phoneBackdrop.hidden) showPhoneShop();
+  if (shopStandalone) renderStandaloneShop();
+}
+
+function afterReales(result, okMessage, duplicateMessage) {
+  if (result.status === "rejected") {
+    const code = result.error && result.error.code;
+    if (toasts) toasts.show(`No se pudo guardar: ${code}`, { tone: "error" });
+    rerenderShopHouses();
+    return;
+  }
+  if (result.status === "duplicate") {
+    if (toasts) toasts.show(duplicateMessage, { tone: "info" });
+  } else if (toasts) {
+    toasts.show(okMessage, { tone: "ok" });
+  }
+  refresh();
+  rerenderShopHouses();
+}
+
+function realesRequestId() {
+  return `rq-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function askRedeemReales(item) {
+  realesConfirm = { id: item.id, n: item.n, price: item.price };
+  rerenderShopHouses();
+}
+
+function cancelRedeemReales() {
+  realesConfirm = null;
+  rerenderShopHouses();
+}
+
+function confirmRedeemReales() {
+  if (!storage || !catalog || !realesConfirm) return;
+  const reward = realesConfirm;
+  realesConfirm = null;
+  const balance = Number(bundle && bundle.core && bundle.core.derived && bundle.core.derived.coins && bundle.core.derived.coins.balance) || 0;
+  if (balance < reward.price) {
+    if (toasts) toasts.show(`🪙 No te alcanza — Te faltan ₡${fmt(reward.price - balance)} para "${reward.n}".`, { tone: "error" });
+    rerenderShopHouses();
+    return;
+  }
+  return applyGameplayMutationLocked(
+    storage, catalog,
+    { type: "reales.redeem", rewardId: reward.id, requestId: realesRequestId() },
+    gameplayDate()
+  ).then((result) => {
+    if (result.status === "rejected" && result.error && result.error.code === "INSUFFICIENT_FUNDS") {
+      const bal = Number(bundle && bundle.core && bundle.core.derived && bundle.core.derived.coins && bundle.core.derived.coins.balance) || 0;
+      if (toasts) toasts.show(`🪙 No te alcanza — Te faltan ₡${fmt(Math.max(0, reward.price - bal))} para "${reward.n}".`, { tone: "error" });
+      rerenderShopHouses();
+      return;
+    }
+    afterReales(
+      result,
+      `🎁 ¡Recompensa canjeada! — "${reward.n}" quedó en tu lista por disfrutar. ¡Te la ganaste!`,
+      "Ese canje ya estaba registrado."
+    );
+  });
+}
+
+function enjoyReales(key) {
+  if (!storage || !catalog) return;
+  return applyGameplayMutationLocked(
+    storage, catalog, { type: "reales.enjoy", key }, gameplayDate()
+  ).then((result) => afterReales(result, "✅ ¡Que la hayás disfrutado!", "Ya estaba marcada como disfrutada."));
+}
+
+function removeReales(rewardId) {
+  if (!storage || !catalog) return;
+  return applyGameplayMutationLocked(
+    storage, catalog, { type: "reales.delete", rewardId }, gameplayDate()
+  ).then((result) => afterReales(result, "Recompensa borrada de tu lista.", "Esa recompensa ya no estaba en tu lista."));
+}
+
+function createReales({ n, ico, price }) {
+  if (!storage || !catalog) return;
+  const name = String(n || "").trim();
+  if (!name) {
+    if (toasts) toasts.show("🎁 Falta el nombre — Escribí qué recompensa querés crear.", { tone: "error" });
+    return;
+  }
+  if (!Number.isInteger(price) || price < 1 || price > 999) {
+    if (toasts) toasts.show("🎁 Precio inválido — Poné un precio entre ₡1 y ₡999.", { tone: "error" });
+    return;
+  }
+  return applyGameplayMutationLocked(
+    storage, catalog, { type: "reales.create", n: name, ico: String(ico || "").trim(), price }, gameplayDate()
+  ).then((result) => afterReales(
+    result,
+    `🎁 Recompensa creada — "${name}" por ₡${fmt(price)}. ¡A ganársela!`,
+    "Esa recompensa ya estaba creada."
+  ));
+}
+
+/* ---------------------- Inventario (v0.45.0) -------------------------
+   El hub de 3 secciones (Adenda §12): presentación pura, cero estado
+   nuevo. Dos casas: la app 🎒 del teléfono y el standalone del Mercado
+   sobre careerDialog, como la Tienda. */
+
+let inventorySection = "hub";
+let inventoryStandalone = false;
+let inventoryFromShop = false;
+let inventoryPhoneFromShop = false;
+
+function inventoryActions(onBack, onShop) {
+  return {
+    equip: (itemId) => equipShopItem(itemId),
+    onBack,
+    onShop,
+    onSection: (section) => { inventorySection = section; rerenderInventoryHouses(); }
+  };
+}
+
+function rerenderInventoryHouses() {
+  if (phoneView === "inventario" && !els.phoneBackdrop.hidden) showPhoneInventory(inventoryPhoneFromShop);
+  if (inventoryStandalone) renderStandaloneInventory();
+}
+
+function showPhoneInventory(fromShop = false) {
+  if (!els.phoneMissions || !bundle || !catalog) return;
+  inventoryPhoneFromShop = fromShop;
+  phoneView = "inventario";
+  els.phoneMissions.classList.remove("is-campaign");
+  if (els.phoneHome) els.phoneHome.hidden = true;
+  els.phoneMissions.hidden = false;
+  renderInventory(els.phoneMissions, {
+    bundle,
+    section: inventorySection,
+    actions: inventoryActions(
+      () => { if (inventoryPhoneFromShop) showPhoneShop(); else showPhoneHome(); },
+      () => showPhoneShop()
+    )
+  });
+}
+
+function openInventoryStandalone(fromShop = false) {
+  if (!bundle || !catalog) return;
+  if (!fromShop) {
+    if (walkOn) setWalk(false);
+    if (viewSession) viewSession.capture();
+    hideSheetRaw();
+    hideOverlayRaw();
+    closePhone();
+    careerId = null;
+    garageOpen = false;
+    ianOpen = false;
+    marcaOpen = false;
+    jarvisOpen = false;
+    dailyStandalone = false;
+    careerReturnFocus = document.activeElement;
+    els.careerBackdrop.hidden = false;
+    els.careerDialog.focus({ preventScroll: true });
+  }
+  shopStandalone = false;
+  inventoryStandalone = true;
+  inventoryFromShop = fromShop;
+  inventorySection = "hub";
+  renderStandaloneInventory();
+}
+
+function renderStandaloneInventory() {
+  if (!inventoryStandalone || !bundle || !catalog) return;
+  renderInventory(els.careerDialog, {
+    bundle,
+    standalone: true,
+    backLabel: inventoryFromShop ? "← Tienda" : "← Mapa",
+    section: inventorySection,
+    actions: inventoryActions(
+      () => closeInventoryStandalone(),
+      () => { inventoryStandalone = false; shopStandalone = true; renderStandaloneShop(); }
+    )
+  });
+}
+
+function closeInventoryStandalone() {
+  if (!inventoryStandalone) return;
+  inventoryStandalone = false;
+  if (inventoryFromShop) {
+    inventoryFromShop = false;
+    shopStandalone = true;
+    renderStandaloneShop();
+    return;
+  }
+  els.careerBackdrop.hidden = true;
+  if (viewSession) viewSession.restore();
+  setTab(TAB_CITY);
+  if (careerReturnFocus && document.contains(careerReturnFocus)) careerReturnFocus.focus({ preventScroll: true });
+  careerReturnFocus = null;
+}
+
+function openInventoryFromShop() {
+  inventorySection = "hub";
+  realesConfirm = null;
+  if (shopStandalone) openInventoryStandalone(true);
+  else showPhoneInventory(true);
+}
+
+/* Acciones compartidas de la Tienda en sus dos casas. */
+function shopActions({ onBack, onDistrict } = {}) {
+  return {
+    buy: (itemId) => buyShopItem(itemId),
+    equip: (itemId) => equipShopItem(itemId),
+    onBack,
+    ...(onDistrict ? { onDistrict } : {}),
+    onInventory: () => openInventoryFromShop(),
+    redeem: (item) => askRedeemReales(item),
+    confirmRedeem: () => confirmRedeemReales(),
+    cancelRedeem: () => cancelRedeemReales(),
+    enjoyReales: (key) => enjoyReales(key),
+    removeReales: (rewardId) => removeReales(rewardId),
+    createReales: (data) => createReales(data)
+  };
+}
+
 function showPhoneShop() {
   if (!els.phoneMissions || !bundle || !catalog) return;
   phoneView = "tienda";
@@ -551,11 +780,8 @@ function showPhoneShop() {
   els.phoneMissions.hidden = false;
   renderShop(els.phoneMissions, {
     bundle,
-    actions: {
-      buy: (itemId) => buyShopItem(itemId),
-      equip: (itemId) => equipShopItem(itemId),
-      onBack: () => showPhoneHome()
-    }
+    confirmReward: realesConfirm,
+    actions: shopActions({ onBack: () => showPhoneHome() })
   });
 }
 
@@ -877,15 +1103,14 @@ function renderStandaloneShop() {
   renderShop(els.careerDialog, {
     bundle,
     standalone: true,
-    actions: {
-      buy: (itemId) => buyShopItem(itemId),
-      equip: (itemId) => equipShopItem(itemId),
+    confirmReward: realesConfirm,
+    actions: shopActions({
       onBack: () => closeShopStandalone(),
       onDistrict: () => {
         closeShopStandalone();
         openDistrictArchive("mercado");
       }
-    }
+    })
   });
 }
 
@@ -1943,6 +2168,7 @@ async function boot() {
     els.careerBackdrop.addEventListener("click", (event) => {
       if (event.target === els.careerBackdrop) {
         if (dailyStandalone) closeDailyStandalone();
+        else if (inventoryStandalone) closeInventoryStandalone();
         else if (shopStandalone) closeShopStandalone();
         else closeCampaign();
       }
@@ -1958,7 +2184,7 @@ async function boot() {
         else if (app === "brete" || app === "gamer") openCampaign(app, true);
         else if (app === "tienda") showPhoneShop();
         else if (app === "map") showPhoneMap();
-        else if (app === "bag") { closePhone(); selectTab(TAB_MOCHILA); }
+        else if (app === "bag") { inventorySection = "hub"; showPhoneInventory(false); }
         else if (app === "gear") { closePhone(); selectTab(TAB_MENU); }
       });
     }
@@ -1974,6 +2200,7 @@ async function boot() {
       else if (marcaOpen) closeCampaign();
       else if (jarvisOpen) closeCampaign();
       else if (dailyStandalone) closeDailyStandalone();
+      else if (inventoryStandalone) closeInventoryStandalone();
       else if (shopStandalone) closeShopStandalone();
       else if (!els.phoneBackdrop.hidden) closePhone();
       else if (sheetOpen) closeSheet();
