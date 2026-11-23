@@ -365,7 +365,7 @@ function renderCollection(root, { bundle, actions }) {
       "p", "inv-escudos-text",
       legendary.claimed
         ? "¡Set ganado! Completaste Operación Confirmación y el set es tuyo para siempre. El atuendo y el vehículo se equipan desde acá; las reliquias solo se exhiben, como buen trofeo."
-        : "Completaste… todavía no. Este set es el premio de Operación Confirmación: se gana completando las 14 misiones del evento y reclamándolo en su panel. No está en la Tienda y ningún ₡ lo compra."
+        : "Todavía no es tuyo. Este set es el premio de Operación Confirmación: se gana completando las 14 misiones del evento y reclamándolo en su panel. No está en la Tienda y ningún ₡ lo compra."
     ));
     const grid = node("div", "shop-grid");
     for (const piece of legendary.pieces) grid.append(legendaryPieceCard(piece, state, balance, actions));
