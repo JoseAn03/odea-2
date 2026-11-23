@@ -277,6 +277,113 @@ export const SHOP_ITEMS = [
     id: "superdeportivo", kind: "vehicle", name: "Súper Deportivo (tipo Lamborghini)", price: 380,
     spec: { type: "car", w: 52, h: 24, color: "#FF7A00", techo: "#B35400", luz: "#FFA63D", sombra: "#8A3E00", spoiler: "#1A1A22", roofW: 13, roofH: 10 },
     tag: "La meta larga"
+  },
+  /* -------- v0.49.0: SET LEGENDARIO EXO//AUTÓMATA (grantOnly) --------
+   * Las 5 piezas del premio de fin de evento (diseño §6.1): NO se
+   * compran — `price: null` + `grantOnly: true`, invisibles en la
+   * grilla de compra y rechazadas en `shop.buy` con GRANT_ONLY. Solo
+   * entran a `play.tienda.owned` por el grant de `legendario.claim`
+   * (src/legendario-state.js), que exige la campaña del evento
+   * completa. Las reliquias estrenan el kind "reliquia": se poseen y
+   * se exhiben en la Vitrina Legendaria de la Colección del
+   * Inventario; no se equipan ni se venden. Su pixel art vive en
+   * `art` (filas + paleta, el sistema de siempre, cero binarios) y lo
+   * rasteriza `relicCanvas` en js/city/pixel.js. */
+  {
+    id: "exo-automata", kind: "outfit", name: "Exo Autómata", price: null, grantOnly: true,
+    pal: { C: "#0B3B4A", H: "#0B3B4A", S, T: "#0E5A6D", P: "#0A2E3A", Z: "#2EE6A8" },
+    gorra: true, tag: "LEGENDARIO · Se gana, no se compra",
+    look: {
+      head: "helmet", face: "normal", torso: "armor", arms: "armor", handKey: "A", legs: "long", overlay: "circuits",
+      pal: {
+        C: "#0B3B4A", c: "#062832", H: "#0B3B4A", S, s: SS, T: "#0E5A6D", t: "#2EE6A8",
+        U: "#BFF6FF", P: "#0A2E3A", Z: "#2EE6A8", z: "#0E7A5F", A: "#31EBDD", K: "#062832", W: "#E8FFFF", E: "#31EBDD",
+        ...legsLong("#0A2E3A", "#062832")
+      }
+    }
+  },
+  {
+    id: "mensajero-gt", kind: "vehicle", name: "Mensajero GT", price: null, grantOnly: true,
+    spec: { type: "car", w: 54, h: 24, color: "#0F7A3D", techo: "#062E1B", luz: "#2EE6A8", sombra: "#052414", stripe: "#31EBDD", spoiler: "#31EBDD", roofW: 16, roofH: 10, wheel: 6 },
+    tag: "LEGENDARIO · Deportivo verde neón, franja de circuito"
+  },
+  {
+    id: "nucleo-automata", kind: "reliquia", name: "Núcleo de Automatización", price: null, grantOnly: true,
+    tag: "LEGENDARIO · Reliquia de vitrina",
+    art: {
+      w: 16, h: 16,
+      pal: { D: "#062832", C: "#31EBDD", G: "#2EE6A8", W: "#E8FFFF", O: "#FFC53D" },
+      rows: [
+        ".......DD.......",
+        "......DCCD......",
+        ".....DCWWCD.....",
+        "....DCWGGWCD....",
+        "...DCWGDDGWCD...",
+        "..DCWGDOODGWCD..",
+        ".DCWGDOWWODGWCD.",
+        ".DCWGDOOOODGWCD.",
+        ".DCWGDOWWODGWCD.",
+        "..DCWGDOODGWCD..",
+        "...DCWGDDGWCD...",
+        "....DCWGGWCD....",
+        ".....DCWWCD.....",
+        "......DCCD......",
+        ".......DD.......",
+        "................"
+      ]
+    }
+  },
+  {
+    id: "sello-confirmacion", kind: "reliquia", name: "Sello de Confirmación", price: null, grantOnly: true,
+    tag: "LEGENDARIO · Reliquia de vitrina",
+    art: {
+      w: 16, h: 16,
+      pal: { D: "#7A5200", O: "#FFC53D", L: "#FFD166", W: "#FFF3C4", K: "#241A02" },
+      rows: [
+        ".....DDDDDD.....",
+        "...DDOOOOOODD...",
+        "..DOOLLLLLLOOD..",
+        ".DOLLLLLLLLLLOD.",
+        ".DLLLLLLLLLLLLD.",
+        "DLLLLLLLLLLKWLLD",
+        "DLLLLLLLLLKWWLLD",
+        "DLLLLLLLLKWWLLLD",
+        "DLLKLLLLKWWLLLLD",
+        "DLLLKKKKWWLLLLLD",
+        "DLLLLLLKWWLLLLLD",
+        ".DLLLLKWWLLLLD..",
+        ".DOLLLKWWLLLOD..",
+        "..DOOLLLLLOOD...",
+        "...DDOOOOODD....",
+        ".....DDDDDD....."
+      ]
+    }
+  },
+  {
+    id: "antena-dorada", kind: "reliquia", name: "Antena Dorada", price: null, grantOnly: true,
+    tag: "LEGENDARIO · Reliquia de vitrina",
+    art: {
+      w: 16, h: 16,
+      pal: { D: "#7A5200", O: "#FFC53D", L: "#FFD166", C: "#31EBDD", W: "#E8FFFF" },
+      rows: [
+        "..CC........CC..",
+        ".C..C......C..C.",
+        "C....C.WW.C....C",
+        "......WOOOW.....",
+        ".C...WOLLLOW..C.",
+        "..C...WOOOW..C..",
+        "....C..OOO..C...",
+        ".......ODO......",
+        ".......ODO......",
+        ".......ODO......",
+        "......DODOD.....",
+        ".......ODO......",
+        "......OODDOO....",
+        ".....ODDDDDDO...",
+        "....DDDDDDDDD...",
+        "...DDDDDDDDDDD.."
+      ]
+    }
   }
 ];
 
@@ -342,6 +449,9 @@ export function applyShopMutation(draft, mutation) {
 
   if (mutation.type === "shop.buy") {
     if (!item) return { changed: false, duplicate: false, reason: "UNKNOWN_ITEM", paths: [] };
+    /* v0.49.0: lo legendario jamás se vende — ni por la UI (donde ni
+       aparece) ni por consola. Se gana completando su evento. */
+    if (item.grantOnly) return { changed: false, duplicate: false, reason: "GRANT_ONLY", paths: [] };
     if (ownsItem(state, item.id)) {
       return { changed: false, duplicate: true, reason: "DUPLICATE", paths: [] };
     }
@@ -370,6 +480,10 @@ export function applyShopMutation(draft, mutation) {
       return { changed: true, duplicate: false, reason: null, paths: ["play.tienda.vehicle"] };
     }
     if (!item) return { changed: false, duplicate: false, reason: "UNKNOWN_ITEM", paths: [] };
+    /* v0.49.0: las reliquias se exhiben, no se equipan. */
+    if (item.kind === "reliquia") {
+      return { changed: false, duplicate: false, reason: "NOT_EQUIPPABLE", paths: [] };
+    }
     if (!ownsItem(state, item.id)) {
       return { changed: false, duplicate: false, reason: "NOT_OWNED", paths: [] };
     }

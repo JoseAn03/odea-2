@@ -734,6 +734,75 @@ await run("inventario: Colección sin escudos invita a ganar el primero", () => 
   };
 });
 
+/* ----------------- Set Legendario (v0.49.0, Fase 5) ------------------ */
+
+const SET_IDS_SMOKE = ["exo-automata", "mensajero-gt", "nucleo-automata", "sello-confirmacion", "antena-dorada"];
+
+await run("renderShop: las piezas legendarias son invisibles en la grilla de compra (Fase 5)", () => {
+  const root = montar();
+  renderShop(root, { bundle, actions: shopActionsStub() });
+  const texto = root.textContent;
+  return {
+    pass:
+      !texto.includes("Exo Autómata") &&
+      !texto.includes("Mensajero GT") &&
+      !texto.includes("Núcleo de Automatización") &&
+      texto.includes("Armadura Carmesí"),
+    detail: "§6.2: grantOnly invisible hasta ganarlo; el catálogo comprable sigue completo"
+  };
+});
+
+await run("inventario: Colección trae la Vitrina Legendaria en silueta sin ganar (Fase 5)", () => {
+  const root = montar();
+  renderInventory(root, {
+    bundle,
+    section: "coleccion",
+    actions: { equip() {}, onBack() {}, onShop() {}, onSection() {} }
+  });
+  const texto = root.textContent;
+  const siluetas = root.querySelectorAll(".inv-legend-piece")
+    .filter((c) => c.className.split(/\s+/).includes("is-silhouette"));
+  return {
+    pass:
+      texto.includes("VITRINA LEGENDARIA") &&
+      texto.includes("SET EXO//AUTÓMATA") &&
+      texto.includes("Se gana, no se compra") &&
+      texto.includes("Antena Dorada") &&
+      siluetas.length === 5,
+    detail: "vitrina §6/§12.2③: 5 piezas en silueta con «Se gana, no se compra»"
+  };
+});
+
+await run("inventario: Vitrina Legendaria ganada — piezas a color y Equipar directo (Fase 5)", () => {
+  const root = montar();
+  const ganado = structuredClone(bundle);
+  ganado.play = {
+    ...(ganado.play || {}),
+    tienda: { owned: [...SET_IDS_SMOKE], outfit: "exo-automata", vehicle: null, spent: 0 },
+    legendario: {
+      version: 1,
+      grants: { whatsapp: { date: "2026-11-24", at: "2026-11-24T12:00:00.000Z", items: [...SET_IDS_SMOKE] } }
+    }
+  };
+  const equips = [];
+  renderInventory(root, {
+    bundle: ganado,
+    section: "coleccion",
+    actions: { equip: (id) => equips.push(id), onBack() {}, onShop() {}, onSection() {} }
+  });
+  const texto = root.textContent;
+  const equipBtn = findBtn(root, "Equipar");
+  if (equipBtn) equipBtn.click();
+  return {
+    pass:
+      texto.includes("¡Set ganado!") &&
+      texto.includes("RELIQUIA · SOLO SE EXHIBE") &&
+      texto.includes("Equipado ✓") &&
+      equips.length === 1,
+    detail: "§12.2③: atuendo/vehículo equipables desde la vitrina; reliquias solo exhibidas"
+  };
+});
+
 /* --------------------- Contrato Semanal (v0.46.0) ----------------------- */
 
 const { renderContrato } = await cargar("js/contrato-ui.js");

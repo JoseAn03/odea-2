@@ -251,3 +251,52 @@ test("entrega: assets y módulos precacheados existen; teléfono enlaza campaña
   assert.ok(app.includes('if (id === "gamer" || id === "empleo")'));
   assert.ok(app.includes("applyGameplayMutationLocked(storage, catalog, mutation"));
 });
+
+test("Set Legendario (v0.49.0): la vitrina dorada aparece solo con la campaña completa y RECLAMAR SET dispara onClaimLegendary", async () => {
+  const { shopItem } = await import("../src/shop.js");
+  const ids = ["exo-automata", "mensajero-gt", "nucleo-automata", "sello-confirmacion", "antena-dorada"];
+  const view = {
+    id: "whatsapp", name: "Operación Confirmación", subtitle: "El evento de confirmación de reservas.",
+    goal: "Automatizar la confirmación.", chapters: [], done: 14, total: 14, percent: 100,
+    rank: "Automatizador de Reservas", next: null,
+    applications: { count: 0, totalXP: 0, totalCoins: 0, recent: [] }
+  };
+  const legendary = {
+    campaignId: "whatsapp", name: "EXO//AUTÓMATA", campaignName: "Operación Confirmación",
+    complete: true, claimed: false, canClaim: true,
+    pieces: ids.map((id) => ({ item: shopItem(id), owned: false }))
+  };
+  const root = new Element("main"); roots.add(root);
+  let claimedId = null;
+  renderCampaign(root, {
+    view, legendary,
+    onClaimLegendary: async (id) => { claimedId = id; return { ok: true }; },
+    onComplete() {}, onApply() {}, onBack() {}
+  });
+  assert.ok(root.textContent.includes("🏆 SET LEGENDARIO — EXO//AUTÓMATA"));
+  assert.ok(root.textContent.includes("Completaste Operación Confirmación. Este set no se compra: se gana."));
+  assert.ok(root.textContent.includes("Mensajero GT"));
+  assert.ok(root.textContent.includes("Antena Dorada"));
+  const claim = root.querySelectorAll("button").find((b) => b.textContent.includes("RECLAMAR SET"));
+  assert.ok(claim, "el botón RECLAMAR SET existe");
+  await claim.fire("click");
+  assert.equal(claimedId, "whatsapp");
+
+  /* Sin completar, la vitrina no aparece. */
+  const root2 = new Element("main"); roots.add(root2);
+  renderCampaign(root2, {
+    view: { ...view, done: 9, percent: 64 },
+    legendary: { ...legendary, complete: false, canClaim: false },
+    onClaimLegendary: async () => ({ ok: true }), onComplete() {}, onApply() {}, onBack() {}
+  });
+  assert.ok(!root2.textContent.includes("SET LEGENDARIO —"));
+
+  /* Reclamado: la vitrina muestra la confirmación, sin botón. */
+  const root3 = new Element("main"); roots.add(root3);
+  renderCampaign(root3, {
+    view, legendary: { ...legendary, claimed: true, canClaim: false },
+    onClaimLegendary: async () => ({ ok: true }), onComplete() {}, onApply() {}, onBack() {}
+  });
+  assert.ok(root3.textContent.includes("✨ ¡Set EXO//AUTÓMATA en tu inventario! El atuendo ya está equipado."));
+  assert.ok(!root3.querySelectorAll("button").some((b) => b.textContent.includes("RECLAMAR SET")));
+});
