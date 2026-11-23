@@ -23,6 +23,7 @@ import { applyJarvisMutation } from "./jarvis-state.js";
 import { applyLibretaMutation } from "./libreta-state.js";
 import { applyMarcaMutation } from "./marca-state.js";
 import { applyRealesMutation } from "./reales-state.js";
+import { applyContratoMutation } from "./contrato-state.js";
 import { applyShopMutation } from "./shop.js";
 
 export const ROUTE_SIZE = 3;
@@ -432,6 +433,13 @@ export function applyMutation(draft, mutation, catalog, { at, date } = {}) {
      saldo vía derive (mergePlaySources). */
   if (mutation && ["reales.create", "reales.delete", "reales.redeem", "reales.enjoy"].includes(mutation.type)) {
     return applyRealesMutation(draft, mutation, { at: atIso, date: dateKey });
+  }
+
+  /* Contrato Semanal (v0.46.0): el reclamo del cofre. El reducer
+     recalcula el progreso derivado desde el borrador — nunca confía
+     en la UI — y solo escribe el reclamo en play.contrato.claims. */
+  if (mutation && mutation.type === "contrato.claim") {
+    return applyContratoMutation(draft, mutation, { at: atIso, date: dateKey });
   }
 
   if (mutation && (mutation.type === "shop.buy" || mutation.type === "shop.equip")) {

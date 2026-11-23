@@ -34,6 +34,8 @@ import { marcaView } from "../src/marca-state.js";
 import { buildProgressSummary, jarvisView } from "../src/jarvis-state.js";
 import { libretaView } from "../src/libreta-state.js";
 import { renderCampaign, renderDaily } from "./campaign-ui.js";
+import { renderContrato } from "./contrato-ui.js";
+import { contratoView } from "../src/contrato-state.js";
 import { renderGarage } from "./garage-ui.js";
 import { renderIan } from "./ian-ui.js";
 import { renderMarca } from "./marca-ui.js";
@@ -1004,11 +1006,70 @@ function openDaily() {
   renderActiveDaily();
 }
 
+/* ------------------- Contrato Semanal (v0.46.0) ---------------------
+   La tarjeta «📜 CONTRATO SEMANAL» se inyecta en paintDaily ANTES de
+   renderDaily, sobre la ruta: como paintDaily alimenta las dos casas
+   (pestaña «Hoy» y app Misiones), la tarjeta aparece en ambas con una
+   sola implementación. Cada casa conserva sus dos hosts (contrato y
+   diarias) entre repintados: renderDaily sigue recibiendo SU host, así
+   su sesión (acordeones, mensajes) no se reinicia, y lo que hubiera en
+   la raíz de otra pantalla se retira al abrir Diarias. */
+
+const dailyHosts = new WeakMap();
+
+function dailyHostsFor(root) {
+  let hosts = dailyHosts.get(root);
+  if (!hosts) {
+    hosts = {
+      contrato: document.createElement("div"),
+      daily: document.createElement("div")
+    };
+    hosts.contrato.className = "contrato-host";
+    dailyHosts.set(root, hosts);
+  }
+  for (const child of [...root.childNodes]) {
+    if (child !== hosts.contrato && child !== hosts.daily) child.remove();
+  }
+  root.append(hosts.contrato, hosts.daily);
+  return hosts;
+}
+
+function claimContrato(weekKey, root, { compact, onBack }) {
+  if (!storage || !catalog) return;
+  return applyGameplayMutationLocked(
+    storage, catalog, { type: "contrato.claim", weekKey }, gameplayDate()
+  ).then((result) => {
+    if (result.status === "rejected") {
+      const code = result.error && result.error.code;
+      const friendly =
+        code === "CONTRACT_INCOMPLETE" ? "Todavía te faltan retos para cerrar el contrato."
+        : code === "CLAIM_EXPIRED" ? "Ese contrato ya expiró: la gracia terminó el miércoles."
+        : `No se pudo guardar: ${code}`;
+      if (toasts) toasts.show(friendly, { tone: "error" });
+    } else if (result.status === "duplicate") {
+      if (toasts) toasts.show("Ese cofre ya lo habías reclamado.", { tone: "info" });
+    } else if (toasts) {
+      toasts.show("🎉 ¡Contrato cumplido! El cofre es tuyo: +150 XP, +₡15.", { tone: "ok" });
+    }
+    refresh();
+    if (bundle && catalog) paintDaily(root, { compact, onBack });
+  });
+}
+
+function paintContrato(host, root, { compact, onBack }) {
+  renderContrato(host, {
+    view: contratoView(bundle, localDateKey()),
+    onClaim: (weekKey) => claimContrato(weekKey, root, { compact, onBack })
+  });
+}
+
 /* El panel de Diarias se pinta igual en sus dos casas (el teléfono y la
    pestaña «Hoy»): mismo root intercambiable, misma ruta, mismo registro. */
 function paintDaily(root, { compact, onBack }) {
+  const hosts = dailyHostsFor(root);
+  paintContrato(hosts.contrato, root, { compact, onBack });
   const route = routeForDay(bundle, catalog);
-  renderDaily(root, {
+  renderDaily(hosts.daily, {
     compact,
     view: {
       day: route.catalogDay,
