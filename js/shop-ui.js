@@ -10,7 +10,7 @@
 
 import { SHOP_ITEMS, tiendaState, ownsItem } from "../src/shop.js";
 import { realesView } from "../src/reales-state.js";
-import { outfitSprite, vehicleSprite } from "./city/pixel.js";
+import { outfitSprite, vehicleSprite, relicCanvas } from "./city/pixel.js";
 import { fmt } from "./format.js";
 
 function node(tag, cls, text) {
@@ -26,9 +26,11 @@ function node(tag, cls, text) {
 export function itemCard(item, state, balance, actions) {
   const card = node("article", "shop-card");
   const preview = node("div", "shop-preview");
-  const canvas = item.kind === "outfit" ? outfitSprite(item.pal, item.gorra, item.look) : vehicleSprite(item.spec);
+  const canvas = item.kind === "outfit" ? outfitSprite(item.pal, item.gorra, item.look)
+    : item.kind === "reliquia" ? relicCanvas(item)
+    : vehicleSprite(item.spec);
   if (canvas) {
-    canvas.className = item.kind === "outfit" ? "shop-sprite-outfit" : "shop-sprite-vehicle";
+    canvas.className = item.kind === "outfit" ? "shop-sprite-outfit" : item.kind === "reliquia" ? "shop-sprite-relic" : "shop-sprite-vehicle";
     preview.append(canvas);
   }
   card.append(preview);
@@ -36,6 +38,11 @@ export function itemCard(item, state, balance, actions) {
   if (item.tag) card.append(node("p", "shop-tag", item.tag));
 
   const owned = ownsItem(state, item.id);
+  /* Las reliquias (v0.49.0) solo se exhiben: sin botón de equipar. */
+  if (item.kind === "reliquia") {
+    card.append(node("p", "shop-tag", owned ? "EN TU VITRINA LEGENDARIA" : "SE GANA, NO SE COMPRA"));
+    return card;
+  }
   const equipped = item.kind === "outfit" ? state.outfit === item.id : state.vehicle === item.id;
   if (equipped) {
     card.append(node("button", "shop-btn is-equipped", "Equipado ✓"));
@@ -245,7 +252,10 @@ export function renderShop(root, { bundle, actions, standalone = false, confirmR
   for (const [kind, title] of [["outfit", "Atuendos"], ["vehicle", "Vehículos"]]) {
     root.append(node("h4", "shop-section", title));
     const grid = node("div", "shop-grid");
-    for (const item of SHOP_ITEMS.filter((i) => i.kind === kind)) {
+    /* v0.49.0: las piezas grantOnly son INVISIBLES en la grilla de
+       compra (§6.2) — la Tienda queda solo de compra/canje; el set
+       legendario vive en la Vitrina de la Colección del Inventario. */
+    for (const item of SHOP_ITEMS.filter((i) => i.kind === kind && !i.grantOnly)) {
       grid.append(itemCard(item, state, balance, actions));
     }
     root.append(grid);
