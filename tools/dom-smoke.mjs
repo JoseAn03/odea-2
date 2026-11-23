@@ -629,7 +629,36 @@ await run("inventario: hub → Vehículos → equipar y «Ir a pie»", () => {
   };
 });
 
-await run("inventario: Colección nace como vitrina en preparación", () => {
+await run("inventario: Colección trae la vitrina de Escudos encendida (Fase 3)", () => {
+  const root = montar();
+  const conEscudo = structuredClone(bundle);
+  conEscudo.play = {
+    ...(conEscudo.play || {}),
+    racha: {
+      version: 1,
+      grants: { "contrato@2026-W47": { date: "2026-11-21", at: "2026-11-21T12:00:00.000Z", via: "contrato" } },
+      covered: {}
+    }
+  };
+  renderInventory(root, {
+    bundle: conEscudo,
+    section: "coleccion",
+    actions: { equip() {}, onBack() {}, onShop() {}, onSection() {} }
+  });
+  const texto = root.textContent;
+  const live = root.querySelectorAll(".inv-vitrina-slot")
+    .find((slot) => slot.className.split(/\s+/).includes("is-live"));
+  return {
+    pass:
+      texto.includes("🛡️ ×1 (1/2)") &&
+      texto.includes("Se ganan con el Contrato Semanal y con rachas de 14/30 días; protegen un día fallado, solos.") &&
+      texto.includes("Se gana, no se compra") &&
+      !!live,
+    detail: "vitrina de Escudos §12.2③: estado sin botones, explicación y slot encendido"
+  };
+});
+
+await run("inventario: Colección sin escudos invita a ganar el primero", () => {
   const root = montar();
   renderInventory(root, {
     bundle,
@@ -639,9 +668,9 @@ await run("inventario: Colección nace como vitrina en preparación", () => {
   const texto = root.textContent;
   return {
     pass:
-      texto.includes("Aquí vivirán tus Cassettes Neón, tus escudos y el set legendario de los eventos") &&
-      texto.includes("Se gana, no se compra"),
-    detail: "las fases 3–5 encienden cada vitrina"
+      texto.includes("🛡️ ×0 (0/2)") &&
+      texto.includes("Todavía no tenés escudos"),
+    detail: "la vitrina nace en 0 sin romperse en saves sin play.racha"
   };
 });
 

@@ -689,6 +689,52 @@
 .inv-vitrina-sprite { width: 52px; height: 40px; image-rendering: pixelated; opacity: 0.85; }
 .inv-vitrina-label { color: #5A6082; font-size: 0.62rem; letter-spacing: 1px; font-weight: 700; }
 .inv-vitrina-text { text-align: center; font-size: 0.92rem; margin: 16px 4px 4px; }
+.inv-vitrina-slot.is-live { border-style: solid; border-color: #31EBDD; box-shadow: 0 0 12px rgba(49, 235, 221, 0.35); }
+.inv-vitrina-slot.is-live .inv-vitrina-label { color: #31EBDD; }
+
+/* Vitrina de Escudos de Racha (v0.47.0): panel cian neón de estado —
+   se exhibe, no se toca: los escudos se ganan jugando y se gastan
+   solos cuando protegen un día fallado. */
+.inv-escudos {
+  margin-top: 14px; text-align: left;
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.028) 0 1px, transparent 1px 3px),
+    linear-gradient(180deg, #0E2A33 0%, #0B1B2A 100%);
+  border: 2px solid #31EBDD; border-radius: 16px; padding: 14px;
+  box-shadow: 0 0 0 1px rgba(255, 46, 147, 0.3), 0 0 16px rgba(49, 235, 221, 0.3), inset 0 2px 0 rgba(255, 209, 102, 0.5);
+}
+.inv-escudos-head { display: flex; align-items: center; gap: 12px; }
+.inv-escudos-sprite { width: 42px; height: 48px; image-rendering: pixelated; flex: 0 0 auto; }
+.inv-escudos-titles { flex: 1; min-width: 0; }
+.inv-escudos-title { margin: 0; font-size: 0.95rem; letter-spacing: 1px; color: #FFF8F4; }
+.inv-escudos-count { margin: 2px 0 0; font-size: 1.05rem; font-weight: 800; color: #FFD166; }
+.inv-escudos-text { margin: 10px 0 0; font-size: 0.86rem; line-height: 1.5; color: #C9D4E3; }
+
+/* Barra de racha en Diarias/«Hoy» (v0.47.0): llama + chip de escudos
+   + la semanita, con el día cubierto como punto-escudo dorado. */
+.racha-host { padding: 10px 14px 0; }
+.racha-host:empty { display: none; padding: 0; }
+.racha-bar {
+  max-width: 880px; margin: 0 auto;
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.028) 0 1px, transparent 1px 3px),
+    linear-gradient(180deg, #171233 0%, #100B2A 100%);
+  border: 2px solid #31EBDD; border-radius: 16px; padding: 10px 14px;
+  color: #FFF8F4; font-family: system-ui, sans-serif;
+  box-shadow: 0 0 0 1px rgba(255, 46, 147, 0.3), 0 0 14px rgba(49, 235, 221, 0.28), inset 0 2px 0 rgba(255, 46, 147, 0.55);
+}
+.racha-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.racha-flame { font-weight: 800; font-size: 0.98rem; }
+.racha-chip {
+  background: #123A4A; border: 1px solid #31EBDD; color: #FFD166;
+  border-radius: 999px; padding: 3px 10px; font-weight: 800; font-size: 0.85rem;
+  box-shadow: 0 0 8px rgba(49, 235, 221, 0.4);
+}
+.racha-week { display: flex; gap: 7px; margin-top: 9px; align-items: center; }
+.racha-dot { font-size: 0.62rem; color: #2A3050; line-height: 1; }
+.racha-dot.is-active { color: #FF7A1A; text-shadow: 0 0 6px rgba(255, 122, 26, 0.7); }
+.racha-dot.is-covered { font-size: 0.8rem; filter: drop-shadow(0 0 5px rgba(255, 209, 102, 0.8)); }
+.racha-detail { margin: 8px 0 0; font-size: 0.78rem; line-height: 1.45; color: #9AA7C7; }
 
 /* ------------------------------- Libreta ------------------------------- */
 /* La libreta de espiral del teléfono (v0.41.0): papel crema con renglones,

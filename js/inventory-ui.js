@@ -14,13 +14,17 @@
  * renderShop): la app «Inventario» 🎒 del teléfono y el acceso desde
  * la Tienda del Mercado (standalone sobre careerDialog).
  *
- * La sección COLECCIÓN nace como vitrina en preparación: las fases
- * 3–5 de las Dinámicas encienden ahí sus vitrinas (escudos, cassettes
- * y el set legendario). Ningún binario nuevo: los iconos son los
- * sprites de siempre (pixel.js) o pixel art dibujado por código acá.
+ * La sección COLECCIÓN nace como vitrina en preparación y cada fase
+ * de las Dinámicas enciende ahí su vitrina: la Fase 3 (v0.47.0)
+ * encendió los ESCUDOS DE RACHA (estado derivado de `play.racha`, sin
+ * botones: se ganan jugando y el consumo es automático); las fases
+ * 4–5 encenderán cassettes y el set legendario. Ningún binario nuevo:
+ * los iconos son los sprites de siempre (pixel.js) o pixel art
+ * dibujado por código acá.
  */
 
 import { SHOP_ITEMS, shopItem, tiendaState, ownsItem } from "../src/shop.js";
+import { rachaView } from "../src/racha-state.js";
 import { outfitSprite, vehicleSprite } from "./city/pixel.js";
 import { shopItemCard } from "./shop-ui.js";
 import { fmt } from "./format.js";
@@ -143,11 +147,12 @@ function renderHub(root, { bundle, actions, standalone, backLabel }) {
     onOpen: () => actions.onSection("vehiculos")
   }));
 
+  const shields = rachaView(bundle);
   root.append(sectionCard({
     icon: cassetteCanvas(false),
     title: "COLECCIÓN",
-    count: "Vitrina en preparación",
-    status: "Cassettes · Escudos · Set legendario",
+    count: "La vitrina de las dinámicas",
+    status: `Cassettes · Escudos ×${shields.available} · Set legendario`,
     onOpen: () => actions.onSection("coleccion")
   }));
 }
@@ -226,27 +231,67 @@ function renderVehicles(root, { bundle, actions }) {
   root.append(toShop);
 }
 
-function renderCollection(root, { actions }) {
+function renderCollection(root, { bundle, actions }) {
+  const shields = rachaView(bundle);
   root.append(backRow("← Volver", () => actions.onSection("hub")));
   root.append(node("h3", "phone-screen-title", "Colección"));
   root.append(node("p", "phone-screen-sub", "La vitrina de las dinámicas nuevas"));
 
   const vitrina = node("div", "inv-vitrina");
-  for (const [canvas, label] of [
-    [cassetteCanvas(true), "CASSETTES NEÓN"],
-    [shieldCanvas(true), "ESCUDOS DE RACHA"],
-    [trophyCanvas(true), "SET LEGENDARIO"]
+  for (const [canvas, label, live] of [
+    [cassetteCanvas(true), "CASSETTES NEÓN", false],
+    [shieldCanvas(shields.available <= 0), "ESCUDOS DE RACHA", shields.available > 0],
+    [trophyCanvas(true), "SET LEGENDARIO", false]
   ]) {
-    const slot = node("div", "inv-vitrina-slot");
+    const slot = node("div", `inv-vitrina-slot${live ? " is-live" : ""}`);
     canvas.className = "inv-vitrina-sprite";
     slot.append(canvas, node("span", "inv-vitrina-label", label));
     vitrina.append(slot);
   }
   root.append(vitrina);
 
+  /* Vitrina de ESCUDOS encendida (Fase 3, §12.2③): exhibición y
+     estado, SIN botones a propósito — se ganan jugando (Contrato
+     Semanal y rachas de 14/30 días) y el consumo es automático. */
+  const escudos = node("section", "inv-escudos");
+  const escHead = node("div", "inv-escudos-head");
+  const escSprite = shieldCanvas(shields.available <= 0);
+  escSprite.className = "inv-escudos-sprite";
+  const escTitles = node("div", "inv-escudos-titles");
+  escTitles.append(
+    node("h4", "inv-escudos-title", "ESCUDOS DE RACHA"),
+    node("p", "inv-escudos-count", `🛡️ ×${shields.available} (${shields.available}/${shields.cap})`)
+  );
+  escHead.append(escSprite, escTitles);
+  escudos.append(escHead);
+  escudos.append(node(
+    "p", "inv-escudos-text",
+    "Se ganan con el Contrato Semanal y con rachas de 14/30 días; protegen un día fallado, solos."
+  ));
+  if (shields.available <= 0) {
+    escudos.append(node(
+      "p", "shop-note",
+      "Todavía no tenés escudos: cerrá el Contrato Semanal o llegá a una racha de 14 días para ganar el primero."
+    ));
+  } else if (shields.full) {
+    escudos.append(node(
+      "p", "shop-note",
+      "Inventario lleno: el próximo escudo se gana cuando uno proteja un día fallado."
+    ));
+  }
+  if (shields.covered > 0) {
+    escudos.append(node(
+      "p", "shop-note",
+      shields.covered === 1
+        ? "Ya hay 1 día salvado por un escudo: tu racha siguió como si nada."
+        : `Ya hay ${shields.covered} días salvados por escudos: tu racha siguió como si nada.`
+    ));
+  }
+  root.append(escudos);
+
   root.append(node(
     "p", "inv-vitrina-text",
-    "Aquí vivirán tus Cassettes Neón, tus escudos y el set legendario de los eventos."
+    "Aquí vivirán tus Cassettes Neón y el set legendario de los eventos."
   ));
   root.append(node(
     "p", "shop-note",
@@ -262,6 +307,6 @@ export function renderInventory(root, { bundle, actions, section = "hub", standa
   root.replaceChildren();
   if (section === "atuendos") renderOutfits(root, { bundle, actions });
   else if (section === "vehiculos") renderVehicles(root, { bundle, actions });
-  else if (section === "coleccion") renderCollection(root, { actions });
+  else if (section === "coleccion") renderCollection(root, { bundle, actions });
   else renderHub(root, { bundle, actions, standalone, backLabel });
 }
