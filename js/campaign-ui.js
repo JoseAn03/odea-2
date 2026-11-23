@@ -838,7 +838,9 @@ function makeDailyMission(root, state, mission, index, nextId) {
   const classes = [
     "campaign-mission",
     completed ? "campaign-mission--done" : "",
-    next ? "campaign-mission--next" : ""
+    next ? "campaign-mission--next" : "",
+    mission.deferred ? "campaign-mission--deferred" : "",
+    mission.focus ? "campaign-mission--focus" : ""
   ].filter(Boolean).join(" ");
   const detail = node("details", classes);
   detail.dataset.campaignMission = text(mission.id);
@@ -856,10 +858,28 @@ function makeDailyMission(root, state, mission, index, nextId) {
     node("span", "campaign-mission-state", completed ? "COMPLETADA" : next ? "SIGUIENTE MISIÓN" : "DISPONIBLE"),
     node("span", "campaign-duration", `${format(mission.time || 0)} min`)
   );
+  /* Jarvis con manos (v0.50.0): el foco del día lleva su pastilla y las
+     diferidas del día ocupado se marcan «PARA MAÑANA» (siguen abiertas:
+     no es un candado, solo dejan de urgir hoy). */
+  if (mission.focus) metadata.append(node("span", "jarvis-focus-pill", "FOCO DE HOY"));
+  if (mission.deferred) metadata.append(node("span", "jarvis-deferred-pill", "PARA MAÑANA"));
   copy.append(metadata, node("span", "campaign-mission-title", mission.title), rewards({ xp: mission.xp, coins: 1 }));
   const chevron = node("span", "campaign-chevron", "+");
   chevron.setAttribute("aria-hidden", "true");
-  summary.append(marker, copy, chevron);
+  summary.append(marker, copy);
+  /* La ⭐ manual: la segunda puerta del foco (la misma mutación
+     jarvis.act con origen manual, sin pasar por la API). */
+  if (typeof state.options.onToggleFocus === "function" && !completed) {
+    const star = button("jarvis-focus-star", mission.focus ? "⭐" : "☆", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      state.options.onToggleFocus(mission.id);
+    });
+    star.type = "button";
+    star.setAttribute("aria-label", mission.focus ? "Quitar el foco de hoy" : "Marcar como foco de hoy");
+    summary.append(star);
+  }
+  summary.append(chevron);
   const body = node("div", "campaign-mission-body");
   if (mission.description) body.append(node("p", "campaign-brief", mission.description));
   if (mission.verification) {
@@ -914,7 +934,29 @@ function paintDaily(root, state) {
   panel.append(panelHeading);
   const missions = Array.isArray(view.missions) ? view.missions : [];
   if (!missions.length) panel.append(statusMessage("Hoy no hay misiones en la ruta.", "info"));
-  missions.forEach((mission, index) => panel.append(makeDailyMission(root, state, mission, index, view.next?.id)));
+  /* Día ocupado (v0.50.0): la franja con los minutos declarados y la
+     vuelta al día completo, sin API — apaga el modo a mano. */
+  if (view.busy) {
+    const strip = node("div", "jarvis-busy-strip");
+    strip.append(node("span", "jarvis-busy-text", `⏱️ Día ocupado: ${format(view.busy.minutes)} min declarados`));
+    if (typeof state.options.onClearBusy === "function") {
+      const clear = button("campaign-button jarvis-busy-clear", "Volver al día completo", () => {
+        state.options.onClearBusy();
+      });
+      clear.type = "button";
+      strip.append(clear);
+    }
+    panel.append(strip);
+  }
+  let mananaShown = false;
+  missions.forEach((mission, index) => {
+    if (mission.deferred && !mananaShown) {
+      mananaShown = true;
+      panel.append(node("h3", "jarvis-manana-title", "Para mañana"));
+      panel.append(node("p", "jarvis-manana-note", "Quedan sugeridas: no se completan ni se pierden. Si querés, podés hacerlas hoy mismo."));
+    }
+    panel.append(makeDailyMission(root, state, mission, index, view.next?.id));
+  });
   layout.append(rail, panel);
   workspace.append(heading, layout);
   interior.append(workspace);
@@ -940,7 +982,7 @@ function paintDaily(root, state) {
  * @param {function} options.onBack Navigation callback.
  * @param {boolean} [options.compact=false]
  */
-export function renderDaily(root, { view, onComplete, onBack, compact = false } = {}) {
+export function renderDaily(root, { view, onComplete, onBack, compact = false, onToggleFocus, onClearBusy } = {}) {
   if (!root || typeof root.replaceChildren !== "function") {
     throw new TypeError("renderDaily necesita un elemento raíz del DOM.");
   }
@@ -969,7 +1011,9 @@ export function renderDaily(root, { view, onComplete, onBack, compact = false } 
     },
     onComplete,
     onBack,
-    compact
+    compact,
+    onToggleFocus,
+    onClearBusy
   };
   if (next && !state.open.size) state.open.add(text(next.id));
   paintDaily(root, state);
