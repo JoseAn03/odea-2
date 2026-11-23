@@ -735,6 +735,20 @@
   .garage-rail { position: sticky; top: 12px; }
 }
 
+/* ===== Estudio Neón (v0.44.0): las dos pestañas de la marca personal ===== */
+.marca-tabs { display: flex; gap: 8px; margin-top: 16px; }
+.marca-tab {
+  flex: 1; appearance: none; font: inherit; cursor: pointer;
+  padding: 10px 12px; border-radius: 5px;
+  border: 1px solid var(--campaign-line);
+  background: var(--campaign-panel); color: var(--campaign-muted);
+  font-size: 13px; font-weight: 700; letter-spacing: .05em;
+}
+.marca-tab--active {
+  border-color: #FFC53D; color: #FFC53D;
+  background: linear-gradient(125deg, rgba(255, 197, 61, .12), transparent 60%), var(--campaign-panel);
+}
+
 /* ---------------- Jarvis (v0.38.0): el compañero de la Zona IA ---------------- */
 .jarvis-shell { padding: 22px 20px 26px; }
 .jarvis-head { display: flex; align-items: center; gap: 16px; }

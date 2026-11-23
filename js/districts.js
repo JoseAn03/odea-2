@@ -110,8 +110,8 @@ export const DISTRICTS = [
     [[0, 1]],
     PALETTE.orange,
     "residential",
-    "Casas cálidas para hábitos, diario personal y sesiones de enfoque.",
-    ["vida", "diary", "focus"],
+    "Casas cálidas para hábitos, diario personal y sesiones de enfoque — y el Estudio Neón de la marca personal.",
+    ["vida", "diary", "focus", "marca"],
     []
   ),
   district(

@@ -73,7 +73,8 @@ const EXPECTED_XP_HOME = {
   hunt: "empleo",
   evento: "hub",
   farm: "hub",
-  garaje: "garaje"
+  garaje: "garaje",
+  marca: "vida"
 };
 
 const EXPECTED_KEY_HOME = {
@@ -91,7 +92,7 @@ const EXPECTED_KEY_HOME = {
 };
 
 test("fase 2 (a): cada componente de xpBreakdown tiene exactamente un distrito", () => {
-  assert.equal(XP_ORDER.length, 11, "xpBreakdown debe tener 11 componentes");
+  assert.equal(XP_ORDER.length, 12, "xpBreakdown debe tener 12 componentes");
   assert.deepEqual(XP_HOME, EXPECTED_XP_HOME);
 
   const assignments = DISTRICTS.flatMap((d) => d.xp);
@@ -516,7 +517,7 @@ test("fase 2: versión visible, bundle y caché del SW están sincronizados", ()
 
   /* Tripwire deliberado: subir la versión obliga a tocar esta línea, para que
      el bump del SHELL y del CACHE_VERSION del SW nunca pase inadvertido. */
-  assert.equal(APP_VERSION, "0.43.0-fase7");
+  assert.equal(APP_VERSION, "0.44.0-fase7");
   assert.equal(pkg.version, APP_VERSION);
   assert.equal(ODEA2_APP_VERSION, APP_VERSION);
   assert.ok(sw.includes(`"odea2-v${APP_VERSION}"`), "la caché del SW debe usar la versión de la app");

@@ -1,6 +1,7 @@
 /** format.js — etiquetas y formato de números para la pantalla de estado. */
 
-/** Los 10 componentes de xpBreakdown, en el orden de ODEA 1. */
+/** Los componentes de xpBreakdown, en el orden de ODEA 1; ODEA 2 suma
+    los suyos al final (garaje, y marca desde v0.44.0). */
 export const XP_ORDER = [
   "career",
   "ach",
@@ -12,7 +13,8 @@ export const XP_ORDER = [
   "hunt",
   "evento",
   "farm",
-  "garaje"
+  "garaje",
+  "marca"
 ];
 
 export const XP_LABELS = {
@@ -26,7 +28,8 @@ export const XP_LABELS = {
   hunt: "Cacería",
   evento: "Evento",
   farm: "Farmeo",
-  garaje: "Garaje"
+  garaje: "Garaje",
+  marca: "Marca personal"
 };
 
 const numberFormat = new Intl.NumberFormat("es-ES", { useGrouping: "always" });

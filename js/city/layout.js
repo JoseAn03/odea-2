@@ -50,6 +50,15 @@ export const SABIDURIA_CELL = { col: 0, row: 0 };
    rincón de videojuegos — y su campaña de 54 misiones para Ian Daniel. */
 export const MUNDOIAN_CELL = { col: 2, row: 2 };
 
+/* ESTUDIO NEÓN: la manzana de Barrio Vida (0,1). Por decisión de José
+   (2026-11-22) el estudio de la marca personal ocupa la manzana
+   ENTERA: la ficha del distrito y las misiones «vida» dejan de abrirse
+   desde este bloque (sus datos y su XP quedan intactos en el save).
+   Ahí vive el lote de grabación de la imagen aprobada — alfombra roja,
+   cámara, focos y aro de luz — y el sistema vivo de la marca personal
+   con sus dos pestañas. */
+export const MARCA_CELL = { col: 0, row: 1 };
+
 export const WORLD_SIZE =
   GRID.margin * 2 + GRID.cols * GRID.block + (GRID.cols - 1) * GRID.road;
 
@@ -83,6 +92,11 @@ export function sabiduriaRect() {
 /** Rectángulo del Mundo de Ian (la manzana sureste del Hub). */
 export function mundoianRect() {
   return cellRect(MUNDOIAN_CELL.col, MUNDOIAN_CELL.row);
+}
+
+/** Rectángulo del Estudio Neón (la manzana de Barrio Vida). */
+export function marcaRect() {
+  return cellRect(MARCA_CELL.col, MARCA_CELL.row);
 }
 
 /* JARVIS (v0.38.0): el robotcito compañero vive DENTRO de la manzana de
