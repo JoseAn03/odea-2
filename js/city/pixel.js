@@ -87,6 +87,54 @@ const JARVIS_GRID = [
 ];
 const PAL_JARVIS = { W: "#E8F4F8", D: "#39465C", F: "#0B1520", E: CIAN, P: ROSA, A: "#8A97A8", T: "#00B8CC" };
 
+/* PAQUETES NEÓN (v0.48.0): el cassette de la cacería, en rejilla
+   26×18 — cuerpo con brillo superior, ventana dorada con la cinta
+   marrón oscuro y sus dos carretes, etiqueta de papel con su renglón,
+   el trapecio inferior con las dos bocas de los cabezales y tornillos
+   en las esquinas. La paleta rota en 5 esquemas (rosado, cian, dorado,
+   verde, violeta): B cuerpo, D borde/sombra, L brillo y carretes. La
+   ventana (W), la cinta (T), la etiqueta (P) y los tornillos (S) son
+   constantes: un cassette se reconoce por su ventana dorada. */
+const CASSETTE_GRID = [
+  "..DDDDDDDDDDDDDDDDDDDDDD..",
+  ".DBBBBBBBBBBBBBBBBBBBBBBD.",
+  ".DBLLLLLLLLLLLLLLLLLLLLBD.",
+  ".DBBWWWWWWWWWWWWWWWWWWBBD.",
+  ".DBBWTTTTTTTTTTTTTTTTWBBD.",
+  ".DBBWTTRRRRTTTTRRRRTTWBBD.",
+  ".DBBWTTRCCRTTTTRCCRTTWBBD.",
+  ".DBBWTTRRRRTTTTRRRRTTWBBD.",
+  ".DBBWTTTTTTTTTTTTTTTTWBBD.",
+  ".DBBWWWWWWWWWWWWWWWWWWBBD.",
+  ".DBBPPPPPPPPPPPPPPPPPPBBD.",
+  ".DBBPPPDDDDDDDDDDPPPPPBBD.",
+  ".DBBBBBBBBBBBBBBBBBBBBBBD.",
+  ".DBBBBDDDDDDDDDDDDDDBBBBD.",
+  ".DBBBBDDTTTBBBBTTTDDBBBBD.",
+  ".DSBBBBBBBBBBBBBBBBBBBBSD.",
+  ".DDDDDDDDDDDDDDDDDDDDDDDD.",
+  "...DDDDDDDDDDDDDDDDDDDD..."
+];
+const CASSETTE_PALS = [
+  { B: "#FF2E93", D: "#7A0E44", L: "#FF7AB8" },
+  { B: "#00B8CC", D: "#00586B", L: "#5FF2FF" },
+  { B: "#E8A812", D: "#7A5200", L: "#FFD166" },
+  { B: "#2FA84F", D: "#14532A", L: "#7AE79B" },
+  { B: "#8B5CF6", D: "#472B8A", L: "#C4A6FF" }
+];
+const CASSETTE_FIXED = { W: "#FFC53D", T: "#2A1608", P: "#FFF3D6", S: "#C9D4E0" };
+
+function gridCanvas(rows, pal, w, h) {
+  const c = mkCanvas(w, h);
+  const g = c.getContext("2d");
+  rows.forEach((row, y) => {
+    [...row].forEach((ch, x) => {
+      if (pal[ch]) { g.fillStyle = pal[ch]; g.fillRect(x, y, 1, 1); }
+    });
+  });
+  return c;
+}
+
 /* Íconos de distrito (8×8): X = color del distrito, o = blanco. */
 const ICONOS = {
   hub: ["...XX...", "...XX...", "XXXXXXXX", ".XXXXXX.", "..XXXX..", ".XX..XX.", "XX....XX", "........"],
@@ -1030,6 +1078,18 @@ export function createPixelArt() {
     tienda: tiendaCanvas(),
     banca: bancaCanvas(),
     jarvis: spriteCanvas(JARVIS_GRID, PAL_JARVIS, false),
+    /* Paquetes Neón (v0.48.0): el cassette 26×18 de la paleta pedida,
+       cacheado por índice (5 esquemas rotando por spot). */
+    cassette(palIndex) {
+      const i = Math.abs(Number(palIndex) || 0) % CASSETTE_PALS.length;
+      if (!iconCache.has(`cassette:${i}`)) {
+        const base = CASSETTE_PALS[i];
+        iconCache.set(`cassette:${i}`, gridCanvas(CASSETTE_GRID, {
+          ...base, ...CASSETTE_FIXED, R: base.L, C: "#FFF6D5"
+        }, 26, 18));
+      }
+      return iconCache.get(`cassette:${i}`);
+    },
     carro: carroCian,
     carroRosa,
     carroV: rotar90(carroRosa),
