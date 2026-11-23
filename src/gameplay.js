@@ -26,6 +26,7 @@ import { applyRealesMutation } from "./reales-state.js";
 import { applyContratoMutation } from "./contrato-state.js";
 import { applyRachaMutation } from "./racha-state.js";
 import { applyPaquetesMutation } from "./paquetes-state.js";
+import { applyLegendarioMutation } from "./legendario-state.js";
 import { applyShopMutation } from "./shop.js";
 
 export const ROUTE_SIZE = 3;
@@ -462,6 +463,15 @@ export function applyMutation(draft, mutation, catalog, { at, date } = {}) {
      premio exige 20/20 y se reclama una sola vez. */
   if (mutation && ["paquete.collect", "paquete.prize"].includes(mutation.type)) {
     return applyPaquetesMutation(draft, mutation, { at: atIso, date: dateKey });
+  }
+
+  /* Set Legendario (v0.49.0): el reclamo del set de fin de evento.
+     El reducer revalida con campaignView que la campaña esté
+     completa (done === total), que exista set para esa campaña y
+     que no haya grant previo; sin la campaña en CAMPAIGNS el
+     reclamo es imposible (fail-closed). Cosmético puro: ₡0, 0 XP. */
+  if (mutation && mutation.type === "legendario.claim") {
+    return applyLegendarioMutation(draft, mutation, { at: atIso, date: dateKey });
   }
 
   if (mutation && (mutation.type === "shop.buy" || mutation.type === "shop.equip")) {
