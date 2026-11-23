@@ -658,6 +658,66 @@ await run("inventario: Colección trae la vitrina de Escudos encendida (Fase 3)"
   };
 });
 
+await run("inventario: Colección trae la vitrina de Cassettes encendida (Fase 4)", () => {
+  const root = montar();
+  const conTapes = structuredClone(bundle);
+  conTapes.play = {
+    ...(conTapes.play || {}),
+    paquetes: {
+      version: 1,
+      found: {
+        "tape-01": { date: "2026-11-23", at: "2026-11-23T12:00:00.000Z", reward: { xp: 15, coins: 1 }, rulesVersion: 1 },
+        "tape-12": { date: "2026-11-23", at: "2026-11-23T12:05:00.000Z", reward: { xp: 15, coins: 1 }, rulesVersion: 1 }
+      },
+      prize: null
+    }
+  };
+  renderInventory(root, {
+    bundle: conTapes,
+    section: "coleccion",
+    actions: { equip() {}, onBack() {}, onShop() {}, onSection() {}, onClaimPaquetePrize() {} }
+  });
+  const texto = root.textContent;
+  const cells = root.querySelectorAll(".inv-tape");
+  const foundCells = cells.filter((c) => c.className.split(/\s+/).includes("is-found"));
+  const claim = findBtn(root, "RECLAMAR PREMIO FINAL · +100 XP, +₡25");
+  return {
+    pass:
+      texto.includes("📼 2/20") &&
+      texto.includes("Parque del Hub") &&
+      texto.includes("Zona Gamer") &&
+      texto.includes("Te faltan 18 cassettes para el premio final") &&
+      cells.length === 20 &&
+      foundCells.length === 2 &&
+      !claim,
+    detail: "vitrina de Cassettes §5/§12.2③: contador, rejilla 20 con zona, sin botón hasta el 20/20"
+  };
+});
+
+await run("inventario: al 20/20 el botón del premio final reclama (Fase 4)", () => {
+  const root = montar();
+  const completa = structuredClone(bundle);
+  const found = {};
+  for (let i = 1; i <= 20; i += 1) {
+    found[`tape-${String(i).padStart(2, "0")}`] = {
+      date: "2026-11-23", at: "2026-11-23T12:00:00.000Z", reward: { xp: 15, coins: 1 }, rulesVersion: 1
+    };
+  }
+  completa.play = { ...(completa.play || {}), paquetes: { version: 1, found, prize: null } };
+  let claimed = false;
+  renderInventory(root, {
+    bundle: completa,
+    section: "coleccion",
+    actions: { equip() {}, onBack() {}, onShop() {}, onSection() {}, onClaimPaquetePrize: () => { claimed = true; } }
+  });
+  const claim = findBtn(root, "RECLAMAR PREMIO FINAL · +100 XP, +₡25");
+  if (claim) claim.click();
+  return {
+    pass: root.textContent.includes("📼 20/20") && !!claim && claimed,
+    detail: "el botón de la ceremonia dispara onClaimPaquetePrize solo al 20/20"
+  };
+});
+
 await run("inventario: Colección sin escudos invita a ganar el primero", () => {
   const root = montar();
   renderInventory(root, {

@@ -211,6 +211,11 @@ export function createCityView({ canvas, world, onSelectDistrict, onFrame, onTap
       renderer.setJarvisAlert(value);
       drawNow();
     },
+    /* Paquetes Neón (v0.48.0): los cassettes sin recoger de la ciudad. */
+    setPaquetes(spots) {
+      renderer.setPaquetes(spots);
+      drawNow();
+    },
     setWalkMode(on) {
       walkMode = !!on;
     },

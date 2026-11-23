@@ -17,14 +17,17 @@
  * La sección COLECCIÓN nace como vitrina en preparación y cada fase
  * de las Dinámicas enciende ahí su vitrina: la Fase 3 (v0.47.0)
  * encendió los ESCUDOS DE RACHA (estado derivado de `play.racha`, sin
- * botones: se ganan jugando y el consumo es automático); las fases
- * 4–5 encenderán cassettes y el set legendario. Ningún binario nuevo:
- * los iconos son los sprites de siempre (pixel.js) o pixel art
- * dibujado por código acá.
+ * botones: se ganan jugando y el consumo es automático) y la Fase 4
+ * (v0.48.0) los CASSETTES NEÓN (la mini-rejilla de los 20 de
+ * `play.paquetes`, con el botón del premio final al 20/20); la Fase 5
+ * encenderá el set legendario. Ningún binario nuevo: los iconos son
+ * los sprites de siempre (pixel.js) o pixel art dibujado por código
+ * acá.
  */
 
 import { SHOP_ITEMS, shopItem, tiendaState, ownsItem } from "../src/shop.js";
 import { rachaView } from "../src/racha-state.js";
+import { PAQUETE_PALETTES, paquetesView } from "../src/paquetes-state.js";
 import { outfitSprite, vehicleSprite } from "./city/pixel.js";
 import { shopItemCard } from "./shop-ui.js";
 import { fmt } from "./format.js";
@@ -47,15 +50,17 @@ function backRow(label, onClick) {
 
 /* Cassette Neón en pixel art por código (26×18): cuerpo rosado, ventana
    dorada y dos carretes cian — el icono de la sección Colección y la
-   silueta de su vitrina. `silhouette` lo pinta todo en azul oscuro. */
-function cassetteCanvas(silhouette = false) {
+   silueta de su vitrina. `silhouette` lo pinta todo en azul oscuro.
+   Desde v0.48.0 acepta la paleta del spot (PAQUETE_PALETTES): cada
+   cassette encontrado se exhibe en SU color, como se ve en la ciudad. */
+function cassetteCanvas(silhouette = false, pal = null) {
   const c = document.createElement("canvas");
   c.width = 26; c.height = 18;
   const g = c.getContext("2d");
-  const body = silhouette ? "#232842" : "#FF2E93";
-  const dark = silhouette ? "#171B30" : "#8E1220";
+  const body = silhouette ? "#232842" : (pal ? pal.body : "#FF2E93");
+  const dark = silhouette ? "#171B30" : (pal ? pal.dark : "#8E1220");
   const win = silhouette ? "#171B30" : "#FFD166";
-  const reel = silhouette ? "#232842" : "#31EBDD";
+  const reel = silhouette ? "#232842" : (pal ? pal.light : "#31EBDD");
   g.fillStyle = dark; g.fillRect(0, 0, 26, 18);
   g.fillStyle = body; g.fillRect(1, 1, 24, 16);
   g.fillStyle = win; g.fillRect(4, 3, 18, 7);
@@ -148,11 +153,12 @@ function renderHub(root, { bundle, actions, standalone, backLabel }) {
   }));
 
   const shields = rachaView(bundle);
+  const tapes = paquetesView(bundle);
   root.append(sectionCard({
     icon: cassetteCanvas(false),
     title: "COLECCIÓN",
     count: "La vitrina de las dinámicas",
-    status: `Cassettes · Escudos ×${shields.available} · Set legendario`,
+    status: `Cassettes ${tapes.foundCount}/${tapes.total} · Escudos ×${shields.available} · Set legendario`,
     onOpen: () => actions.onSection("coleccion")
   }));
 }
@@ -233,13 +239,14 @@ function renderVehicles(root, { bundle, actions }) {
 
 function renderCollection(root, { bundle, actions }) {
   const shields = rachaView(bundle);
+  const tapes = paquetesView(bundle);
   root.append(backRow("← Volver", () => actions.onSection("hub")));
   root.append(node("h3", "phone-screen-title", "Colección"));
   root.append(node("p", "phone-screen-sub", "La vitrina de las dinámicas nuevas"));
 
   const vitrina = node("div", "inv-vitrina");
   for (const [canvas, label, live] of [
-    [cassetteCanvas(true), "CASSETTES NEÓN", false],
+    [cassetteCanvas(tapes.foundCount <= 0), "CASSETTES NEÓN", tapes.foundCount > 0],
     [shieldCanvas(shields.available <= 0), "ESCUDOS DE RACHA", shields.available > 0],
     [trophyCanvas(true), "SET LEGENDARIO", false]
   ]) {
@@ -249,6 +256,53 @@ function renderCollection(root, { bundle, actions }) {
     vitrina.append(slot);
   }
   root.append(vitrina);
+
+  /* Vitrina de CASSETTES encendida (Fase 4, §5 + §12.2③): la
+     mini-rejilla de los 20 — encontrados a todo color con su zona,
+     faltantes en silueta azul oscuro con la pista de su zona — el
+     contador N/20 y el botón del premio final, activo solo al 20/20
+     (reclamo manual = ceremonia, mutación `paquete.prize`). */
+  const tapesBox = node("section", "inv-tapes");
+  const tapesHead = node("div", "inv-tapes-head");
+  const tapesTitles = node("div", "inv-escudos-titles");
+  tapesTitles.append(
+    node("h4", "inv-escudos-title", "CASSETTES NEÓN"),
+    node("p", "inv-tapes-count", `📼 ${tapes.foundCount}/${tapes.total}`)
+  );
+  tapesHead.append(tapesTitles);
+  tapesBox.append(tapesHead);
+  tapesBox.append(node(
+    "p", "inv-escudos-text",
+    "Veinte cassettes neón escondidos por toda Costa Neón. Se recogen caminando: pasales por encima y son tuyos. Cada uno paga +15 XP y +₡1."
+  ));
+  const tapesGrid = node("div", "inv-tapes-grid");
+  for (const spot of tapes.spots) {
+    const cell = node("div", `inv-tape${spot.found ? " is-found" : ""}`);
+    const sprite = cassetteCanvas(!spot.found, PAQUETE_PALETTES[spot.pal]);
+    sprite.className = "inv-tape-sprite";
+    cell.append(sprite, node("span", "inv-tape-zone", spot.zona));
+    tapesGrid.append(cell);
+  }
+  tapesBox.append(tapesGrid);
+  if (tapes.prizeClaimed) {
+    tapesBox.append(node(
+      "p", "inv-tapes-prize-done",
+      "🏆 ¡Colección Neón completa! Ya reclamaste el premio final: +100 XP, +₡25."
+    ));
+  } else if (tapes.canClaimPrize) {
+    const claim = node("button", "inv-tapes-claim", "🏆 RECLAMAR PREMIO FINAL · +100 XP, +₡25");
+    claim.type = "button";
+    claim.addEventListener("click", () => { if (actions.onClaimPaquetePrize) actions.onClaimPaquetePrize(); });
+    tapesBox.append(claim);
+  } else {
+    tapesBox.append(node(
+      "p", "shop-note",
+      tapes.foundCount === 0
+        ? "Todavía no tenés ninguno: el primero te espera en el Parque del Hub, a la vuelta de donde aparecés."
+        : `Te faltan ${tapes.total - tapes.foundCount} cassettes para el premio final de +100 XP y +₡25. Las siluetas te dicen la zona.`
+    ));
+  }
+  root.append(tapesBox);
 
   /* Vitrina de ESCUDOS encendida (Fase 3, §12.2③): exhibición y
      estado, SIN botones a propósito — se ganan jugando (Contrato
@@ -291,7 +345,7 @@ function renderCollection(root, { bundle, actions }) {
 
   root.append(node(
     "p", "inv-vitrina-text",
-    "Aquí vivirán tus Cassettes Neón y el set legendario de los eventos."
+    "Aquí vivirá también el set legendario de los eventos."
   ));
   root.append(node(
     "p", "shop-note",
@@ -301,7 +355,8 @@ function renderCollection(root, { bundle, actions }) {
 
 /**
  * Renderiza el Inventario. `section`: "hub" | "atuendos" | "vehiculos"
- * | "coleccion". actions: { equip, onBack, onSection, onShop }.
+ * | "coleccion". actions: { equip, onBack, onSection, onShop,
+ * onClaimPaquetePrize }.
  */
 export function renderInventory(root, { bundle, actions, section = "hub", standalone = false, backLabel = null }) {
   root.replaceChildren();
