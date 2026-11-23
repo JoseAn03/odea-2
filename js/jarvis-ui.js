@@ -25,6 +25,13 @@ import {
   JARVIS_QUIZ_XP_PER_HIT,
 } from "../src/jarvis-state.js";
 import { askJarvis, jarvisConfigured } from "./jarvis-client.js";
+import {
+  JARVIS_ACT_DAILY_LIMIT,
+  describeJarvisAction,
+  jarvisStaleMessage,
+  newJarvisRequestId,
+  validateJarvisAction,
+} from "../src/jarvis-actions.js";
 
 const QUIZ_TOPICS = [
   { id: "entrevista", label: "Entrevista Envista", campaignId: "entrevista" },
@@ -127,6 +134,16 @@ export function renderJarvis(root, options = {}) {
       feedbackUsed: JARVIS_FEEDBACK_DAILY_LIMIT - ((options.view && options.view.feedbackRestantes) || 0),
     },
     chatLog: [],
+    /* v0.50.0 — manos: contador de acciones aplicadas hoy, el plan del
+       día conocido (para re-validar propuestas contra el estado vivo) y
+       la ÚNICA tarjeta que puede estar pendiente a la vez. */
+    actUsed: (options.view && options.view.accionesHoy) || 0,
+    plan: {
+      focusId: (options.view && options.view.dayPlan && options.view.dayPlan.focusId) || null,
+      order: (options.view && options.view.dayPlan && options.view.dayPlan.order) || null,
+      busy: (options.view && options.view.dayPlan && options.view.dayPlan.busy) || null,
+    },
+    pendingCard: null,
   };
   sessions.set(root, session);
   root.replaceChildren();
@@ -181,7 +198,8 @@ export function renderJarvis(root, options = {}) {
       `Hoy: quiz XP ${session.counts.quizXp}/${JARVIS_QUIZ_XP * JARVIS_QUIZ_DAILY_LIMIT}` +
       ` · rondas con XP: ${session.counts.quizUsed}/${JARVIS_QUIZ_DAILY_LIMIT}` +
       ` · mensajes ${session.counts.chatUsed}/${JARVIS_CHAT_DAILY_LIMIT}` +
-      ` · revisiones ${session.counts.feedbackUsed}/${JARVIS_FEEDBACK_DAILY_LIMIT}`);
+      ` · revisiones ${session.counts.feedbackUsed}/${JARVIS_FEEDBACK_DAILY_LIMIT}` +
+      ` · Acciones de hoy: ${session.actUsed}/${JARVIS_ACT_DAILY_LIMIT}`);
   }
   renderFoot();
 
@@ -315,6 +333,127 @@ export function renderJarvis(root, options = {}) {
     panel.append(optionsBox, feedback);
   }
 
+  /* --------------------- manos: la tarjeta de acción ----------------------
+     El ciclo completo (§2/§5 del diseño): Jarvis propone en JSON, el
+     JUEGO re-valida contra el estado vivo y pinta la tarjeta con SUS
+     plantillas; nada se aplica sin el toque de José en «Aceptar», y la
+     confirmación la pone el juego, nunca el modelo. Máx. 1 pendiente. */
+
+  function actionContext() {
+    const ac = session.summary && session.summary.accionesContext;
+    return {
+      date: null,
+      dailies: ac && Array.isArray(ac.diarias)
+        ? ac.diarias.map((d) => ({ id: d.id, title: d.titulo, completed: Boolean(d.hecha) }))
+        : [],
+      focusId: session.plan.focusId,
+      order: session.plan.order,
+      busy: session.plan.busy,
+    };
+  }
+
+  function applyPlanLocally(name, args) {
+    if (name === "set_daily_focus") session.plan.focusId = args.dailyId;
+    else if (name === "reorder_dailies") session.plan.order = [...args.order];
+    else if (name === "set_busy_day") {
+      session.plan.busy = { minutes: args.minutes, chosen: [...args.chosen], deferred: [...args.deferred] };
+    }
+  }
+
+  function handleActionProposal(action, log) {
+    if (session.pendingCard) return; /* una pendiente a la vez */
+    if (typeof options.onAct !== "function") return;
+    const ctx = actionContext();
+    const code = validateJarvisAction(ctx, action.name, action.args);
+    if (code === "ACTION_UNKNOWN" || code === "ACTION_BAD_ARGS") {
+      /* Fail-closed en silencio: el hilo sigue solo con el texto. */
+      return;
+    }
+    const desc = describeJarvisAction(ctx, action.name, action.args);
+    if (!desc) return;
+    const card = el("div", "jarvis-action-card");
+    if (code === "ACTION_STALE") {
+      card.classList.add("jarvis-action-card--stale");
+      card.append(
+        el("p", "jarvis-action-title", desc.title),
+        el("p", "jarvis-action-body", `Ya no aplica: ${jarvisStaleMessage(ctx, action.name, action.args)}.`)
+      );
+      log.append(card);
+      return;
+    }
+
+    const requestId = newJarvisRequestId();
+    const planSnapshot = structuredClone(session.plan);
+    session.pendingCard = { requestId, name: action.name, args: action.args };
+    card.append(
+      el("p", "jarvis-action-title", desc.title),
+      el("p", "jarvis-action-body", desc.body)
+    );
+    const row = el("div", "jarvis-action-row");
+    const accept = el("button", "jarvis-action-accept", "Aceptar");
+    accept.type = "button";
+    const discard = el("button", "jarvis-action-discard", "Descartar");
+    discard.type = "button";
+    row.append(accept, discard);
+    card.append(row);
+    log.append(card);
+
+    discard.addEventListener("click", () => {
+      session.pendingCard = null;
+      card.replaceChildren(el("p", "jarvis-action-discarded", "Propuesta descartada"));
+      card.classList.add("jarvis-action-card--collapsed");
+    });
+
+    accept.addEventListener("click", async () => {
+      accept.disabled = true;
+      discard.disabled = true;
+      const result = await options.onAct({ type: "jarvis.act", requestId, name: action.name, args: action.args });
+      if (controller.signal.aborted) return;
+      if (result && (result.status === "applied" || result.status === "duplicate")) {
+        if (result.status === "applied") session.actUsed += 1;
+        applyPlanLocally(action.name, action.args);
+        session.pendingCard = null;
+        renderFoot();
+        card.classList.add("jarvis-action-card--applied");
+        card.replaceChildren(
+          el("p", "jarvis-action-title", `✅ Aplicado: ${desc.applied}`),
+        );
+        const undo = el("button", "jarvis-action-undo", "Deshacer");
+        undo.type = "button";
+        undo.addEventListener("click", async () => {
+          undo.disabled = true;
+          const undone = await options.onActUndo({ type: "jarvis.actUndo", requestId });
+          if (controller.signal.aborted) return;
+          if (undone && undone.status === "applied") {
+            session.plan = planSnapshot;
+            card.replaceChildren(el("p", "jarvis-action-discarded", "↩️ Deshecho: quedó como estaba."));
+          } else {
+            card.replaceChildren(el("p", "jarvis-action-discarded", "Ya no se puede deshacer: el ajuste cambió después."));
+          }
+        });
+        const undoRow = el("div", "jarvis-action-row");
+        undoRow.append(undo);
+        card.append(undoRow);
+        log.append(el("p", "jarvis-msg jarvis-msg--game", `✅ Aplicado: ${desc.applied}`));
+      } else {
+        const failCode = result && result.error && result.error.code;
+        session.pendingCard = null;
+        if (failCode === "ACTION_STALE") {
+          card.classList.add("jarvis-action-card--stale");
+          card.replaceChildren(
+            el("p", "jarvis-action-title", desc.title),
+            el("p", "jarvis-action-body", `Ya no aplica: ${jarvisStaleMessage(actionContext(), action.name, action.args)}.`)
+          );
+        } else if (failCode === "JARVIS_ACT_CAP") {
+          card.classList.add("jarvis-action-card--stale");
+          card.replaceChildren(el("p", "jarvis-action-body", "Hoy ya aplicaste 10 ajustes; mañana seguimos."));
+        } else {
+          card.replaceChildren(el("p", "jarvis-action-body", "No se pudo aplicar. Probá de nuevo en un rato."));
+        }
+      }
+    });
+  }
+
   /* --------------------------------- chat --------------------------------- */
   function showChat() {
     panel.replaceChildren();
@@ -350,8 +489,17 @@ export function renderJarvis(root, options = {}) {
       }, { signal: controller.signal });
       if (controller.signal.aborted) return;
       if (result.ok) {
-        pending.replaceChildren(result.text);
-        session.chatLog.push({ role: "jarvis", text: result.text });
+        if (result.text && result.text.trim()) {
+          pending.replaceChildren(result.text);
+          session.chatLog.push({ role: "jarvis", text: result.text });
+        } else if (result.action) {
+          /* Tool_call sin texto: el juego pone su línea de plantilla. */
+          const desc = describeJarvisAction(actionContext(), result.action.name, result.action.args);
+          pending.replaceChildren(desc ? `Te preparé una propuesta: ${desc.title}. Revisala y decidí vos.` : "Te preparé una propuesta en la tarjeta de abajo.");
+        } else {
+          pending.replaceChildren("…");
+        }
+        if (result.action) handleActionProposal(result.action, log);
         const recorded = typeof options.onUsage === "function" ? await options.onUsage("chat") : null;
         if (recorded && recorded.status === "applied") {
           session.counts.chatUsed += 1;
