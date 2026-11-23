@@ -46,6 +46,7 @@ import { renderMarca } from "./marca-ui.js";
 import { renderJarvis } from "./jarvis-ui.js";
 import { renderShop } from "./shop-ui.js";
 import { renderInventory } from "./inventory-ui.js";
+import { nearestCollectible, paquetesView } from "../src/paquetes-state.js";
 import { renderLibreta } from "./libreta-ui.js";
 import { fmt } from "./format.js";
 import { equippedLook, shopItem } from "../src/shop.js";
@@ -287,6 +288,11 @@ function initCity() {
           const pst = player.update(dt, cityWorld ? cityWorld.buildings : []);
           pst.look = bundle ? equippedLook(bundle) : null;
           city.setPlayer(pst);
+          /* Paquetes Neón (v0.48.0): recolección por PROXIMIDAD en el
+             mismo tick — sin temporizadores nuevos, solo se lee la
+             posición que el motor ya calculó. Pasar por encima de un
+             cassette sin recoger dispara su mutación (una a la vez). */
+          maybeCollectPaquete(pst);
         }
       },
       onSteer: (dir) => {
@@ -658,6 +664,58 @@ function createReales({ n, ico, price }) {
   ));
 }
 
+/* ------------------- Paquetes Neón (v0.48.0) -----------------------
+   La cacería de los 20 cassettes: la ciudad pinta los que faltan
+   (refresh manda la lista), el tick de caminar detecta la proximidad
+   (radio 44 desde el centro del jugador) y la recolección pasa por la
+   puerta única, como todo. El premio final se reclama a mano desde
+   el botón del panel de Colección del Inventario (ceremonia). */
+
+let paqueteCollectPending = false;
+
+function maybeCollectPaquete(pst) {
+  if (!bundle || !storage || !catalog || paqueteCollectPending) return;
+  const spot = nearestCollectible(bundle, pst.x, pst.y);
+  if (!spot) return;
+  paqueteCollectPending = true;
+  applyGameplayMutationLocked(
+    storage, catalog, { type: "paquete.collect", spotId: spot.id }, gameplayDate()
+  ).then((result) => {
+    paqueteCollectPending = false;
+    if (result.status === "rejected") {
+      const code = result.error && result.error.code;
+      if (toasts) toasts.show(`No se pudo guardar: ${code}`, { tone: "error" });
+      return;
+    }
+    refresh();
+    if (result.status === "applied") {
+      const view = paquetesView(bundle);
+      if (toasts) toasts.show(`📼 ¡Cassette neón! ${view.foundCount}/${view.total}`, { tone: "ok" });
+    }
+  }).catch(() => { paqueteCollectPending = false; });
+}
+
+function claimPaquetePrize() {
+  if (!storage || !catalog) return;
+  return applyGameplayMutationLocked(
+    storage, catalog, { type: "paquete.prize" }, gameplayDate()
+  ).then((result) => {
+    if (result.status === "rejected") {
+      const code = result.error && result.error.code;
+      if (toasts) toasts.show(`No se pudo guardar: ${code}`, { tone: "error" });
+      rerenderInventoryHouses();
+      return;
+    }
+    if (result.status === "duplicate") {
+      if (toasts) toasts.show("El premio final ya era tuyo.", { tone: "info" });
+    } else if (toasts) {
+      toasts.show("🏆 ¡Colección Neón completa! Los 20 cassettes son tuyos: +100 XP, +₡25.", { tone: "ok" });
+    }
+    refresh();
+    rerenderInventoryHouses();
+  });
+}
+
 /* ---------------------- Inventario (v0.45.0) -------------------------
    El hub de 3 secciones (Adenda §12): presentación pura, cero estado
    nuevo. Dos casas: la app 🎒 del teléfono y el standalone del Mercado
@@ -673,6 +731,7 @@ function inventoryActions(onBack, onShop) {
     equip: (itemId) => equipShopItem(itemId),
     onBack,
     onShop,
+    onClaimPaquetePrize: () => claimPaquetePrize(),
     onSection: (section) => { inventorySection = section; rerenderInventoryHouses(); }
   };
 }
@@ -2030,6 +2089,7 @@ function refresh() {
       city.setPlayerVisible(true);
       city.setCredit(hud.xpBreakdown.evento + hud.xpBreakdown.farm);
       city.setJarvisAlert(jarvisHasNews(bundle));
+      city.setPaquetes(paquetesView(bundle).spots.filter((s) => !s.found));
     }
     applyAmbience();
 
@@ -2053,6 +2113,7 @@ function refresh() {
     city.setPlayerVisible(false);
     city.setCredit(null);
     city.setJarvisAlert(false);
+    city.setPaquetes([]);
     city.clearSelection();
   }
   setWalk(false);
