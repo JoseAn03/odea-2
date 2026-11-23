@@ -2,6 +2,8 @@
  * Presentational campaign UI. Persistence, eligibility and rewards belong to
  * the caller. This module never writes to storage or changes a campaign view.
  */
+import { outfitSprite, vehicleSprite, relicCanvas } from "./city/pixel.js";
+
 const sessions = new WeakMap();
 let instanceSequence = 0;
 
@@ -519,6 +521,74 @@ function makeApplications(root, state, view) {
   return section;
 }
 
+/* ----------------- Set Legendario (v0.49.0, §6.6) ------------------
+   La vitrina «SET LEGENDARIO DESBLOQUEADO»: solo aparece cuando la
+   campaña está completa Y tiene set definido (options.legendary,
+   calculado por el llamador desde legendarioView — genérico para
+   cualquier campaña con set). Panel dorado #FFC53D, las 5 piezas en
+   fila con su pixel art y el botón RECLAMAR SET; el reclamo pasa por
+   options.onClaimLegendary (la mutación legendario.claim de la
+   puerta única). Al reclamar, el llamador repinta con claimed=true
+   y esta vitrina muestra la confirmación. */
+function makeLegendary(root, state, view) {
+  const legendary = state.options.legendary;
+  if (!legendary || !legendary.complete) return null;
+  const panel = node("section", "campaign-legendary");
+  panel.setAttribute("aria-label", "Set legendario desbloqueado");
+  panel.append(
+    node("p", "campaign-eyebrow campaign-legendary-eyebrow", "EVENTO COMPLETO · PREMIO DE FIN DE EVENTO"),
+    node("h2", "campaign-legendary-title", `🏆 SET LEGENDARIO — ${text(legendary.name)}`),
+    node("p", "campaign-legendary-text", `Completaste ${text(legendary.campaignName, view.name || "el evento")}. Este set no se compra: se gana.`)
+  );
+  const row = node("div", "campaign-legendary-row");
+  for (const piece of legendary.pieces || []) {
+    const item = piece.item;
+    if (!item) continue;
+    const cell = node("div", "campaign-legendary-piece");
+    let canvas = null;
+    try {
+      canvas = item.kind === "outfit" ? outfitSprite(item.pal, item.gorra, item.look)
+        : item.kind === "reliquia" ? relicCanvas(item)
+        : vehicleSprite(item.spec);
+    } catch { canvas = null; }
+    if (canvas) {
+      canvas.className = "campaign-legendary-sprite";
+      cell.append(canvas);
+    }
+    cell.append(node("span", "campaign-legendary-name", item.name));
+    row.append(cell);
+  }
+  panel.append(row);
+  if (legendary.claimed) {
+    panel.append(node("p", "campaign-legendary-done", `✨ ¡Set ${text(legendary.name)} en tu inventario! El atuendo ya está equipado.`));
+  } else {
+    const pending = state.pending?.type === "legendary";
+    const claim = button(
+      "campaign-button campaign-legendary-claim",
+      pending ? "Reclamando…" : "RECLAMAR SET",
+      async () => {
+        if (state.pending || typeof state.options.onClaimLegendary !== "function") return;
+        state.pending = { type: "legendary" };
+        redraw(root, state);
+        try {
+          const result = await state.options.onClaimLegendary(view.id);
+          if (!result?.ok) {
+            announce(state, result?.message || "No pudimos reclamar el set. Intentá de nuevo.", "error");
+          }
+        } catch {
+          announce(state, "No pudimos reclamar el set. Revisá la conexión e intentá de nuevo.", "error");
+        } finally {
+          state.pending = null;
+          redraw(root, state);
+        }
+      }
+    );
+    claim.disabled = pending || typeof state.options.onClaimLegendary !== "function";
+    panel.append(claim);
+  }
+  return panel;
+}
+
 function paint(root, state) {
   const { view, compact } = state.options;
   state.fieldSequence = 0;
@@ -546,6 +616,8 @@ function paint(root, state) {
   interior.append(makeStats(view, state));
   if (state.message) interior.append(statusMessage(state.message.text, state.message.kind));
   interior.append(makeNext(root, state, view));
+  const legendaryPanel = makeLegendary(root, state, view);
+  if (legendaryPanel) interior.append(legendaryPanel);
   if (brete) interior.append(makeApplications(root, state, view));
   interior.append(makeChapters(root, state, view));
   const footer = node("footer", "campaign-footer");
@@ -584,7 +656,7 @@ function paint(root, state) {
  * @param {boolean} [options.compact=false] Narrow embedded phone presentation.
  * @returns {HTMLElement} The mount point.
  */
-export function renderCampaign(root, { view, onComplete, onApply, onBack, compact = false } = {}) {
+export function renderCampaign(root, { view, onComplete, onApply, onBack, compact = false, legendary = null, onClaimLegendary = null } = {}) {
   if (!root || typeof root.replaceChildren !== "function") {
     throw new TypeError("renderCampaign necesita un elemento raíz del DOM.");
   }
@@ -613,7 +685,7 @@ export function renderCampaign(root, { view, onComplete, onApply, onBack, compac
     sessions.set(root, state);
   }
   state.id = id;
-  state.options = { view, onComplete, onApply, onBack, compact };
+  state.options = { view, onComplete, onApply, onBack, compact, legendary, onClaimLegendary };
   // The save is authoritative, including after importing/restoring an older backup.
   state.saved.clear();
   root.dataset.campaignId = id;
