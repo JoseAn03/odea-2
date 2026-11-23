@@ -995,6 +995,28 @@ function paintOverlay(g, dir, look) {
     }
     g.restore();
   }
+  if (look.overlay === "circuits") {
+    /* v0.49.0 · Exo Autómata: trazas de circuito verde neón (pal.t)
+       con nodos cian (pal.A) sobre el torso de armadura y el núcleo
+       brillante del pecho al frente — el atuendo legendario se tiene
+       que LEER como máquina viva, no como una armadura más. */
+    if (dir === "front") {
+      for (const x of [5, 12]) rect(x, 11, 1, 8, pal.t);
+      for (const y of [12, 18]) rect(5, y, 8, 1, pal.t);
+      for (const [x, y] of [[5, 12], [12, 12], [5, 18], [12, 18], [5, 15], [12, 15]]) px1(x, y, pal.A);
+      rect(8, 14, 2, 1, pal.A); rect(7, 15, 4, 1, pal.A); rect(8, 16, 2, 1, pal.A);
+      rect(8, 15, 2, 1, pal.W); px1(9, 14, pal.W);
+    } else if (dir === "back") {
+      for (const x of [5, 12]) rect(x, 11, 1, 8, pal.t);
+      for (const y of [13, 17]) rect(5, y, 8, 1, pal.t);
+      for (const [x, y] of [[5, 13], [12, 13], [5, 17], [12, 17]]) px1(x, y, pal.A);
+      rect(8, 14, 2, 3, pal.A); px1(8, 15, pal.W);
+    } else {
+      rect(8, 11, 1, 8, pal.t);
+      for (const y of [12, 18]) rect(7, y, 6, 1, pal.t);
+      px1(8, 12, pal.A); px1(8, 18, pal.A); px1(12, 15, pal.A);
+    }
+  }
   if (look.overlay === "reactor" && dir === "front") {
     rect(8, 12, 2, 1, pal.A); rect(7, 13, 4, 1, pal.A); rect(8, 14, 2, 1, pal.A);
     rect(8, 13, 2, 1, pal.W); px1(9, 12, pal.W); px1(8, 14, pal.W);
@@ -1040,6 +1062,24 @@ const BASE_LOOK = {
     "1": "#2E6BD8", "2": "#2E6BD8", "3": "#2E6BD8", "4": "#2456AC", "5": "#2456AC", "6": "#2456AC"
   }
 };
+
+/** Sprite de una RELIQUIA legendaria (v0.49.0): rasteriza el `art`
+ *  (filas + paleta) que el ítem trae en src/shop.js. `silhouette` lo
+ *  pinta todo en azul oscuro, para la vitrina sin ganar. */
+export function relicCanvas(item, silhouette = false) {
+  if (typeof document === "undefined" || !item || !item.art) return null;
+  const { w, h, rows, pal } = item.art;
+  const c = mkCanvas(w, h);
+  const g = c.getContext("2d");
+  rows.forEach((row, y) => {
+    [...row].forEach((ch, x) => {
+      if (ch === "." || !pal[ch]) return;
+      g.fillStyle = silhouette ? (y % 2 ? "#232842" : "#1B2038") : pal[ch];
+      g.fillRect(x, y, 1, 1);
+    });
+  });
+  return c;
+}
 
 /** Sprite lateral (horizontal) de un vehículo de la Tienda. */
 export function vehicleSprite(spec) {
