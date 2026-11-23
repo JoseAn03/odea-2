@@ -8,7 +8,7 @@
 import { PALETTE, DISTRICTS, alpha, mix } from "../districts.js";
 import { fmt } from "../format.js";
 import { createPixelArt } from "./pixel.js";
-import { clipsRect, cellRect, eventosRect, jarvisRect } from "./layout.js";
+import { clipsRect, cellRect, eventosRect, jarvisRect, marcaRect } from "./layout.js";
 import { shopItem } from "../../src/shop.js";
 
 const FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
@@ -69,7 +69,7 @@ export function createRenderer(canvas) {
   let glow = null;
   const venuePictures = {};
   if (typeof Image !== "undefined") {
-    for (const id of ["brete", "gamer", "tienda", "eventos", "garaje", "academia", "zonaia", "sabiduria", "mundoian"]) {
+    for (const id of ["brete", "gamer", "tienda", "eventos", "garaje", "academia", "zonaia", "sabiduria", "mundoian", "marca"]) {
       const image = new Image();
       image.src = new URL(`../../assets/slots/${id}.webp`, import.meta.url).href;
       venuePictures[id] = image;
@@ -1283,7 +1283,7 @@ export function createRenderer(canvas) {
 
   function staticKey(world) {
     const levels = DISTRICTS.map((d) => districtLevelOf(d.id)).join("");
-    const imgs = ["brete", "gamer", "tienda"]
+    const imgs = ["brete", "gamer", "tienda", "marca"]
       .map((id) => (venuePictures[id] && venuePictures[id].complete && venuePictures[id].naturalWidth > 0 ? "1" : "0"))
       .join("");
     return `${levels}|${windowBoost()}|${reduced ? "r" : "n"}|${imgs}|${cityMapReady() ? "map" : "proc"}`;
@@ -1454,6 +1454,20 @@ export function createRenderer(canvas) {
       if (visible(view, mundoianCell.x, mundoianCell.y, mundoianCell.w, mundoianCell.h)) {
         if (!useMap) drawVenueSkin("mundoian", mundoianCell);
         drawVenueSign("MUNDO IAN", mundoianCell, "#4FC3F7");
+      }
+
+      /* ESTUDIO NEÓN ocupa la manzana de Barrio Vida (0,1) ENTERA
+         (decisión de José, 2026-11-22): el lote de grabación de la
+         imagen aprobada cubre el cuadrado y su letrero dorado va a la
+         entrada. A diferencia de los venues viejos, su escena se
+         dibuja TAMBIÉN sobre el mapa imagen: city-map.webp pinta esa
+         manzana como residencial porque el estudio nació después del
+         rediseño del mapa, así que la piel aprobada manda en las dos
+         rutas. */
+      const marcaCell = marcaRect();
+      if (visible(view, marcaCell.x, marcaCell.y, marcaCell.w, marcaCell.h)) {
+        drawVenueSkin("marca", marcaCell);
+        drawVenueSign("ESTUDIO NEÓN", marcaCell, "#FFC53D");
       }
 
       ctx.restore();

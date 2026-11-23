@@ -156,7 +156,13 @@ test("XP: el oráculo reproduce el fixture (integridad de la referencia)", () =>
   const f = loadFixture();
   const c = loadCatalog();
   const d = derive(sourcesFromLegacy(f), c, REFERENCE_DATE);
-  assert.deepEqual(d.xpBreakdown, f.save.xpBreakdown);
+  /* Cada componente del fixture se reproduce exacto; el componente
+     `marca` (v0.44.0, posterior al fixture) deriva 0 en un save sin
+     Estudio Neón, así que ningún total histórico se mueve. */
+  for (const k of Object.keys(f.save.xpBreakdown)) {
+    assert.equal(d.xpBreakdown[k], f.save.xpBreakdown[k], `componente ${k}`);
+  }
+  assert.equal(d.xpBreakdown.marca, 0);
   assert.equal(d.totalXP, f.save.totalXP);
   assert.equal(d.campaignLevel, f.save.campaignLevel);
   assert.equal(d.odeLevel, f.save.odeLevel);

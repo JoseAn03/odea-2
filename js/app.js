@@ -30,17 +30,19 @@ import { campaignStateOf, campaignView } from "../src/campaign-state.js";
 import { CAMPAIGNS, CAMPAIGN_MISSIONS } from "../src/campaigns.js";
 import { garageView } from "../src/garage-state.js";
 import { ianView } from "../src/ian-state.js";
+import { marcaView } from "../src/marca-state.js";
 import { buildProgressSummary, jarvisView } from "../src/jarvis-state.js";
 import { libretaView } from "../src/libreta-state.js";
 import { renderCampaign, renderDaily } from "./campaign-ui.js";
 import { renderGarage } from "./garage-ui.js";
 import { renderIan } from "./ian-ui.js";
+import { renderMarca } from "./marca-ui.js";
 import { renderJarvis } from "./jarvis-ui.js";
 import { renderShop } from "./shop-ui.js";
 import { renderLibreta } from "./libreta-ui.js";
 import { equippedLook, shopItem } from "../src/shop.js";
 import { DISTRICTS } from "./districts.js";
-import { academiaRect, cellRect, clipsRect, eventosRect, jarvisRect, mundoianRect, pointInRect, sabiduriaRect, zonaiaRect } from "./city/layout.js";
+import { academiaRect, cellRect, clipsRect, eventosRect, jarvisRect, marcaRect, mundoianRect, pointInRect, sabiduriaRect, zonaiaRect } from "./city/layout.js";
 import { newPlayerBundle } from "../src/new-player.js";
 import {
   TAB_MOCHILA,
@@ -193,6 +195,8 @@ let garageOpen = false;
 let garageWritePending = false;
 let ianOpen = false;
 let ianWritePending = false;
+let marcaOpen = false;
+let marcaWritePending = false;
 let jarvisOpen = false;
 let jarvisWritePending = false;
 let libretaUi = { mode: "list", noteId: null };
@@ -391,6 +395,16 @@ function openDistrict(id) {
        queda a un botón dentro, como el archivo de Empleo en El Brete. */
     closePhone();
     openGarage();
+    return;
+  }
+  if (id === "vida" || id === "marca") {
+    /* La manzana de Barrio Vida abre el ESTUDIO NEÓN (decisión de José,
+       2026-11-22): el estudio de la marca personal ocupa el bloque
+       entero, sin botón de convivencia. La ficha del distrito vida y
+       sus misiones dejan de abrirse desde aquí; sus datos y su XP
+       quedan intactos en el save, solo que sin venue. */
+    closePhone();
+    openMarca();
     return;
   }
   if (id === "mercado") {
@@ -654,6 +668,7 @@ function openCampaign(id, inPhone = false) {
   shopStandalone = false;
   garageOpen = false;
   ianOpen = false;
+  marcaOpen = false;
   jarvisOpen = false;
   if (walkOn) setWalk(false);
   if (viewSession) viewSession.capture();
@@ -701,10 +716,11 @@ function openCampaign(id, inPhone = false) {
 }
 
 function closeCampaign() {
-  if (!careerId && !garageOpen && !ianOpen && !jarvisOpen) return;
+  if (!careerId && !garageOpen && !ianOpen && !marcaOpen && !jarvisOpen) return;
   careerId = null;
   garageOpen = false;
   ianOpen = false;
+  marcaOpen = false;
   jarvisOpen = false;
   els.careerBackdrop.hidden = true;
   if (viewSession) viewSession.restore();
@@ -717,6 +733,7 @@ function renderActiveCampaign() {
   const inPhone = !els.phoneBackdrop.hidden && Boolean(CAMPAIGNS[phoneView]);
   if (garageOpen && !inPhone) { renderGaragePanel(); return; }
   if (ianOpen && !inPhone) { renderIanPanel(); return; }
+  if (marcaOpen && !inPhone) { renderMarcaPanel(); return; }
   if (jarvisOpen && !inPhone) { renderJarvisPanel(); return; }
   const id = inPhone ? phoneView : careerId;
   if (!id || !bundle) return;
@@ -805,6 +822,7 @@ function openDailyStandalone() {
   careerId = null;
   garageOpen = false;
   ianOpen = false;
+  marcaOpen = false;
   jarvisOpen = false;
   shopStandalone = false;
   careerReturnFocus = document.activeElement;
@@ -844,6 +862,7 @@ function openShopStandalone() {
   careerId = null;
   garageOpen = false;
   ianOpen = false;
+  marcaOpen = false;
   jarvisOpen = false;
   dailyStandalone = false;
   careerReturnFocus = document.activeElement;
@@ -926,6 +945,7 @@ function openGarage() {
   closePhone();
   careerReturnFocus = document.activeElement;
   careerId = null;
+  marcaOpen = false;
   garageOpen = true;
   els.careerBackdrop.hidden = false;
   els.careerDialog.focus({ preventScroll: true });
@@ -994,6 +1014,7 @@ function openIan() {
   closePhone();
   careerReturnFocus = document.activeElement;
   careerId = null;
+  marcaOpen = false;
   ianOpen = true;
   els.careerBackdrop.hidden = false;
   els.careerDialog.focus({ preventScroll: true });
@@ -1045,6 +1066,68 @@ async function saveIanAction(mutation) {
   }
 }
 
+/* ------------------- el Estudio Neón vivo (marca) ------------------- */
+
+function openMarca() {
+  if (!bundle || !catalog) return;
+  dailyStandalone = false;
+  shopStandalone = false;
+  garageOpen = false;
+  ianOpen = false;
+  jarvisOpen = false;
+  if (walkOn) setWalk(false);
+  if (viewSession) viewSession.capture();
+  hideSheetRaw();
+  hideOverlayRaw();
+  closePhone();
+  careerReturnFocus = document.activeElement;
+  careerId = null;
+  marcaOpen = true;
+  els.careerBackdrop.hidden = false;
+  els.careerDialog.focus({ preventScroll: true });
+  if (city) {
+    const r = marcaRect();
+    city.camera.jumpTo(r.x + r.w / 2, r.y + r.h / 2, city.camera.clampZoom(0.8));
+  }
+  renderMarcaPanel();
+}
+
+function renderMarcaPanel() {
+  if (!marcaOpen || !bundle) return;
+  renderMarca(els.careerDialog, {
+    view: marcaView(bundle, gameplayDate().date),
+    onBack: () => closeCampaign(),
+    onComplete: (missionId) => saveMarcaAction({ type: "marca.complete", missionId })
+  });
+}
+
+async function saveMarcaAction(mutation) {
+  if (marcaWritePending) return { text: "Ya hay un registro en curso.", kind: "error" };
+  marcaWritePending = true;
+  try {
+    const result = await applyGameplayMutationLocked(storage, catalog, mutation, gameplayDate());
+    if (result.status !== "applied") {
+      const messages = {
+        DUPLICATE: "Eso ya estaba registrado hoy; no se pagó otra vez.",
+        QUOTA_EXCEEDED: "No hay espacio para guardar. Exportá un respaldo y liberá espacio antes de continuar.",
+        CONCURRENT_CHANGE: "Otra pestaña cambió el progreso. Revisá el registro antes de volver a intentar."
+      };
+      refresh();
+      setTimeout(renderMarcaPanel, 1100);
+      return { text: messages[result.error?.code] ||
+        (result.status === "duplicate" ? messages.DUPLICATE :
+          `No se pudo guardar (${result.error?.code || "error"}). No se otorgaron premios.`), kind: "error" };
+    }
+    refresh();
+    setTimeout(renderMarcaPanel, 500);
+    return null;
+  } catch (error) {
+    return { text: "No se pudo guardar. Tu progreso anterior sigue intacto; exportá un respaldo y reintentá.", kind: "error" };
+  } finally {
+    marcaWritePending = false;
+  }
+}
+
 /* ------------------------- Jarvis, el compañero -------------------------
    El robotcito de la Zona IA (v0.38.0): vive en el mismo #career-dialog
    de las campañas, con su propia bandera como el Garaje e Ian. La IA es
@@ -1058,6 +1141,7 @@ function openJarvis() {
   shopStandalone = false;
   garageOpen = false;
   ianOpen = false;
+  marcaOpen = false;
   if (walkOn) setWalk(false);
   if (viewSession) viewSession.capture();
   hideSheetRaw();
@@ -1356,6 +1440,13 @@ function showPhoneMissions() {
   ianBtn.type = "button";
   ianBtn.addEventListener("click", () => { closePhone(); openIan(); });
   root.append(ianBtn);
+  /* v0.44.0: el Estudio Neón (marca personal) se suma a Sistemas vivos
+     con su conteo de hitos, como el Garaje y el Mundo de Ian. */
+  const marca = marcaView(bundle, gameplayDate().date);
+  const marcaBtn = phoneEl("button", "campaign-phone-route", `Estudio Neón · ${marca.hitosDone}/${marca.hitosTotal} hitos`);
+  marcaBtn.type = "button";
+  marcaBtn.addEventListener("click", () => { closePhone(); openMarca(); });
+  root.append(marcaBtn);
   if (els.phoneHome) els.phoneHome.hidden = true;
   root.hidden = false;
 }
@@ -1369,7 +1460,7 @@ function showPhoneMap() {
   root.replaceChildren(phoneEl("h3", "phone-screen-title", "Destinos de Costa Neón"),
     phoneEl("p", "phone-screen-sub", "Elegí un destino. Se abre su localización en el mapa."));
   for (const destination of [{ id: "gamer", name: "Zona Gamer · Estudio de clips" },
-    ...DISTRICTS.map((d) => ({ id: d.id, name: d.id === "empleo" ? "El Brete · Analista de datos" : d.name }))]) {
+    ...DISTRICTS.map((d) => ({ id: d.id, name: d.id === "empleo" ? "El Brete · Analista de datos" : d.id === "vida" ? "Estudio Neón · Marca personal" : d.name }))]) {
     const button = phoneEl("button", "campaign-phone-route", destination.name);
     button.type = "button";
     button.addEventListener("click", () => {
@@ -1880,6 +1971,7 @@ async function boot() {
       if (careerId) closeCampaign();
       else if (garageOpen) closeCampaign();
       else if (ianOpen) closeCampaign();
+      else if (marcaOpen) closeCampaign();
       else if (jarvisOpen) closeCampaign();
       else if (dailyStandalone) closeDailyStandalone();
       else if (shopStandalone) closeShopStandalone();

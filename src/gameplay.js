@@ -21,6 +21,7 @@ import { applyGarageMutation } from "./garage-state.js";
 import { applyIanMutation } from "./ian-state.js";
 import { applyJarvisMutation } from "./jarvis-state.js";
 import { applyLibretaMutation } from "./libreta-state.js";
+import { applyMarcaMutation } from "./marca-state.js";
 import { applyShopMutation } from "./shop.js";
 
 export const ROUTE_SIZE = 3;
@@ -402,6 +403,12 @@ export function applyMutation(draft, mutation, catalog, { at, date } = {}) {
 
   if (mutation && mutation.type === "ian.complete") {
     return applyIanMutation(draft, mutation, { at: atIso, date: dateKey });
+  }
+
+  /* Estudio Neón (v0.44.0): la marca personal viva de Barrio Vida —
+     rutinas con reloj e hitos de una vez, en dos pestañas. */
+  if (mutation && mutation.type === "marca.complete") {
+    return applyMarcaMutation(draft, mutation, { at: atIso, date: dateKey });
   }
 
   /* Jarvis (v0.38.0): quiz con XP acotado, contadores de uso del Worker
