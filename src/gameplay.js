@@ -25,6 +25,7 @@ import { applyMarcaMutation } from "./marca-state.js";
 import { applyRealesMutation } from "./reales-state.js";
 import { applyContratoMutation } from "./contrato-state.js";
 import { applyRachaMutation } from "./racha-state.js";
+import { applyPaquetesMutation } from "./paquetes-state.js";
 import { applyShopMutation } from "./shop.js";
 
 export const ROUTE_SIZE = 3;
@@ -452,6 +453,15 @@ export function applyMutation(draft, mutation, catalog, { at, date } = {}) {
      opciones (hoy) y no el `dateKey` derivado de la mutación. */
   if (mutation && ["racha.cover", "racha.grant"].includes(mutation.type)) {
     return applyRachaMutation(draft, mutation, { at: atIso, date });
+  }
+
+  /* Paquetes Neón (v0.48.0): la recolección de cassettes caminando por
+     la ciudad y el premio final de la colección. La recolección es
+     físicamente irrepetible (el sprite no se pinta) y el reducer
+     además devuelve DUPLICATE si el spot ya está en `found`; el
+     premio exige 20/20 y se reclama una sola vez. */
+  if (mutation && ["paquete.collect", "paquete.prize"].includes(mutation.type)) {
+    return applyPaquetesMutation(draft, mutation, { at: atIso, date: dateKey });
   }
 
   if (mutation && (mutation.type === "shop.buy" || mutation.type === "shop.equip")) {
