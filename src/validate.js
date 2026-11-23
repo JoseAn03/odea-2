@@ -34,6 +34,7 @@ import { jarvisProblems } from "./jarvis-state.js";
 import { libretaProblems } from "./libreta-state.js";
 import { marcaProblems } from "./marca-state.js";
 import { realesProblems } from "./reales-state.js";
+import { contratoProblems } from "./contrato-state.js";
 import { occurrenceKey } from "./gameplay.js";
 import { loadOdea2 } from "./storage.js";
 import { legacyProjection, XP_COMPONENTS } from "./migrate.js";
@@ -541,6 +542,7 @@ export function validatePlaySection(bundle2, catalog) {
   problems.push(...libretaProblems(bundle2));
   problems.push(...marcaProblems(bundle2));
   problems.push(...realesProblems(bundle2));
+  problems.push(...contratoProblems(bundle2));
   checks.push(
     check(
       "PLAY_RECORDS",

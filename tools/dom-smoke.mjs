@@ -645,6 +645,54 @@ await run("inventario: Colección nace como vitrina en preparación", () => {
   };
 });
 
+/* --------------------- Contrato Semanal (v0.46.0) ----------------------- */
+
+const { renderContrato } = await cargar("js/contrato-ui.js");
+const { contratoView } = await cargar("src/contrato-state.js");
+
+await run("renderContrato pinta la tarjeta sobre la ruta: 3 retos, barras segmentadas y cofre", () => {
+  const root = montar();
+  /* Jueves de la W46: la gracia de la W45 ya expiró y solo vive la actual. */
+  const view = contratoView(bundle, "2026-11-12");
+  renderContrato(root, { view, onClaim() {} });
+  const texto = root.textContent;
+  const retos = root.querySelectorAll(".contrato-reto");
+  const segs = root.querySelectorAll(".contrato-seg");
+  const claim = findBtn(root, "RECLAMAR");
+  return {
+    pass:
+      texto.includes("Contrato semanal — Semana") &&
+      texto.includes("Cofre: 150 XP + ₡15") &&
+      retos.length === 3 &&
+      segs.length > 0 &&
+      !!claim && claim.disabled === true,
+    detail: "tarjeta §3.8 con el botón en candado sin 3/3"
+  };
+});
+
+await run("renderContrato al 3/3 activa RECLAMAR y dispara onClaim con la semana", () => {
+  const root = montar();
+  const view = contratoView(bundle, "2026-11-10");
+  const ready = {
+    ...view,
+    grace: null,
+    current: {
+      ...view.current,
+      doneCount: 3,
+      complete: true,
+      challenges: view.current.challenges.map((c) => ({ ...c, current: c.target, done: true }))
+    }
+  };
+  let claimed = null;
+  renderContrato(root, { view: ready, onClaim: (weekKey) => { claimed = weekKey; } });
+  const btn = findBtn(root, "RECLAMAR COFRE");
+  if (btn) btn.click();
+  return {
+    pass: !!btn && btn.disabled === false && claimed === view.weekKey,
+    detail: "el reclamo sale por la mutación contrato.claim de app.js"
+  };
+});
+
 /* ------------------------- el render no escribe nada ---------------------- */
 
 await run("renderizar no escribe el bundle", () => ({
