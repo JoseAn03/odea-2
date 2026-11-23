@@ -10,6 +10,7 @@ import { fmt } from "../format.js";
 import { createPixelArt } from "./pixel.js";
 import { clipsRect, cellRect, eventosRect, jarvisRect, marcaRect } from "./layout.js";
 import { shopItem } from "../../src/shop.js";
+import { PAQUETE_PALETTES } from "../../src/paquetes-state.js";
 
 const FONT = 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
 
@@ -60,6 +61,10 @@ export function createRenderer(canvas) {
   /* Jarvis (v0.38.0): la app avisa si el robotcito tiene algo que contar
      hoy (su bocadillo «!»); el cálculo es local, en app.js. */
   let jarvisAlert = false;
+  /* Paquetes Neón (v0.48.0): los cassettes SIN recoger que la app
+     manda pintar (id, x, y, pal). Un cassette recogido desaparece de
+     esta lista y de la ciudad para siempre. */
+  let paquetesSpots = [];
   /* Caché del look de la Tienda (atuendo/vehículo): se reconstruye solo
      cuando cambia el id equipado. */
   const lookCache = { outfitId: null, outfitFrames: null, vehicleId: null, vehicleSprites: null };
@@ -1274,6 +1279,46 @@ export function createRenderer(canvas) {
     ctx.restore();
   }
 
+  /* PAQUETES NEÓN (v0.48.0): cada cassette sin recoger flota sobre su
+     punto con un halo radial pulsante EN EL COLOR DE SU PALETA y 3
+     destellos que suben y se apagan, en la misma capa dinámica y con
+     el mismo `time` que anima a Jarvis. El sprite es el cassette
+     26×18 de pixel.js dibujado a 52×36 unidades. Al recogerse, la app
+     lo saca de la lista y no vuelve a pintarse nunca. */
+  function drawPaquetes(view, time) {
+    if (!paquetesSpots.length) return;
+    const px = art();
+    if (!px || !px.cassette) return;
+    for (const spot of paquetesSpots) {
+      if (!visible(view, spot.x - 70, spot.y - 70, 140, 140)) continue;
+      const pal = PAQUETE_PALETTES[spot.pal] || PAQUETE_PALETTES[0];
+      const phase = (spot.x * 0.013 + spot.y * 0.017) % (Math.PI * 2);
+      const bob = reduced ? 0 : Math.sin(time * 2 + phase) * 3;
+      const pulse = reduced ? 0.16 : 0.15 + 0.07 * Math.sin(time * 2.4 + phase);
+      const grad = ctx.createRadialGradient(spot.x, spot.y, 0, spot.x, spot.y, 52);
+      grad.addColorStop(0, alpha(pal.body, pulse + 0.10));
+      grad.addColorStop(1, alpha(pal.body, 0));
+      ctx.fillStyle = grad;
+      ctx.fillRect(spot.x - 52, spot.y - 52, 104, 104);
+      /* Destellos que suben desde el cassette y se desvanecen. */
+      if (!reduced) {
+        for (let i = 0; i < 3; i++) {
+          const ph = (time * 0.32 + phase + i / 3) % 1;
+          const sx = spot.x + Math.sin(phase * 3 + i * 2.1) * 15;
+          const sy = spot.y - 8 - ph * 36;
+          ctx.fillStyle = alpha(i % 2 ? pal.light : pal.body, (1 - ph) * 0.85);
+          ctx.fillRect(sx - 1.6, sy - 1.6, 3.2, 3.2);
+        }
+      }
+      /* Sombra suave sobre el suelo y el cassette flotando. */
+      ctx.fillStyle = "rgba(6,10,18,0.30)";
+      ctx.beginPath();
+      ctx.ellipse(spot.x, spot.y + 15, 17, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      px.draw(ctx, px.cassette(spot.pal), spot.x, spot.y + 14 + bob, 52, 36);
+    }
+  }
+
   function drawSelection(view) {
     if (!selectedRect) return;
     const r = selectedRect;
@@ -1544,6 +1589,7 @@ export function createRenderer(canvas) {
 
     drawGlitch(view, world, time);
     drawTraffic(view, world, time);
+    drawPaquetes(view, time);
     drawPixelLife(view, world, time);
     drawSelection(view);
 
@@ -1601,6 +1647,11 @@ export function createRenderer(canvas) {
     },
     setJarvisAlert(value) {
       jarvisAlert = !!value;
+    },
+    /* Paquetes Neón (v0.48.0): la app pasa los cassettes sin recoger
+       (del catálogo de src/paquetes-state.js filtrado por el save). */
+    setPaquetes(spots) {
+      paquetesSpots = Array.isArray(spots) ? spots : [];
     },
     setSelected(rect, accent = PALETTE.pink) {
       selectedRect = rect || null;
