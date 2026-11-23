@@ -25,8 +25,11 @@
  * (`fnv1a64` de shape.js) sobre la clave ISO. Misma semana = mismo
  * contrato en cualquier dispositivo, sin guardar la selección.
  *
- * El cofre NO incluye el Escudo de Racha: eso llega en la Fase 3. Los
- * reclamos de esta fase llevan solo { xp, coins } congelados (R1).
+ * Desde la Fase 3 (v0.47.0) el cofre TAMBIÉN otorga 1 Escudo de Racha
+ * si hay espacio en el inventario (tope 2): el reclamo llama al helper
+ * `grantShield` de racha-state.js en la MISMA escritura atómica. Los
+ * reclamos escritos en la Fase 2 NO se reescriben: su `reward`
+ * congelado manda y el escudo solo nace en reclamos nuevos.
  *
  * El oráculo (derive.js) suma los claims vía `contratoRewards()`:
  * componente nuevo `contrato` en xpBreakdown (0 en saves viejos) y su
@@ -35,6 +38,7 @@
 
 import { addDays, deriveStreak, epochDayOf, isoWeekKey } from "./derive.js";
 import { fnv1a64 } from "./shape.js";
+import { grantShield } from "./racha-state.js";
 
 export const CONTRATO_VERSION = 1;
 export const CONTRATO_REWARD = Object.freeze({ xp: 150, coins: 15 });
@@ -421,7 +425,16 @@ export function applyContratoMutation(draft, mutation, { at, date } = {}) {
     reward: { ...CONTRATO_REWARD },
     rulesVersion: CONTRATO_RULES_VERSION
   };
-  return { changed: true, duplicate: false, reason: null, paths: [`play.contrato.claims.${weekKey}`] };
+  const paths = [`play.contrato.claims.${weekKey}`];
+  /* Escudo de Racha (Fase 3): el cofre otorga 1 escudo si hay espacio
+     en el inventario (tope 2), en ESTA misma escritura atómica — nunca
+     dos mutaciones encadenadas. Con el inventario lleno el grant se
+     omite y el reclamo vale igual: el cofre no se castiga. */
+  const shield = grantShield(draft, {
+    key: `contrato@${weekKey}`, via: "contrato", at: ts, date: dateKey
+  });
+  if (shield.granted) paths.push(`play.racha.grants.contrato@${weekKey}`);
+  return { changed: true, duplicate: false, reason: null, paths };
 }
 
 export { templateById as contratoTemplateById };

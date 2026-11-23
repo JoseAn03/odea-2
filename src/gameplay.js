@@ -24,6 +24,7 @@ import { applyLibretaMutation } from "./libreta-state.js";
 import { applyMarcaMutation } from "./marca-state.js";
 import { applyRealesMutation } from "./reales-state.js";
 import { applyContratoMutation } from "./contrato-state.js";
+import { applyRachaMutation } from "./racha-state.js";
 import { applyShopMutation } from "./shop.js";
 
 export const ROUTE_SIZE = 3;
@@ -442,6 +443,17 @@ export function applyMutation(draft, mutation, catalog, { at, date } = {}) {
     return applyContratoMutation(draft, mutation, { at: atIso, date: dateKey });
   }
 
+  /* Escudo de Racha (v0.47.0): grants por hitos de racha (14/30) y el
+     consumo automático que cubre un día perdido. El reducer revalida
+     TODAS las condiciones sobre el borrador; el oráculo solo agrega
+     los días cubiertos al conjunto de días activos de la racha.
+     OJO: en `racha.cover` el `date` DE LA MUTACIÓN es el día perdido,
+     no la fecha de juego — por eso acá se pasa el `date` de las
+     opciones (hoy) y no el `dateKey` derivado de la mutación. */
+  if (mutation && ["racha.cover", "racha.grant"].includes(mutation.type)) {
+    return applyRachaMutation(draft, mutation, { at: atIso, date });
+  }
+
   if (mutation && (mutation.type === "shop.buy" || mutation.type === "shop.equip")) {
     return applyShopMutation(draft, mutation);
   }
@@ -548,13 +560,27 @@ export function systemMissions(bundle2, catalog, system, dateKey = localDateKey(
   return { system, date: dateKey, missions: [...pending, ...completed], pending, completed };
 }
 
-/** Vecindario de días para la UI de la racha (no persiste nada). */export function recentStreakDays(bundle2, dateKey = localDateKey(), span = 7) {
+/** Vecindario de días para la UI de la racha (no persiste nada).
+ * Desde v0.47.0 cada día trae también `covered` (lo cubrió un Escudo
+ * de Racha: se distingue con un punto-escudo en la semanita) y
+ * `active` (hub o check-in reales de ese día). */
+export function recentStreakDays(bundle2, dateKey = localDateKey(), span = 7) {
   const play = playStateOf(bundle2);
+  const covered = (bundle2 && bundle2.play && bundle2.play.racha && bundle2.play.racha.covered) || {};
+  const hubDates = new Set();
+  for (const record of Object.values(play.completions)) {
+    if (record && record.system === "hub" && typeof record.date === "string") hubDates.add(record.date);
+  }
   const days = [];
   for (let i = span - 1; i >= 0; i--) {
     const day = addDays(dateKey, -i);
     const checked = !!play.checkins[day];
-    days.push({ date: day, checked });
+    days.push({
+      date: day,
+      checked,
+      active: checked || hubDates.has(day),
+      covered: Boolean(covered[day])
+    });
   }
   return days;
 }

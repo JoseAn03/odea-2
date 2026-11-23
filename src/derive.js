@@ -105,6 +105,19 @@ export function deriveStreak(bundle2) {
   for (const date of Object.keys(checkins)) {
     if (isDateKey(date)) active.add(date);
   }
+  /* Escudo de Racha (v0.47.0): los días CUBIERTOS por un escudo ganado
+     (play.racha.covered) entran al conjunto de días activos — es el
+     ÚNICO cambio del oráculo en esta fase. El día cubierto protege la
+     cadena y el multiplicador, pero no fabrica actividad (no suma XP
+     ni cuenta para el Contrato: solo vive en este conjunto). Con
+     `covered` vacío — todo save previo a la fase — la derivación es
+     idéntica a la de siempre, número por número. La herencia de ODEA 1
+     (core.identity.freezers / shieldWeek) NO se convierte: queda como
+     historia migrada sin uso (§4.3 del diseño). */
+  const rachaCovered = (play.racha && typeof play.racha === "object" && play.racha.covered) || {};
+  for (const date of Object.keys(rachaCovered)) {
+    if (isDateKey(date)) active.add(date);
+  }
 
   if (!active.size) {
     return { streak: baseline, streakDate: baselineDate, baseline, baselineDate, days: [] };

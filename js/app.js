@@ -16,7 +16,7 @@
 import { APP_VERSION } from "./version.js";
 import { loadCatalog } from "./catalog.js";
 import { getStorage } from "./browser-storage.js";
-import { localDateKey } from "../src/derive.js";
+import { deriveStreak, localDateKey } from "../src/derive.js";
 import * as ui from "./ui.js";
 import { buildWorld } from "./city/world.js";
 import { createCityView } from "./city/engine.js";
@@ -25,7 +25,7 @@ import { createViewSession } from "./city/view-session.js";
 import { buildHud } from "./hud.js";
 import { buildDistrictPanel } from "./district-figures.js";
 import { renderHud, renderSheet, renderTabs } from "./hud-ui.js";
-import { routeForDay } from "../src/gameplay.js";
+import { recentStreakDays, routeForDay } from "../src/gameplay.js";
 import { campaignStateOf, campaignView } from "../src/campaign-state.js";
 import { CAMPAIGNS, CAMPAIGN_MISSIONS } from "../src/campaigns.js";
 import { garageView } from "../src/garage-state.js";
@@ -36,6 +36,10 @@ import { libretaView } from "../src/libreta-state.js";
 import { renderCampaign, renderDaily } from "./campaign-ui.js";
 import { renderContrato } from "./contrato-ui.js";
 import { contratoView } from "../src/contrato-state.js";
+import {
+  coverCandidate, milestoneReachDate, rachaView, shieldInventory,
+  RACHA_MILESTONES
+} from "../src/racha-state.js";
 import { renderGarage } from "./garage-ui.js";
 import { renderIan } from "./ian-ui.js";
 import { renderMarca } from "./marca-ui.js";
@@ -883,6 +887,9 @@ function afterGameplay(result, okMessage, duplicateMessage) {
   }
   if (toasts) toasts.show(okMessage, { tone: "ok" });
   refresh();
+  /* Primera actividad del día registrada: si ayer se falló y hay un
+     escudo guardado, este es el momento en que protege la racha. */
+  detectRachaShield();
   if (sheetOpen && sheetDistrictId) openDistrictArchive(sheetDistrictId);
   if (phoneView === "missions" && !els.phoneBackdrop.hidden) showPhoneMissions();
   if (phoneView === "diarias" && !els.phoneBackdrop.hidden) renderActiveDaily();
@@ -1022,16 +1029,134 @@ function dailyHostsFor(root) {
   if (!hosts) {
     hosts = {
       contrato: document.createElement("div"),
+      racha: document.createElement("div"),
       daily: document.createElement("div")
     };
     hosts.contrato.className = "contrato-host";
+    hosts.racha.className = "racha-host";
     dailyHosts.set(root, hosts);
   }
   for (const child of [...root.childNodes]) {
-    if (child !== hosts.contrato && child !== hosts.daily) child.remove();
+    if (child !== hosts.contrato && child !== hosts.racha && child !== hosts.daily) child.remove();
   }
-  root.append(hosts.contrato, hosts.daily);
+  root.append(hosts.contrato, hosts.racha, hosts.daily);
   return hosts;
+}
+
+/* ------------------- Escudo de Racha (v0.47.0) ---------------------
+   La barra de racha vive en Diarias/«Hoy», entre el Contrato y la
+   ruta: llama de la racha derivada, chip «🛡️ ×N» con su explicación
+   y la semanita de actividad reciente, donde el día cubierto por un
+   escudo se distingue con un punto-escudo en vez del punto lleno.
+   La DETECCIÓN es automática (como en ODEA 1): al abrir Diarias y al
+   registrar actividad, si ayer se falló, hoy ya se jugó y hay un
+   escudo guardado, la mutación `racha.cover` lo gasta sola y el
+   toast lo celebra; los hitos de 14/30 días otorgan su escudo por la
+   mutación `racha.grant`. El reducer revalida todo: acá solo se
+   detecta y se avisa. */
+
+function rachaEl(tag, cls, text) {
+  const el = document.createElement(tag);
+  if (cls) el.className = cls;
+  if (text !== undefined && text !== null) el.textContent = String(text);
+  return el;
+}
+
+function paintRacha(host) {
+  host.replaceChildren();
+  if (!bundle) return;
+  const today = localDateKey();
+  const streak = deriveStreak(bundle);
+  const shields = rachaView(bundle);
+  const bar = rachaEl("div", "racha-bar");
+  const head = rachaEl("div", "racha-head");
+  head.append(
+    rachaEl("span", "racha-flame", `🔥 Racha: ${streak.streak} ${streak.streak === 1 ? "día" : "días"}`),
+    rachaEl("span", "racha-chip", `🛡️ ×${shields.available}`)
+  );
+  const week = rachaEl("div", "racha-week");
+  week.setAttribute("aria-label", "Tu actividad de los últimos 7 días");
+  for (const day of recentStreakDays(bundle, today, 7)) {
+    const dot = rachaEl("span", `racha-dot${day.covered ? " is-covered" : day.active ? " is-active" : ""}`, day.covered ? "🛡️" : "●");
+    dot.title = day.covered
+      ? `${day.date} — día salvado por un escudo`
+      : day.active ? `${day.date} — jugaste` : `${day.date} — sin actividad`;
+    week.append(dot);
+  }
+  bar.append(
+    head,
+    week,
+    rachaEl("p", "racha-detail", "Se gana con el Contrato Semanal y con rachas de 14/30 días. Protege un día fallado.")
+  );
+  host.append(bar);
+}
+
+let rachaDetectBusy = false;
+
+function repaintDailyHouses() {
+  if (phoneView === "diarias" && !els.phoneBackdrop.hidden) renderActiveDaily();
+  if (dailyStandalone) renderStandaloneDaily();
+}
+
+async function detectRachaShield() {
+  if (rachaDetectBusy || !storage || !catalog || !bundle) return;
+  const today = localDateKey();
+  const missed = coverCandidate(bundle, today);
+  const streakNow = deriveStreak(bundle).streak;
+  const inventory = shieldInventory(bundle);
+  let milestone = null;
+  if (inventory.available < inventory.cap) {
+    for (const candidate of RACHA_MILESTONES) {
+      const reach = milestoneReachDate(bundle, candidate);
+      if (streakNow >= candidate && reach && !rachaView(bundle).grantKeys.includes(`hito${candidate}@${reach}`)) {
+        milestone = candidate;
+        break;
+      }
+    }
+  }
+  if (!missed && milestone == null) return;
+  rachaDetectBusy = true;
+  try {
+    if (missed) {
+      const result = await applyGameplayMutationLocked(
+        storage, catalog, { type: "racha.cover", date: missed }, gameplayDate()
+      );
+      if (result.status === "applied") {
+        refresh();
+        const kept = deriveStreak(bundle).streak;
+        const left = shieldInventory(bundle).available;
+        if (toasts) {
+          toasts.show(
+            `🛡️ ¡Escudo de racha activado! — Un día perdido no rompió tu racha de ${kept} días. Te quedan ${left}.`,
+            { tone: "ok" }
+          );
+        }
+        repaintDailyHouses();
+        return;
+      }
+    }
+    if (milestone != null) {
+      const result = await applyGameplayMutationLocked(
+        storage, catalog, { type: "racha.grant", milestone }, gameplayDate()
+      );
+      if (result.status === "applied") {
+        refresh();
+        const total = shieldInventory(bundle).available;
+        if (toasts) {
+          toasts.show(
+            `🛡️ ¡Escudo de racha ganado! — Tu racha de ${milestone} días te premia. Tenés ${total}.`,
+            { tone: "ok" }
+          );
+        }
+        repaintDailyHouses();
+      }
+    }
+  } catch (error) {
+    /* La detección nunca rompe la pantalla: si la escritura falla, el
+       reducer no aplicó nada y la racha queda como estaba. */
+  } finally {
+    rachaDetectBusy = false;
+  }
 }
 
 function claimContrato(weekKey, root, { compact, onBack }) {
@@ -1049,7 +1174,16 @@ function claimContrato(weekKey, root, { compact, onBack }) {
     } else if (result.status === "duplicate") {
       if (toasts) toasts.show("Ese cofre ya lo habías reclamado.", { tone: "info" });
     } else if (toasts) {
-      toasts.show("🎉 ¡Contrato cumplido! El cofre es tuyo: +150 XP, +₡15.", { tone: "ok" });
+      /* Desde la Fase 3 el cofre también trae 1 Escudo de Racha si
+         había espacio en el inventario (misma escritura atómica). */
+      const withShield = Array.isArray(result.changed) &&
+        result.changed.some((path) => String(path).startsWith("play.racha.grants."));
+      toasts.show(
+        withShield
+          ? "🎉 ¡Contrato cumplido! El cofre es tuyo: +150 XP, +₡15 y 🛡️ un Escudo de Racha."
+          : "🎉 ¡Contrato cumplido! El cofre es tuyo: +150 XP, +₡15.",
+        { tone: "ok" }
+      );
     }
     refresh();
     if (bundle && catalog) paintDaily(root, { compact, onBack });
@@ -1068,6 +1202,10 @@ function paintContrato(host, root, { compact, onBack }) {
 function paintDaily(root, { compact, onBack }) {
   const hosts = dailyHostsFor(root);
   paintContrato(hosts.contrato, root, { compact, onBack });
+  paintRacha(hosts.racha);
+  /* Detección del Escudo de Racha al abrir Diarias/«Hoy»: si ayer se
+     falló y hoy ya hubo actividad, el escudo se gasta solo. */
+  detectRachaShield();
   const route = routeForDay(bundle, catalog);
   renderDaily(hosts.daily, {
     compact,
