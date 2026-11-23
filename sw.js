@@ -35,7 +35,6 @@ const SHELL = [
   "./assets/slots/zonaia.webp",
   "./assets/slots/sabiduria.webp",
   "./assets/slots/mundoian.webp",
-  "./assets/slots/marca.webp",
   "./assets/phone-wallpaper.webp",
   "./assets/city-map.webp",
   "./assets/jarvis.webp",
