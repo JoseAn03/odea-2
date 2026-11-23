@@ -50,6 +50,24 @@ function validateQuizSet(data) {
   return questions;
 }
 
+/**
+ * v0.50.0 — la acción propuesta en el sobre de chat (Worker v4). Aquí se
+ * valida SOLO la FORMA del sobre (nombre string, args objeto plano); la
+ * validez de fondo (ids vivos, partición exacta, stale) es de
+ * src/jarvis-actions.js contra el estado vivo. Una acción mal formada se
+ * descarta en silencio y el chat sigue como texto, como con el Worker v3
+ * (que nunca manda `action`: compatibilidad hacia atrás total).
+ */
+export function parseChatAction(data) {
+  if (!data || typeof data !== "object") return null;
+  const action = data.action;
+  if (action == null) return null;
+  if (typeof action !== "object" || Array.isArray(action)) return null;
+  if (typeof action.name !== "string" || !action.name) return null;
+  if (!action.args || typeof action.args !== "object" || Array.isArray(action.args)) return null;
+  return { name: action.name, args: action.args };
+}
+
 export async function askJarvis(type, payload, { signal } = {}) {
   if (!jarvisConfigured()) return { ok: false, error: "not-configured" };
 
@@ -62,10 +80,17 @@ export async function askJarvis(type, payload, { signal } = {}) {
   }
 
   try {
+    const body = { type, ...(payload || {}) };
+    /* v0.50.0: el contexto de acciones viaja también a nivel raíz para
+       que el Worker (v4 o v5, indistinto) adjunte las tools SOLO cuando
+       hay contexto. Con Worker v3 el campo extra se ignora: chat como hoy. */
+    if (type === "chat" && body.summary && body.summary.accionesContext && !body.actionsContext) {
+      body.actionsContext = body.summary.accionesContext;
+    }
     const response = await fetch(JARVIS_WORKER_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type, ...(payload || {}) }),
+      body: JSON.stringify(body),
       signal: controller.signal,
     });
     if (!response.ok) return { ok: false, error: `http-${response.status}` };
@@ -76,6 +101,14 @@ export async function askJarvis(type, payload, { signal } = {}) {
       const questions = validateQuizSet(data);
       if (!questions) return { ok: false, error: "invalid-quiz" };
       return { ok: true, questions };
+    }
+    if (type === "chat") {
+      const action = parseChatAction(data);
+      const text = typeof data.text === "string" ? data.text : "";
+      /* Un tool_call válido puede venir SIN texto: el juego pinta su
+         línea de plantilla. Texto vacío y sin acción sí es error. */
+      if (!text.trim() && !action) return { ok: false, error: "empty-text" };
+      return { ok: true, text, ...(action ? { action } : {}) };
     }
     if (typeof data.text !== "string" || !data.text.trim()) return { ok: false, error: "empty-text" };
     return { ok: true, text: data.text };
