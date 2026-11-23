@@ -36,6 +36,7 @@ import { marcaProblems } from "./marca-state.js";
 import { realesProblems } from "./reales-state.js";
 import { contratoProblems } from "./contrato-state.js";
 import { rachaProblems } from "./racha-state.js";
+import { paquetesProblems } from "./paquetes-state.js";
 import { occurrenceKey } from "./gameplay.js";
 import { loadOdea2 } from "./storage.js";
 import { legacyProjection, XP_COMPONENTS } from "./migrate.js";
@@ -545,6 +546,7 @@ export function validatePlaySection(bundle2, catalog) {
   problems.push(...realesProblems(bundle2));
   problems.push(...contratoProblems(bundle2));
   problems.push(...rachaProblems(bundle2));
+  problems.push(...paquetesProblems(bundle2));
   checks.push(
     check(
       "PLAY_RECORDS",
