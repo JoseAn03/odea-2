@@ -418,8 +418,10 @@ export function applyMutation(draft, mutation, catalog, { at, date } = {}) {
 
   /* Jarvis (v0.38.0): quiz con XP acotado, contadores de uso del Worker
      y el saludo del día en caché. La IA nunca escribe por su cuenta:
-     todo pasa por aquí y por applyGameplayMutation. */
-  if (mutation && ["jarvis.quiz", "jarvis.usage", "jarvis.briefing", "jarvis.act", "jarvis.actUndo"].includes(mutation.type)) {
+     todo pasa por aquí y por applyGameplayMutation. v0.52.0 suma el
+     banco de preguntas (bankSave/bankRemove): mutaciones del juego
+     que dispara el toque de José, sin XP ni monedas. */
+  if (mutation && ["jarvis.quiz", "jarvis.usage", "jarvis.briefing", "jarvis.act", "jarvis.actUndo", "jarvis.bankSave", "jarvis.bankRemove"].includes(mutation.type)) {
     return applyJarvisMutation(draft, mutation, { at: atIso, date: dateKey, catalog });
   }
 
