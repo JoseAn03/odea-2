@@ -33,6 +33,7 @@ import { ianProblems } from "./ian-state.js";
 import { jarvisProblems } from "./jarvis-state.js";
 import { libretaProblems } from "./libreta-state.js";
 import { marcaProblems } from "./marca-state.js";
+import { inglesProblems } from "./ingles-state.js";
 import { realesProblems } from "./reales-state.js";
 import { contratoProblems } from "./contrato-state.js";
 import { rachaProblems } from "./racha-state.js";
@@ -544,6 +545,7 @@ export function validatePlaySection(bundle2, catalog) {
   problems.push(...jarvisProblems(bundle2));
   problems.push(...libretaProblems(bundle2));
   problems.push(...marcaProblems(bundle2));
+  problems.push(...inglesProblems(bundle2));
   problems.push(...realesProblems(bundle2));
   problems.push(...contratoProblems(bundle2));
   problems.push(...rachaProblems(bundle2));
