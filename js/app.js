@@ -1481,6 +1481,10 @@ async function saveCampaignAction(mutation) {
       const messages = {
         EVIDENCE_REQUIRED: "Contá qué hiciste o pegá el enlace de tu entregable (mínimo 12 caracteres).",
         MISSION_LOCKED: "Primero completá la misión anterior.",
+        DICTATION_REQUIRED: "Esta misión pide el dictado registrado: hacé un dictado de referencia en el Center (Escucha → Dictado) y volvé.",
+        MOCK_REQUIRED: "Esta misión pide el simulacro registrado: hacé el mock completo y registralo en el Center (Banco de entrevista → Simulacro completo).",
+        EFSET_REQUIRED: "Esta misión pide tu medición registrada: hacé el EF SET y registrá el resultado en el Center (Tablero → Medición).",
+        EFSET_SECOND_REQUIRED: "La segunda medición se registra en el Center (Tablero → Medición) cuando se cumplen 90 días de la primera.",
         STALE_APPLICATION_COUNT: "El contador cambió en otra pantalla. Ya lo actualizamos; revisalo y volvé a registrar.",
         TOO_FAST: "Esperá un instante antes de registrar otra postulación.",
         QUOTA_EXCEEDED: "No hay espacio para guardar. Exportá un respaldo y liberá espacio antes de continuar.",
@@ -1755,7 +1759,11 @@ function renderInglesPanel() {
     onBack: () => closeCampaign(),
     onComplete: (missionId) => saveInglesAction({ type: "ingles.complete", missionId }),
     onMutate: (mutation) => saveInglesAction(mutation),
-    getSrsSession: () => srsSession(bundle, gameplayDate().date)
+    getSrsSession: () => srsSession(bundle, gameplayDate().date),
+    /* Fase C (v0.57.0): la tarjeta DESPEGUE muestra el progreso de la
+       campaña y la abre en el panel de campañas del juego. */
+    campaign: campaignView(bundle, "ingles"),
+    onOpenCampaign: () => { closeCampaign(); openCampaign("ingles"); }
   });
 }
 
@@ -2114,7 +2122,7 @@ function showPhoneMissions() {
      quedan fuera a propósito: son los eventos guardados, no el activo
      (hoy el activo es Operación Confirmación). */
   root.append(phoneEl("h4", "phone-screen-group", "Más campañas"));
-  for (const id of ["academia", "zonaia", "sabiduria", "whatsapp"]) {
+  for (const id of ["academia", "zonaia", "sabiduria", "whatsapp", "ingles"]) {
     const view = campaignView(bundle, id);
     const button = phoneEl("button", "campaign-phone-route", `${view.name} · ${view.done}/${view.total} · ${view.percent}%`);
     button.type = "button";
@@ -2143,7 +2151,7 @@ function showPhoneMissions() {
   /* v0.55.0: La Torre de Control (inglés) se suma a Sistemas vivos
      con su conteo de hitos, como el Garaje, Ian y el Estudio. */
   const ingles = inglesView(bundle, gameplayDate().date);
-  const inglesBtn = phoneEl("button", "campaign-phone-route", `La Torre de Control · ${ingles.hitosDone}/${ingles.hitosTotal} hitos`);
+  const inglesBtn = phoneEl("button", "campaign-phone-route", `English Center · ${ingles.hitosDone}/${ingles.hitosTotal} hitos`);
   inglesBtn.type = "button";
   inglesBtn.addEventListener("click", () => { closePhone(); openIngles(); });
   root.append(inglesBtn);
@@ -2160,7 +2168,7 @@ function showPhoneMap() {
   root.replaceChildren(phoneEl("h3", "phone-screen-title", "Destinos de Costa Neón"),
     phoneEl("p", "phone-screen-sub", "Elegí un destino. Se abre su localización en el mapa."));
   for (const destination of [{ id: "gamer", name: "Zona Gamer · Estudio de clips" },
-    { id: "torrecontrol", name: "La Torre de Control · Inglés" },
+    { id: "torrecontrol", name: "English Center · Inglés" },
     ...DISTRICTS.map((d) => ({ id: d.id, name: d.id === "empleo" ? "El Brete · Analista de datos" : d.id === "vida" ? "Estudio Neón · Marca personal" : d.name }))]) {
     const button = phoneEl("button", "campaign-phone-route", destination.name);
     button.type = "button";
