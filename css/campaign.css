@@ -131,6 +131,10 @@
 }
 .campaign-title {
   max-width: 680px;
+  /* v0.57.0: el título nunca se parte a mitad de palabra — el héroe es
+     estrecho y .campaign-shell usa overflow-wrap: anywhere; sin esto
+     «OPERACIÓN CONFIRMACIÓN» se partía en «CONFIRMACI / ÓN». */
+  overflow-wrap: normal;
   margin-top: 10px !important;
   color: #fff5e7;
   font: 400 clamp(42px, 7.4vw, 86px)/.98 var(--campaign-display);

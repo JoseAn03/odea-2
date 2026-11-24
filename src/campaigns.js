@@ -531,6 +531,100 @@ const entrevistaChapters = [
   },
 ];
 
+/* EVENTO ACTIVO — Operación Confirmación (v0.57.0): el proyecto real de
+   José, la confirmación automática de reservas por WhatsApp para ANC,
+   en sus 5 fases y con su XP espejo de los demás eventos (1.020 en
+   total). Secuencial a propósito: es el mapa del proyecto real y las
+   fases dependen entre sí (no hay piloto sin prototipo, ni informe sin
+   piloto). Los números reales viven en los briefs: la plantilla de
+   utilidad de Meta cuesta US$0,0113 por mensaje entregado (Costa Rica,
+   vigente desde oct. 2026), el piloto ~US$7/mes y la operación completa
+   ~US$170–220/mes. Al completar las 14 misiones el set legendario
+   EXO//AUTÓMATA es suyo. */
+const whatsappChapters = [
+  {
+    id: 'whatsapp-presentar', title: 'Fase 1 · Presentar en ANC', subtitle: 'PRIMERO EL PROBLEMA Y LA PROPUESTA, ANTES QUE EL CÓDIGO.',
+    missions: [
+      { title: 'El problema en números',
+        brief: 'El seguimiento de hoy es manual: llamadas uno por uno a 2 días, sin un registro ordenado de quién confirmó, canceló o no respondió. Antes de proponer nada, poné el problema en números: cuántas reservas se siguen por día, cuántas llamadas hace el equipo, cuánto tiempo se va en eso y cuántos no-shows se escapan por no tener el dato a tiempo. Lista cuando: tus números del problema están escritos y cualquiera que los lea entiende por qué el proceso actual no da más.',
+        steps: ['Contá cuántas reservas se confirman por día y por qué canal.', 'Medí el tiempo real que se va en llamadas de seguimiento.', 'Escribí el número de no-shows que el proceso actual no atrapa.'],
+        deliverable: 'Tus números del problema (§1).', xp: 70, coins: 4 },
+      { title: 'La propuesta en una página',
+        brief: 'El resumen ejecutivo en una sola página: WhatsApp en vez de llamadas, botones 1 para CONFIRMAR y 2 para CANCELAR, y llamadas solo para quien no responde. La propuesta se entiende en un minuto y se defiende con los números de la misión anterior. Lista cuando: el resumen está leído y aprobado por vos, sin nada que te dé vergüenza mostrarle a un supervisor.',
+        steps: ['Escribí la propuesta en una página: problema, solución, costo, ahorro.', 'Leela en voz alta: si te trabás, recortala hasta que fluya.', 'Aprobala vos primero: es tu firma la que va ahí.'],
+        deliverable: 'El resumen ejecutivo leído y aprobado por vos.', xp: 70, coins: 4 },
+      { title: 'Autorización y permisos',
+        brief: 'Presentar a supervisores, pedir autorización de Fase 1 y validar el uso de datos de clientes: qué datos se tocan (teléfono, fecha, marca), para qué se usan y quién los ve. Sin autorización no hay prototipo: este paso es el permiso de construir. Lista cuando: la autorización está pedida (o la respuesta ya llegó, sea sí o sea qué falta).',
+        steps: ['Llevá la propuesta de una página a tus supervisores.', 'Pedí la autorización de Fase 1 y dejá claro qué datos se usan.', 'Anotá la respuesta y lo que pidan para seguir.'],
+        deliverable: 'Autorización pedida (o respuesta recibida).', xp: 70, coins: 4 },
+    ],
+  },
+  {
+    id: 'whatsapp-prototipo', title: 'Fase 2 · Prototipo', subtitle: 'EL MENSAJE, EL FLUJO Y LA CLASIFICACIÓN: LO MÍNIMO QUE FUNCIONA.',
+    missions: [
+      { title: 'La plantilla aprobada',
+        brief: 'El mensaje inicial que Meta debe aprobar: «¿Nos confirma que la tomará? Responda 1 para CONFIRMAR o 2 para CANCELAR». Corto, claro y sin sorpresas: el cliente responde con un número, no con un párrafo. Lista cuando: el texto final de la plantilla está escrito y listo para enviar a aprobación de Meta.',
+        steps: ['Escribí el texto final de la plantilla, palabra por palabra.', 'Revisá que la respuesta sea un solo dígito: 1 o 2.', 'Dejá el texto guardado, listo para la aprobación de Meta.'],
+        deliverable: 'El texto final de la plantilla.', xp: 70, coins: 4 },
+      { title: 'El flujo en n8n',
+        brief: 'Cargar la lista de reservas del día siguiente, enviar la plantilla y recibir el webhook con la respuesta. Tres piezas y un solo flujo: la lista entra, el mensaje sale y la respuesta vuelve sola. Lista cuando: el flujo está dibujado o corriendo en prueba, de punta a punta.',
+        steps: ['Dibujá el flujo: lista → plantilla → webhook de respuesta.', 'Conectá la lista de reservas del día siguiente.', 'Probá el envío y la recepción con una reserva de prueba.'],
+        deliverable: 'El flujo dibujado o corriendo en prueba.', xp: 70, coins: 4 },
+      { title: 'Clasificación en dos pisos',
+        brief: 'Botones 1/2 por regla, sin IA; solo el texto libre lo clasifica la IA, en JSON, en 5 categorías: CONFIRMADA, CANCELADA, CAMBIO, DUDA y NO_CLARO. La regla es barata y confiable; la IA solo entra donde el botón no alcanza. Lista cuando: tenés 5 respuestas libres clasificadas a mano como prueba, una por categoría.',
+        steps: ['Escribí la regla: 1 = CONFIRMADA, 2 = CANCELADA, sin excepciones.', 'Definí las 5 categorías del texto libre en JSON.', 'Clasificá 5 respuestas libres a mano, una por categoría.'],
+        deliverable: '5 respuestas libres clasificadas a mano como prueba.', xp: 70, coins: 4 },
+    ],
+  },
+  {
+    id: 'whatsapp-piloto', title: 'Fase 3 · Piloto', subtitle: 'EL PROYECTO SALE A LA CALLE, CON POCAS RESERVAS Y TODO MEDIDO.',
+    missions: [
+      { title: 'La hoja de seguimiento',
+        brief: 'El modelo de datos del piloto: reserva_id, cliente, fecha y marca, estado, respuesta, horas de envío y de respuesta, recordatorio y el campo nuevo `unidad_liberada` — la unidad que se libera cuando un cliente cancela a tiempo y se puede re-rentar. Sin esta hoja no hay piloto que medir. Lista cuando: la tabla está lista, con todas las columnas y el campo nuevo incluido.',
+        steps: ['Definí las columnas: reserva, cliente, fecha, marca, estado, respuesta.', 'Agregá las horas de envío y de respuesta, y el recordatorio.', 'Agregá el campo `unidad_liberada` y su regla: cuándo se marca.'],
+        deliverable: 'La tabla lista.', xp: 70, coins: 4 },
+      { title: 'Piloto 20 al día',
+        brief: 'De 1 a 2 semanas, 10 a 20 reservas diarias por WhatsApp y el resto por llamada, para comparar: mismo día, mismo equipo, dos canales. El piloto no es para presumir, es para medir. Lista cuando: el primer día de piloto corrió y quedó registrado en la hoja.',
+        steps: ['Elegí las 10–20 reservas del primer día y el resto sigue por llamada.', 'Corré el día: mensajes, respuestas y registro en la hoja.', 'Al cerrar, anotá qué salió bien y qué se trabó.'],
+        deliverable: 'El primer día de piloto corrido.', xp: 70, coins: 4 },
+      { title: 'El panel en vivo',
+        brief: 'Confirmados, cancelados y pendientes por llamar, en Sheets o Power BI, en vivo: el equipo abre el panel y sabe en qué está cada reserva sin preguntarle a nadie. Lista cuando: tenés la captura del panel con los tres grupos visibles.',
+        steps: ['Armá las tres vistas: confirmados, cancelados y pendientes por llamar.', 'Conectá el panel a la hoja de seguimiento.', 'Sacá la captura con datos del piloto.'],
+        deliverable: 'Captura del panel.', xp: 70, coins: 4 },
+    ],
+  },
+  {
+    id: 'whatsapp-ajustes', title: 'Fase 4 · Ajustes', subtitle: 'LO QUE EL PILOTO ENSEÑA SE VUELVE REGLA.',
+    missions: [
+      { title: 'El recordatorio',
+        brief: 'A las 4 horas, un recordatorio solo a quienes no respondieron: ni antes (molesta) ni a todos (gasta mensajes). Un solo recordatorio, al que calló, con el mismo tono de la plantilla. Lista cuando: el recordatorio está definido: a quién, a las cuántas horas y con qué texto.',
+        steps: ['Fijá la regla: 4 horas sin respuesta = un recordatorio.', 'Escribí el texto del recordatorio.', 'Verificá que nunca llegue a quien ya respondió.'],
+        deliverable: 'El recordatorio definido.', xp: 70, coins: 4 },
+      { title: 'Escalamiento a llamada',
+        brief: 'Sin respuesta, NO_CLARO o duda: ahí sí llama una persona; el resto nunca llega al teléfono. La llamada es el último piso, no el primero: solo suben los casos que la máquina no puede cerrar. Lista cuando: la regla de escalamiento está escrita, con sus tres disparadores claros.',
+        steps: ['Definí los 3 disparadores: sin respuesta, NO_CLARO, duda.', 'Escribí qué hace la persona que llama en cada caso.', 'Verificá que un CONFIRMADA o CANCELADA nunca llegue al teléfono.'],
+        deliverable: 'La regla de escalamiento escrita.', xp: 70, coins: 4 },
+      { title: 'Los costos reales',
+        brief: 'Meta cobra US$0,0113 por mensaje entregado (Costa Rica, «Resto de América Latina», vigente desde oct. 2026): el piloto sale ~US$7/mes y la operación completa ~US$170–220/mes. El costo no se estima a ojo: se calcula con el volumen real del piloto. Lista cuando: tu cálculo está hecho con el volumen real y el número final no te sorprende.',
+        steps: ['Contá los mensajes reales del piloto: plantillas + recordatorios.', 'Multiplicá por US$0,0113 y proyectá el mes completo.', 'Compará piloto (~US$7/mes) contra operación (~US$170–220/mes).'],
+        deliverable: 'Tu cálculo con el volumen real del piloto.', xp: 70, coins: 4 },
+    ],
+  },
+  {
+    id: 'whatsapp-resultados', title: 'Fase 5 · Resultados y empaquetado', subtitle: 'EL INFORME QUE VENDE EL PROYECTO Y LA DEMO QUE LO MUESTRA.',
+    missions: [
+      { title: 'El informe final',
+        brief: 'Tiempo ahorrado, tasa de confirmación, no-shows evitados y unidades liberadas que se re-rentaron: el informe con las 7 métricas del piloto (§8). El informe no cuenta lo que hiciste: cuenta lo que cambió. Lista cuando: el informe tiene las 7 métricas, con números del piloto real.',
+        steps: ['Sacá las 7 métricas del piloto: tiempo, confirmación, no-shows, unidades.', 'Escribí el informe: qué cambió, con números, sin adornos.', 'Revisá que cada métrica tenga su fuente en la hoja.'],
+        deliverable: 'El informe con las 7 métricas del piloto (§8).', xp: 70, coins: 4 },
+      { title: 'La demo para venderlo',
+        brief: 'El mismo sistema con datos ficticios, listo para mostrar a hoteles, tours o clínicas que viven de reservas (sin conflicto con ANC): la demo se vende sola cuando el cliente ve su propio problema resuelto en pantalla. Lista cuando: la demo está corriendo con datos ficticios, de punta a punta.',
+        steps: ['Copiá el flujo con datos ficticios, sin tocar nada de ANC.', 'Probá la demo completa: mensaje, respuesta, panel.', 'Dejá la demo lista para mostrar en cualquier momento.'],
+        deliverable: 'La demo corriendo.', xp: 110, coins: 16 },
+    ],
+  },
+];
+
 const eventosChapters = [
   {
     id: 'eventos-operacion',
@@ -1632,6 +1726,15 @@ export const CAMPAIGNS = {
     image: 'assets/slots/eventos.webp',
     freeOrder: true,
   }, entrevistaChapters),
+  whatsapp: buildCampaign({
+    id: 'whatsapp',
+    name: 'Operación Confirmación',
+    subtitle: 'Evento activo en la Zona de Eventos: tu proyecto real, la confirmación automática de reservas por WhatsApp.',
+    goal: 'Llevar el proyecto de confirmación por WhatsApp de la propuesta al piloto y a la demo: presentar en ANC, construir el prototipo en n8n, correr el piloto con 10–20 reservas al día, ajustar con los datos y empaquetar el resultado. Las 14 misiones van en orden: cada fase depende de la anterior. Al completar las 14 ganás la insignia «Automatizador de Reservas» y el set legendario EXO//AUTÓMATA es tuyo.',
+    accent: '#ffd166',
+    districtId: 'eventos',
+    image: 'assets/slots/whatsapp.svg',
+  }, whatsappChapters),
   garaje: buildCampaign({
     id: 'garaje',
     name: 'El Garaje',
