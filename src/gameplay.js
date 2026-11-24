@@ -22,6 +22,7 @@ import { applyIanMutation } from "./ian-state.js";
 import { applyJarvisMutation } from "./jarvis-state.js";
 import { applyLibretaMutation } from "./libreta-state.js";
 import { applyMarcaMutation } from "./marca-state.js";
+import { applyInglesMutation } from "./ingles-state.js";
 import { applyRealesMutation } from "./reales-state.js";
 import { applyContratoMutation } from "./contrato-state.js";
 import { applyRachaMutation } from "./racha-state.js";
@@ -414,6 +415,13 @@ export function applyMutation(draft, mutation, catalog, { at, date } = {}) {
      rutinas con reloj e hitos de una vez, en dos pestañas. */
   if (mutation && mutation.type === "marca.complete") {
     return applyMarcaMutation(draft, mutation, { at: atIso, date: dateKey });
+  }
+
+  /* La Torre de Control (v0.55.0): el vivo de inglés — rutinas con
+     reloj e hitos de una vez, con el Tope de Turno semanal aplicado
+     dentro del reducer (ingles-state), nunca en la UI. */
+  if (mutation && mutation.type === "ingles.complete") {
+    return applyInglesMutation(draft, mutation, { at: atIso, date: dateKey });
   }
 
   /* Jarvis (v0.38.0): quiz con XP acotado, contadores de uso del Worker

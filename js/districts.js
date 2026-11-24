@@ -96,7 +96,7 @@ export const DISTRICTS = [
     "empleo",
     "Distrito Empleo",
     "Centro Financiero",
-    [[1, 3], [2, 3]],
+    [[1, 3]],
     mix(PALETTE.cyan, PALETTE.pink, 0.18),
     "financial",
     "Torres de oficinas para la cacería: postulaciones, radar y carrera.",
@@ -191,9 +191,14 @@ export const KEY_HOME = Object.fromEntries(
 
 /**
  * Manzanas sin distrito: edificios genéricos que completan el damero.
- * (3,0) noreste y (0,3) suroeste.
+ * (3,0) noreste, (0,3) suroeste y (2,3) — esta última con venue propio
+ * desde v0.55.0: LA TORRE DE CONTROL (inglés), por decisión de José
+ * (2026-11-24) de que esa manzana sea EXCLUSIVAMENTE para inglés. El
+ * Distrito Empleo se consolidó en su otra mitad, la (1,3): su puerta
+ * sigue ahí y el progreso career/hunt deriva de registros, no del
+ * bloque, así que no se toca.
  */
-export const FILLER_CELLS = [[3, 0], [0, 3]];
+export const FILLER_CELLS = [[3, 0], [0, 3], [2, 3]];
 
 export const FILLER_RECTS = FILLER_CELLS.map(([c, r]) => cellRect(c, r));
 

@@ -22,6 +22,7 @@ import { garageRewards } from "./garage-state.js";
 import { ianRewards } from "./ian-state.js";
 import { jarvisRewards } from "./jarvis-state.js";
 import { marcaRewards } from "./marca-state.js";
+import { inglesRewards } from "./ingles-state.js";
 import { paquetesRewards } from "./paquetes-state.js";
 
 export const BALANCE_BONUS = 30;
@@ -239,6 +240,7 @@ export function sourcesFromMigrated(bundle2, catalog = null) {
     ianRewards: ianRewards(bundle2),
     jarvisRewards: jarvisRewards(bundle2),
     marcaRewards: marcaRewards(bundle2),
+    inglesRewards: inglesRewards(bundle2),
     paquetesRewards: paquetesRewards(bundle2),
     identity: { streak: streakInfo.streak },
     progress: {
@@ -596,6 +598,11 @@ export function derive(sources, catalog, referenceDate) {
      propio componente y su hogar en el distrito vida. Un save sin
      play.marca deriva 0: ningún total previo cambia. */
   const marca = (sources.marcaRewards && sources.marcaRewards.xp) || 0;
+  /* La Torre de Control (v0.55.0): el vivo de inglés de la manzana
+     (2,3), con su propio componente. Un save sin play.ingles deriva
+     0: ningún total previo cambia. Su Tope de Turno ya viene aplicado
+     en los registros (ingles-state): aquí solo se suma lo pagado. */
+  const ingles = (sources.inglesRewards && sources.inglesRewards.xp) || 0;
   /* Contrato Semanal (v0.46.0): el cofre de los reclamos, con su propio
      componente. Un save sin play.contrato deriva 0: ningún total previo
      cambia ni un punto. */
@@ -627,8 +634,8 @@ export function derive(sources, catalog, referenceDate) {
     .reduce((a, e) => a + Math.max(0, Number(e && e.xp) || 0), 0) + (extraCampaign.evento || 0);
   const farm = farmXPGain(sources.credits.farm);
 
-  const xpBreakdown = { career, ach, vida, capital, focus, diary, bosses, hunt, evento, farm, garaje, ian, marca, contrato, paquetes };
-  const totalXP = career + ach + vida + capital + focus + diary + bosses + hunt + evento + farm + garaje + ian + marca + contrato + paquetes;
+  const xpBreakdown = { career, ach, vida, capital, focus, diary, bosses, hunt, evento, farm, garaje, ian, marca, contrato, paquetes, ingles };
+  const totalXP = career + ach + vida + capital + focus + diary + bosses + hunt + evento + farm + garaje + ian + marca + contrato + paquetes + ingles;
 
   const fullDays = fullDaysCount(p, catalog);
   const campaignLevel = Math.min(fullDays + 1, catalog.dailyTotalDays + 1);
@@ -651,6 +658,7 @@ export function derive(sources, catalog, referenceDate) {
     ((sources.garageRewards && sources.garageRewards.coins) || 0) +
     ((sources.ianRewards && sources.ianRewards.coins) || 0) +
     ((sources.marcaRewards && sources.marcaRewards.coins) || 0) +
+    ((sources.inglesRewards && sources.inglesRewards.coins) || 0) +
     ((sources.contratoRewards && sources.contratoRewards.coins) || 0) +
     ((sources.paquetesRewards && sources.paquetesRewards.coins) || 0);
   const spent = Number((sources.shop && sources.shop.spent) || 0) || 0;
