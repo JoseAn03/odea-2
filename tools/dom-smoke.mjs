@@ -44,6 +44,30 @@ class NodeStub {
     }
   }
 
+  /* v0.52.0: las vistas nuevas (el banco de Jarvis) usan classList
+     sobre nodos que el smoke ya monta; el DOM mínimo lo respalda con
+     el mismo className de siempre, como el proxy de canvas de v0.45. */
+  get classList() {
+    const node = this;
+    const read = () => node.className.split(/\s+/).filter(Boolean);
+    const write = (list) => { node.className = list.join(" "); };
+    return {
+      add(...names) {
+        const list = read();
+        for (const name of names) if (!list.includes(name)) list.push(name);
+        write(list);
+      },
+      remove(...names) { write(read().filter((name) => !names.includes(name))); },
+      toggle(name) {
+        const list = read();
+        const index = list.indexOf(name);
+        if (index >= 0) { list.splice(index, 1); write(list); return false; }
+        list.push(name); write(list); return true;
+      },
+      contains(name) { return read().includes(name); }
+    };
+  }
+
   get textContent() {
     if (this.tagName === "#TEXT") return this._text;
     /* El texto propio cuenta, como en el DOM real: sin esto, las vistas
@@ -471,6 +495,58 @@ await run("el saludo local de Jarvis se arma sin red", () => {
       saludo.includes("Accent: cambio de aceite") &&
       saludo.includes("4 días"),
     detail: "nivel, diarias, garaje y cuenta regresiva"
+  };
+});
+
+/* v0.52.0 — el Banco de preguntas: la vista agrupa por módulo con su
+   pie de 100, y el repaso es tarjetas locales (la respuesta nace
+   oculta y se revela al toque; sin red, sin XP). */
+await run("renderJarvis: el banco lista por módulo y el repaso revela al toque", () => {
+  const btn = (root, text) => root.querySelectorAll("button").find((b) => b.textContent.includes(text));
+  const root = montar();
+  renderJarvis(root, {
+    view: {
+      quizXpToday: 0, quizRestantes: 2, quizXpDisponible: 10,
+      chatRestantes: 20, feedbackRestantes: 5, tutorHoy: 0,
+      briefingHoy: "Hola, José. Saludo en caché de prueba.",
+      bankCount: 2,
+      bankEntries: [
+        { id: "jb-s1", q: "¿Qué es un JOIN?", a: "Un JOIN combina filas de dos tablas por una clave.", kind: "lesson", ref: "brete/brete-sql/brete-15", module: "El Brete", date: "2026-11-24", at: 2 },
+        { id: "jb-s2", q: "¿Qué es el ROAS?", a: "Ingresos atribuidos a anuncios ÷ inversión en anuncios.", kind: "extra", ref: null, module: null, date: "2026-11-24", at: 1 }
+      ]
+    },
+    summary: { nivel: 15, diaDelPlan: 25, diarias: { hechas: 0, total: 3, pendientes: [] }, garajePorVencer: [], ianPorVencer: [] },
+    completedMissions: [],
+    onQuiz() {}, onUsage() {}, onBriefing() {}, onOpenZonaIA() {}, onClose() {},
+    onBankSave() {}, onBankRemove() {}
+  });
+  btn(root, "📚 Estudiar").click();
+  const bankButton = btn(root, "Mi banco (2)");
+  if (!bankButton) return { pass: false, detail: "el Tutor no muestra el banco con su conteo" };
+  bankButton.click();
+  let texto = root.textContent;
+  const listaOk =
+    texto.includes("¿Qué es un JOIN?") &&
+    texto.includes("¿Qué es el ROAS?") &&
+    texto.includes("El Brete") &&
+    texto.includes("Extras") &&
+    texto.includes("2/100 guardadas");
+  if (!listaOk) return { pass: false, detail: "la vista del banco no lista grupos ni pie" };
+  btn(root, "Repasar").click();
+  texto = root.textContent;
+  const tarjetaOculta =
+    texto.includes("¿Qué es un JOIN?") &&
+    !texto.includes("Un JOIN combina filas");
+  if (!tarjetaOculta) return { pass: false, detail: "la tarjeta no nace con la respuesta oculta" };
+  btn(root, "Mostrar respuesta").click();
+  texto = root.textContent;
+  const revelaOk =
+    texto.includes("Un JOIN combina filas") &&
+    texto.includes("La sabía") &&
+    texto.includes("Repasarla luego");
+  return {
+    pass: listaOk && tarjetaOculta && revelaOk,
+    detail: "grupos por módulo + pie 2/100 + tarjeta que se revela al toque"
   };
 });
 
