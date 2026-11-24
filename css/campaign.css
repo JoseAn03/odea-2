@@ -1517,3 +1517,17 @@ button.jarvis-tutor-chip--lesson { cursor: pointer; }
 .torre-hvpt-feedback--no { color: #ef9a9a; }
 .torre-keys-row { padding: 8px 0; border-top: 1px dashed rgba(79, 195, 247, .25); }
 .torre-keys-phrase { margin: 0 0 6px; font-size: 14px; color: #f6f4e6; }
+
+/* Fase C (v0.57.0): banco de entrevista, escucha/dictado y Tablero. */
+.torre-despegue { border-color: rgba(79, 195, 247, .65); }
+.torre-bank-q { margin: 0 0 6px; font-size: 16px; color: #fff; font-weight: 700; }
+.torre-textarea {
+  width: 100%; min-height: 96px; resize: vertical; margin: 6px 0;
+  font-family: inherit; line-height: 1.45;
+}
+.torre-rescue { font-size: 14px; color: #f6f4e6; align-self: center; }
+.torre-num { width: 92px; }
+.torre-link { text-decoration: none; display: inline-block; margin: 4px 0 10px; }
+.torre-dict-pct { margin: 6px 0 2px; font-size: 34px; font-weight: 800; color: #4FC3F7; }
+.torre-original { margin: 8px 0; }
+.torre-original summary { cursor: pointer; color: #b3e5fc; font-size: 13px; }
