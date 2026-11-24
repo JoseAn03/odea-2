@@ -36,8 +36,10 @@ const index = buildTutorIndex(CAMPAIGNS, catalog.daily);
 
 /* ------------------------------ 1. el índice ------------------------------ */
 
-test("tutor-index: el corpus son los 510 documentos reales (342 campañas + 168 diarias)", () => {
-  assert.equal(index.total, 510);
+test("tutor-index: el corpus son los 568 documentos reales (400 campañas + 168 diarias)", () => {
+  /* 400 de campañas desde v0.57.0: DESPEGUE (La Torre de Control)
+     sumó sus 58 misiones al material real del Tutor. */
+  assert.equal(index.total, 568);
 });
 
 test("tutor-index: batería de preguntas reales — la lección esperada es el top-1", () => {
@@ -74,9 +76,17 @@ test("tutor-index: batería por campaña — el top-1 cae en el módulo correcto
     ["¿cómo edito un video para mi canal de clips?", "gamer"],
     ["¿qué es el pensamiento crítico?", "sabiduria"],
     ["¿qué es un prompt y cómo se escribe uno bueno para un agente?", "zonaia"],
-    ["¿cómo respondo si me preguntan mi mayor debilidad en el screening?", "entrevista"],
+    /* Desde v0.57.0 la respuesta de la debilidad vive en La Torre
+       (misión «La debilidad, sin miedo» + tarjeta bank-09 del banco):
+       el top-1 correcto ahora es ingles, no entrevista. */
+    ["¿cómo respondo si me preguntan mi mayor debilidad en el screening?", "ingles"],
     ["¿qué es la inteligencia emocional y cómo se practica?", "sabiduria"],
-    ["¿cómo grabo mi pantalla con OBS para un clip?", "gamer"],
+    /* Recalibrado en v0.57.0: con el corpus crecido (568), el IDF se
+       rebalanceó y la redacción vieja («grabo mi pantalla con OBS»)
+       empataba con el título de brete-12 («Reporte de una pantalla»);
+       la pregunta de captura que cae en gamer es esta. «OBS» ni
+       siquiera está en el corpus: esa redacción da cero extractos. */
+    ["¿cómo capturo mi gameplay para hacer clips?", "gamer"],
     ["¿qué es un ETL y para qué sirve?", "zonaia"],
   ];
   for (const [question, expectedCampaign] of battery) {
