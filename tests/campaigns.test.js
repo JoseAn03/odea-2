@@ -41,7 +41,7 @@ test("partida nueva: cero XP, cero monedas, perfil vacío y campañas listas sin
 });
 
 test("campañas: 96 misiones únicas, 8 capítulos de 6 por ruta y entregables completos", () => {
-  const rutas = Object.entries(CAMPAIGNS).filter(([id]) => !["eventos", "garaje", "academia", "zonaia", "sabiduria", "mundoian", "entrevista", "whatsapp"].includes(id));
+  const rutas = Object.entries(CAMPAIGNS).filter(([id]) => !["eventos", "garaje", "academia", "zonaia", "sabiduria", "mundoian", "entrevista", "whatsapp", "ingles"].includes(id));
   const misiones = rutas.flatMap(([, c]) => c.chapters.flatMap((ch) => ch.missions));
   assert.equal(misiones.length, 96);
   assert.equal(new Set(misiones.map((m) => m.id)).size, 96);
@@ -355,6 +355,22 @@ test("postulaciones: campos seguros y cantidades de premios ignoradas", () => {
 
 test("campañas: recorrido de ambas rutas completo, totales congelados, recarga y restauración", () => {
   const s = fresh();
+  /* v0.57.0: cuatro misiones de DESPEGUE piden el registro que la
+     Torre ya guarda (dictado de referencia, simulacro y las dos
+     mediciones EF SET). La evidencia se siembra ANTES de medir el
+     estado inicial, como precondición del recorrido: los hitos que
+     otorga (h5/h6) quedan dentro del «initial» y el delta del
+     recorrido sigue siendo solo XP de campañas. */
+  const seedOpts = (d) => ({ date: d, at: `${d}T12:00:00.000Z` });
+  for (const [mutation, d] of [
+    [{ type: "ingles.dictation", clipId: "dic-5", pct: 70 }, "2026-11-17"],
+    [{ type: "ingles.mock", secs: 470, pauses: 5 }, "2026-11-17"],
+    [{ type: "ingles.efset", score: "B1 · 52/100" }, "2026-11-17"],
+    [{ type: "ingles.efset", score: "B2 · 61/100" }, "2027-02-15"]
+  ]) {
+    assert.equal(applyGameplayMutation(s, catalog, mutation, seedOpts(d)).status, "applied",
+      `siembra de la Torre: ${mutation.type}`);
+  }
   const initial = derived(s);
   for (const mission of CAMPAIGN_MISSIONS) assert.equal(complete(s, mission.id).status, "applied", mission.id);
   assert.equal(campaignView(saved(s), "brete").done, 48);
