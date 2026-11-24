@@ -27,14 +27,20 @@
  *    «Turno especial», alternando simulacro de entrevista y
  *    dictogloss por paridad de semana.
  *
- * La campaña DESPEGUE (58 misiones), el SRS, el Laboratorio de Voz y
- * el Tablero llegan en fases B–D: aquí no hay ni rastro de su estado
- * (srs/hvpt/bank del diseño §8 entran con su fase). El estado vive
- * SOLO en `play.ingles`, aditivo: un save sin la sección deriva 0 y
- * ningún total previo cambia (precedente marca/ian).
+ * La Fase B (v0.56.0) suma las herramientas — SRS, HVPT, marcas de
+ * voz y prueba del teclado — en claves aditivas del mismo
+ * `play.ingles` (bloque «Fase B» más abajo): no pagan nada por sí
+ * mismas y el oráculo ni las lee. La campaña DESPEGUE (58 misiones)
+ * y el Tablero llegan en sus fases. El estado vive SOLO en
+ * `play.ingles`, aditivo: un save sin la sección deriva 0 y ningún
+ * total previo cambia (precedente marca/ian).
  */
 
 import { isoWeekKey } from "./derive.js";
+import {
+  SRS_DECKS, SRS_CARDS, SRS_CARD_BY_ID,
+  HVPT_CONTRASTS, HVPT_CONTRAST_BY_ID, LAB_PHRASES, LAB_PHRASE_BY_ID
+} from "./ingles-content.js";
 
 export const INGLES_VERSION = 1;
 export const DUE_SOON_DAYS = 3;
@@ -134,6 +140,30 @@ const CATALOG = [
 
 export const INGLES_ITEMS = CATALOG;
 const byId = new Map(INGLES_ITEMS.map((m) => [m.id, m]));
+
+/* ================= Fase B (v0.56.0): Fraseología y Laboratorio ====
+ * El SRS corregido (§6.2), el motor HVPT (§6.1.2), las marcas A/B
+ * del Laboratorio (§6.1.1) y la prueba del teclado (§6.1.3) viven en
+ * claves ADITIVAS de `play.ingles` (srs, custom, hvpt, voice, keys):
+ * un save de la Fase A sin ellas valida igual y deriva igual — el
+ * oráculo solo suma `records`, y ninguna de estas mutaciones crea
+ * records: las herramientas NO pagan; pagan las rutinas de siempre
+ * al registrarlas (la rutina paga por el hábito; la herramienta es
+ * el gimnasio). Sin XP inventado y sin notas de voz: el HVPT tiene
+ * respuesta correcta local porque el contenido está en el código;
+ * el SRS y el A/B guardan la auto-marca de José, nada más. */
+
+/* Leitner de 5 cajas (§6.2): intervalo en días por caja. */
+export const SRS_INTERVALS = { 1: 1, 2: 2, 3: 4, 4: 7, 5: 15 };
+export const SRS_GRAD_STREAK = 3;      // aciertos espaciados en caja 5, en días distintos
+export const SRS_GRAD_RECHECK_DAYS = 30; // la graduada reaparece en chequeos mensuales
+export const SRS_MAX_CUSTOM = 200;
+export const HVPT_WINDOW = 20;         // la escalera se evalúa cada 20 intentos
+export const HVPT_LEVEL_UP_PCT = 85;
+export const HVPT_LEVEL_DOWN_PCT = 60;
+export const KEYS_HISTORY_CAP = 24;
+export const VOICE_MARKS = ["bien", "medio", "no"];
+export const SRS_MARKS = ["se", "dude", "no"];
 
 const plain = (v) => !!v && typeof v === "object" && !Array.isArray(v);
 const DAY_MS = 86400000;
@@ -243,6 +273,7 @@ export function inglesView(bundle, today) {
       capCoins: TOPE_TURNO_COINS,
       capReached: weekPaid.xp >= TOPE_TURNO_XP && weekPaid.coins >= TOPE_TURNO_COINS
     },
+    faseB: inglesFaseBView(bundle, today),
     probadas: items.filter((m) => m.times > 0).length,
     total: items.length,
     rutinasAlDia: rutinas.filter((m) => m.state === "al-dia").length,
@@ -251,6 +282,146 @@ export function inglesView(bundle, today) {
     hitosDone,
     hitosTotal: hitos.length,
     rank: hitosDone === hitos.length
+  };
+}
+
+/* ---------------- Fase B: acceso al estado nuevo ---------------- */
+
+const srsOf = (state) => (plain(state.srs) ? state.srs : {});
+const customOf = (state) => (plain(state.custom) ? state.custom : {});
+const hvptOf = (state) => (plain(state.hvpt) ? state.hvpt : {});
+const voiceOf = (state) => (plain(state.voice) ? state.voice : {});
+const keysOf = (state) => (Array.isArray(state.keys) ? state.keys : []);
+
+/** La tarjeta completa (base o guardada por José) o null. */
+export function srsCardOf(state, cardId) {
+  const base = SRS_CARD_BY_ID.get(cardId);
+  if (base) return base;
+  const custom = customOf(state)[cardId];
+  if (!plain(custom)) return null;
+  return {
+    id: cardId, deck: "robadas", type: "prod",
+    term: custom.term, pron: "", meaning: custom.meaning,
+    example: custom.example || "", custom: true
+  };
+}
+
+const srsEntryDefault = (today) => ({
+  box: 1, due: today, seen: 0, gradStreak: 0, gradDay: null, graduated: false, lastAt: null
+});
+
+/**
+ * La sesión de repaso (§6.2): primero las vencidas (due ≤ hoy),
+ * entrelazadas por deck en ronda — recuperar en contextos variados
+ * es lo que hace que la palabra salga en la llamada real — y después
+ * hasta `maxNew` tarjetas nuevas, también entrelazadas. Las
+ * graduadas solo vuelven cuando su chequeo mensual vence.
+ */
+export function srsSession(bundle, today, { maxNew = 5, maxCards = 20 } = {}) {
+  const state = inglesStateOf(bundle);
+  const srs = srsOf(state);
+  const allIds = [...SRS_CARDS.map((c) => c.id), ...Object.keys(customOf(state))];
+  const due = [];
+  const fresh = [];
+  for (const id of allIds) {
+    const entry = plain(srs[id]) ? srs[id] : null;
+    if (!entry) { fresh.push(id); continue; }
+    if (entry.due <= today) due.push(id);
+  }
+  const interleave = (ids) => {
+    const byDeck = new Map();
+    for (const id of ids) {
+      const card = srsCardOf(state, id);
+      const key = card ? card.deck : "?";
+      if (!byDeck.has(key)) byDeck.set(key, []);
+      byDeck.get(key).push(id);
+    }
+    const out = [];
+    let moved = true;
+    while (moved) {
+      moved = false;
+      for (const list of byDeck.values()) {
+        if (list.length) { out.push(list.shift()); moved = true; }
+      }
+    }
+    return out;
+  };
+  const ordered = [...interleave(due), ...interleave(fresh).slice(0, Math.max(0, maxNew))];
+  return ordered.slice(0, maxCards).map((id) => {
+    const entry = plain(srs[id]) ? srs[id] : null;
+    return {
+      card: srsCardOf(state, id),
+      isNew: !entry,
+      box: entry ? entry.box : 1,
+      graduated: entry ? entry.graduated === true : false
+    };
+  });
+}
+
+/** Resúmenes de la Fase B para la vista (el tablero llega en su fase;
+ *  esto es solo el conteo honesto que el panel muestra). */
+export function inglesFaseBView(bundle, today) {
+  const state = inglesStateOf(bundle);
+  const srs = srsOf(state);
+  const custom = customOf(state);
+  const allIds = [...SRS_CARDS.map((c) => c.id), ...Object.keys(custom)];
+  let seen = 0, graduated = 0, dueCount = 0;
+  for (const id of allIds) {
+    const entry = plain(srs[id]) ? srs[id] : null;
+    if (!entry) continue;
+    seen += 1;
+    if (entry.graduated === true) graduated += 1;
+    if (entry.due <= today) dueCount += 1;
+  }
+  const decks = SRS_DECKS.map((d) => {
+    const ids = SRS_CARDS.filter((c) => c.deck === d.id).map((c) => c.id);
+    return {
+      ...d,
+      total: ids.length,
+      seen: ids.filter((id) => plain(srs[id])).length,
+      graduated: ids.filter((id) => plain(srs[id]) && srs[id].graduated === true).length
+    };
+  });
+  if (Object.keys(custom).length) {
+    decks.push({
+      id: "robadas", name: "Palabras robadas", icon: "🕵️",
+      total: Object.keys(custom).length,
+      seen: Object.keys(custom).filter((id) => plain(srs[id])).length,
+      graduated: Object.keys(custom).filter((id) => plain(srs[id]) && srs[id].graduated === true).length
+    });
+  }
+  const hvptState = hvptOf(state);
+  const hvpt = HVPT_CONTRASTS.map((c) => {
+    const e = plain(hvptState[c.id]) ? hvptState[c.id] : null;
+    const window = e && Array.isArray(e.window) ? e.window : [];
+    return {
+      id: c.id, name: c.name, detail: c.detail, stress: c.stress === true,
+      pairs: c.pairs.length,
+      level: e ? e.level : 1,
+      attempts: e ? e.attempts : 0,
+      correct: e ? e.correct : 0,
+      windowCount: window.length,
+      windowPct: window.length ? Math.round((window.reduce((a, b) => a + b, 0) / window.length) * 100) : null
+    };
+  });
+  const voice = voiceOf(state);
+  const voiceMarks = Object.values(voice).filter(plain);
+  const keys = keysOf(state).filter(plain);
+  return {
+    srs: {
+      total: allIds.length, seen, graduated, dueCount,
+      newCount: allIds.length - seen, decks
+    },
+    hvpt,
+    voice: {
+      phrases: LAB_PHRASES.length,
+      marked: voiceMarks.length,
+      bien: voiceMarks.filter((v) => v.lastSelf === "bien").length
+    },
+    keys: {
+      count: keys.length,
+      last: keys.length ? keys[keys.length - 1] : null
+    }
   };
 }
 
@@ -290,6 +461,84 @@ export function inglesProblems(bundle) {
       errors.push(`ingles.records.${id}: registro inválido`);
     }
   }
+  /* Fase B: las claves nuevas son opcionales — un save de la Fase A
+     sin ellas es válido; si están, su forma es estricta. */
+  if (state.custom !== undefined) {
+    if (!plain(state.custom) || Object.keys(state.custom).length > SRS_MAX_CUSTOM) {
+      errors.push("ingles.custom: forma inválida");
+    } else {
+      for (const [id, c] of Object.entries(state.custom)) {
+        if (!/^custom-\d+$/.test(id) || !plain(c) ||
+            typeof c.term !== "string" || !c.term.length || c.term.length > 80 ||
+            typeof c.meaning !== "string" || !c.meaning.length || c.meaning.length > 160 ||
+            typeof c.example !== "string" || c.example.length > 200 ||
+            typeof c.at !== "string" || !Number.isFinite(Date.parse(c.at))) {
+          errors.push(`ingles.custom.${id}: tarjeta inválida`);
+        }
+      }
+    }
+  }
+  if (state.srs !== undefined) {
+    if (!plain(state.srs)) {
+      errors.push("ingles.srs: forma inválida");
+    } else {
+      for (const [id, e] of Object.entries(state.srs)) {
+        if (!srsCardOf(state, id) || !plain(e) ||
+            !Number.isSafeInteger(e.box) || e.box < 1 || e.box > 5 ||
+            !validDate(e.due) ||
+            !Number.isSafeInteger(e.seen) || e.seen < 0 ||
+            !Number.isSafeInteger(e.gradStreak) || e.gradStreak < 0 || e.gradStreak > SRS_GRAD_STREAK ||
+            !(e.gradDay === null || validDate(e.gradDay)) ||
+            typeof e.graduated !== "boolean" ||
+            !(e.lastAt === null || (typeof e.lastAt === "string" && Number.isFinite(Date.parse(e.lastAt))))) {
+          errors.push(`ingles.srs.${id}: registro inválido`);
+        }
+      }
+    }
+  }
+  if (state.hvpt !== undefined) {
+    if (!plain(state.hvpt)) {
+      errors.push("ingles.hvpt: forma inválida");
+    } else {
+      for (const [id, e] of Object.entries(state.hvpt)) {
+        if (!HVPT_CONTRAST_BY_ID.has(id) || !plain(e) ||
+            !Number.isSafeInteger(e.level) || e.level < 1 || e.level > 3 ||
+            !Number.isSafeInteger(e.attempts) || e.attempts < 0 ||
+            !Number.isSafeInteger(e.correct) || e.correct < 0 || e.correct > e.attempts ||
+            !Array.isArray(e.window) || e.window.length > HVPT_WINDOW ||
+            e.window.some((v) => v !== 0 && v !== 1) ||
+            !(e.lastAt === null || (typeof e.lastAt === "string" && Number.isFinite(Date.parse(e.lastAt))))) {
+          errors.push(`ingles.hvpt.${id}: registro inválido`);
+        }
+      }
+    }
+  }
+  if (state.voice !== undefined) {
+    if (!plain(state.voice)) {
+      errors.push("ingles.voice: forma inválida");
+    } else {
+      for (const [id, v] of Object.entries(state.voice)) {
+        if (!LAB_PHRASE_BY_ID.has(id) || !plain(v) || !VOICE_MARKS.includes(v.lastSelf) ||
+            typeof v.at !== "string" || !Number.isFinite(Date.parse(v.at))) {
+          errors.push(`ingles.voice.${id}: marca inválida`);
+        }
+      }
+    }
+  }
+  if (state.keys !== undefined) {
+    if (!Array.isArray(state.keys) || state.keys.length > KEYS_HISTORY_CAP) {
+      errors.push("ingles.keys: forma inválida");
+    } else {
+      for (const k of state.keys) {
+        if (!plain(k) || !validDate(k.date) ||
+            !Number.isSafeInteger(k.clean) || !Number.isSafeInteger(k.total) ||
+            k.total < 1 || k.total > 10 || k.clean < 0 || k.clean > k.total) {
+          errors.push("ingles.keys: registro inválido");
+          break;
+        }
+      }
+    }
+  }
   return errors;
 }
 
@@ -301,6 +550,17 @@ function ensureState(draft) {
   const state = draft.play.ingles;
   if (!plain(state.log)) state.log = {};
   if (!plain(state.records)) state.records = {};
+  return state;
+}
+
+/* Las claves de la Fase B nacen SOLO con una mutación de la Fase B:
+   un save que solo usó la Fase A conserva su forma exacta. */
+function ensureFaseB(state) {
+  if (!plain(state.srs)) state.srs = {};
+  if (!plain(state.custom)) state.custom = {};
+  if (!plain(state.hvpt)) state.hvpt = {};
+  if (!plain(state.voice)) state.voice = {};
+  if (!Array.isArray(state.keys)) state.keys = [];
   return state;
 }
 
@@ -350,6 +610,113 @@ export function applyInglesMutation(draft, mutation, { at, date }) {
     }
     state.log[item.id] = own;
     return { changed: true, duplicate: false, reason: null, paths: [`play.ingles.log.${item.id}`] };
+  }
+
+  /* -------- Fase B: herramientas sin paga (0 XP / ₡0 siempre) ---- */
+
+  if (mutation.type === "ingles.srsMark") {
+    if (!SRS_MARKS.includes(mutation.mark)) return no("BAD_MARK");
+    const state0 = inglesStateOf(draft);
+    if (!srsCardOf(state0, mutation.cardId)) return no("UNKNOWN_CARD");
+    const state = ensureFaseB(ensureState(draft));
+    const entry = plain(state.srs[mutation.cardId])
+      ? state.srs[mutation.cardId]
+      : srsEntryDefault(date);
+    entry.seen = (entry.seen || 0) + 1;
+    entry.lastAt = at;
+    if (mutation.mark === "no") {
+      entry.box = 1;
+      entry.gradStreak = 0;
+      entry.due = addDays(date, SRS_INTERVALS[1]);
+    } else if (mutation.mark === "dude") {
+      entry.due = addDays(date, SRS_INTERVALS[entry.box] || 1);
+    } else if (entry.box < 5) {
+      entry.box += 1;
+      entry.due = addDays(date, SRS_INTERVALS[entry.box]);
+    } else if (entry.graduated) {
+      entry.due = addDays(date, SRS_GRAD_RECHECK_DAYS);
+    } else {
+      /* LA CORRECCIÓN KARPIKE & ROEDIGER (§6.2): en caja 5 no basta
+         un acierto — graduarse exige 3 aciertos espaciados en días
+         distintos; dos aciertos el mismo día cuentan uno. */
+      if (entry.gradDay !== date) {
+        entry.gradStreak = (entry.gradStreak || 0) + 1;
+        entry.gradDay = date;
+      }
+      if (entry.gradStreak >= SRS_GRAD_STREAK) {
+        entry.graduated = true;
+        entry.due = addDays(date, SRS_GRAD_RECHECK_DAYS);
+      } else {
+        entry.due = addDays(date, SRS_INTERVALS[5]);
+      }
+    }
+    state.srs[mutation.cardId] = entry;
+    return { changed: true, duplicate: false, reason: null, paths: [`play.ingles.srs.${mutation.cardId}`] };
+  }
+
+  if (mutation.type === "ingles.srsAdd") {
+    const term = typeof mutation.term === "string" ? mutation.term.trim() : "";
+    const meaning = typeof mutation.meaning === "string" ? mutation.meaning.trim() : "";
+    const example = typeof mutation.example === "string" ? mutation.example.trim() : "";
+    if (!term || term.length > 80 || !meaning || meaning.length > 160 || example.length > 200) {
+      return no("BAD_CARD");
+    }
+    const state = ensureFaseB(ensureState(draft));
+    if (Object.keys(state.custom).length >= SRS_MAX_CUSTOM) return no("CUSTOM_FULL");
+    let n = Object.keys(state.custom).length + 1;
+    while (state.custom[`custom-${n}`]) n += 1;
+    const id = `custom-${n}`;
+    state.custom[id] = { term, meaning, example, at };
+    state.srs[id] = srsEntryDefault(date);
+    return { changed: true, duplicate: false, reason: null, paths: [`play.ingles.custom.${id}`] };
+  }
+
+  if (mutation.type === "ingles.hvptAttempt") {
+    const contrast = HVPT_CONTRAST_BY_ID.get(mutation.contrastId);
+    if (!contrast) return no("UNKNOWN_CONTRAST");
+    const pair = contrast.pairs[mutation.pairIdx];
+    if (!pair || !["a", "b"].includes(mutation.played) || !["a", "b"].includes(mutation.picked)) {
+      return no("BAD_ATTEMPT");
+    }
+    /* La respuesta correcta la calcula el reducer desde el
+       contenido en código — la UI no se califica a sí misma. */
+    const correct = mutation.played === mutation.picked;
+    const state = ensureFaseB(ensureState(draft));
+    const entry = plain(state.hvpt[mutation.contrastId])
+      ? state.hvpt[mutation.contrastId]
+      : { level: 1, attempts: 0, correct: 0, window: [], lastAt: null };
+    entry.attempts += 1;
+    if (correct) entry.correct += 1;
+    entry.window = [...(Array.isArray(entry.window) ? entry.window : []), correct ? 1 : 0].slice(-HVPT_WINDOW);
+    entry.lastAt = at;
+    if (entry.window.length >= HVPT_WINDOW) {
+      /* LA ESCALERA (§6.1.2): ≥85% en 20 intentos sube; <60% baja. */
+      const pct = (entry.window.reduce((a, b) => a + b, 0) / HVPT_WINDOW) * 100;
+      if (pct >= HVPT_LEVEL_UP_PCT && entry.level < 3) entry.level += 1;
+      else if (pct < HVPT_LEVEL_DOWN_PCT && entry.level > 1) entry.level -= 1;
+      entry.window = [];
+    }
+    state.hvpt[mutation.contrastId] = entry;
+    return { changed: true, duplicate: false, reason: null, paths: [`play.ingles.hvpt.${mutation.contrastId}`] };
+  }
+
+  if (mutation.type === "ingles.voiceMark") {
+    if (!LAB_PHRASE_BY_ID.has(mutation.phraseId)) return no("UNKNOWN_PHRASE");
+    if (!VOICE_MARKS.includes(mutation.mark)) return no("BAD_MARK");
+    const state = ensureFaseB(ensureState(draft));
+    state.voice[mutation.phraseId] = { lastSelf: mutation.mark, at };
+    return { changed: true, duplicate: false, reason: null, paths: [`play.ingles.voice.${mutation.phraseId}`] };
+  }
+
+  if (mutation.type === "ingles.keysTest") {
+    const { clean, total } = mutation;
+    if (!Number.isSafeInteger(total) || total < 1 || total > 10 ||
+        !Number.isSafeInteger(clean) || clean < 0 || clean > total) {
+      return no("BAD_KEYS");
+    }
+    const state = ensureFaseB(ensureState(draft));
+    state.keys = [...state.keys, { date, clean, total }].slice(-KEYS_HISTORY_CAP);
+    return { changed: true, duplicate: false, reason: null, paths: ["play.ingles.keys"] };
   }
 
   return no("UNKNOWN_MUTATION");
