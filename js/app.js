@@ -1481,6 +1481,10 @@ async function saveCampaignAction(mutation) {
       const messages = {
         EVIDENCE_REQUIRED: "Contá qué hiciste o pegá el enlace de tu entregable (mínimo 12 caracteres).",
         MISSION_LOCKED: "Primero completá la misión anterior.",
+        DICTATION_REQUIRED: "Esta misión pide el dictado registrado: hacé un dictado de referencia en la Torre (Escucha → Dictado) y volvé.",
+        MOCK_REQUIRED: "Esta misión pide el simulacro registrado: hacé el mock completo y registralo en la Torre (Banco de entrevista → Simulacro completo).",
+        EFSET_REQUIRED: "Esta misión pide tu medición registrada: hacé el EF SET y registrá el resultado en la Torre (Tablero → Medición).",
+        EFSET_SECOND_REQUIRED: "La segunda medición se registra en la Torre (Tablero → Medición) cuando se cumplen 90 días de la primera.",
         STALE_APPLICATION_COUNT: "El contador cambió en otra pantalla. Ya lo actualizamos; revisalo y volvé a registrar.",
         TOO_FAST: "Esperá un instante antes de registrar otra postulación.",
         QUOTA_EXCEEDED: "No hay espacio para guardar. Exportá un respaldo y liberá espacio antes de continuar.",
@@ -1755,7 +1759,11 @@ function renderInglesPanel() {
     onBack: () => closeCampaign(),
     onComplete: (missionId) => saveInglesAction({ type: "ingles.complete", missionId }),
     onMutate: (mutation) => saveInglesAction(mutation),
-    getSrsSession: () => srsSession(bundle, gameplayDate().date)
+    getSrsSession: () => srsSession(bundle, gameplayDate().date),
+    /* Fase C (v0.57.0): la tarjeta DESPEGUE muestra el progreso de la
+       campaña y la abre en el panel de campañas del juego. */
+    campaign: campaignView(bundle, "ingles"),
+    onOpenCampaign: () => { closeCampaign(); openCampaign("ingles"); }
   });
 }
 
@@ -2113,7 +2121,7 @@ function showPhoneMissions() {
      El SJO Decision Lab («eventos») queda fuera a propósito: es el evento
      guardado, no el activo (hoy el activo es Operación Entrevista). */
   root.append(phoneEl("h4", "phone-screen-group", "Más campañas"));
-  for (const id of ["academia", "zonaia", "sabiduria", "entrevista"]) {
+  for (const id of ["academia", "zonaia", "sabiduria", "entrevista", "ingles"]) {
     const view = campaignView(bundle, id);
     const button = phoneEl("button", "campaign-phone-route", `${view.name} · ${view.done}/${view.total} · ${view.percent}%`);
     button.type = "button";
