@@ -14,6 +14,16 @@
  *
  * Nada de esto escribe el guardado directamente: cada registro pasa por
  * los callbacks de app.js → applyGameplayMutation → src/storage.js.
+ *
+ * v0.53.0 — LA NUEVA CARA DE JARVIS (la maqueta que eligió José, «El
+ * orbe manda»): rediseño SOLO de la capa visual. El orbe grande se
+ * dibuja por código (SVG en línea, cero binarios) con la cara-pantalla
+ * de píxeles del diseño v2 (rejilla 11×7) y sus estados — reposo,
+ * pensando, celebrando, sin conexión — que la propia interfaz activa
+ * según lo que ya distingue (espera de red, quiz perfecto, acción
+ * aplicada). Debajo: el briefing, las acciones como píldoras neón y la
+ * barra de pestañas Chat/Tutor/Quiz/Banco siempre visible. Ni el
+ * estado, ni las mutaciones, ni las reglas de XP cambian en nada.
  */
 
 import { CAMPAIGNS } from "../src/campaigns.js";
@@ -47,6 +57,51 @@ const QUIZ_TOPICS = [
 
 const NOT_CONNECTED =
   "Hola, José. Todavía no estoy conectado: falta configurar mi dirección en el juego. Mientras tanto, el juego sigue completo sin mí.";
+
+/* El orbe de la maqueta, dibujado por código (SVG en línea): cuerpo
+ * perla, visor oscuro y la cara de luz en la rejilla de 11×7 del
+ * diseño v2 — ojos cian #00E5FF, mejillas y punta de antena rosas
+ * #FF2E93. Cada estado es un grupo <g class="orb-face--…"> y el CSS
+ * muestra el que coincide con el data-face del contenedor. */
+const JARVIS_ORB_SVG = `
+<svg viewBox="0 0 240 250" role="img" aria-label="Jarvis, el robot compañero de la Zona IA" focusable="false">
+  <defs>
+    <linearGradient id="jv-body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F7FAFD"/><stop offset="1" stop-color="#C3CEDD"/>
+    </linearGradient>
+    <radialGradient id="jv-visor" cx="0.5" cy="0.38" r="0.85">
+      <stop offset="0" stop-color="#131B3D"/><stop offset="1" stop-color="#070B1D"/>
+    </radialGradient>
+    <filter id="jv-blur" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+    <clipPath id="jv-clip"><ellipse cx="120" cy="142" rx="96" ry="80"/></clipPath>
+  </defs>
+  <ellipse cx="120" cy="234" rx="58" ry="9" fill="#00E5FF" opacity="0.35" filter="url(#jv-blur)"/>
+  <rect x="117" y="26" width="6" height="32" rx="3" fill="#9AA7BD"/>
+  <circle cx="120" cy="20" r="16" fill="#FF2E93" opacity="0.18"/>
+  <circle class="orb-antenna-tip" cx="120" cy="20" r="9" fill="#FF2E93"/>
+  <rect x="13" y="120" width="18" height="46" rx="9" fill="#9AA7BD"/>
+  <rect x="209" y="120" width="18" height="46" rx="9" fill="#9AA7BD"/>
+  <ellipse cx="120" cy="142" rx="96" ry="80" fill="url(#jv-body)"/>
+  <g clip-path="url(#jv-clip)">
+    <ellipse cx="120" cy="212" rx="76" ry="26" fill="#9AA7BD" opacity="0.22"/>
+    <ellipse cx="82" cy="86" rx="52" ry="20" fill="#FFFFFF" opacity="0.35"/>
+  </g>
+  <g class="orb-sparkles" fill="#00E5FF">
+    <path d="M30 52 h4 v6 h6 v4 h-6 v6 h-4 v-6 h-6 v-4 h6 z"/>
+    <path d="M202 52 h4 v6 h6 v4 h-6 v6 h-4 v-6 h-6 v-4 h6 z" fill="#FF2E93"/>
+    <path d="M22 196 h4 v6 h6 v4 h-6 v6 h-4 v-6 h-6 v-4 h6 z" fill="#FF2E93"/>
+    <path d="M210 196 h4 v6 h6 v4 h-6 v6 h-4 v-6 h-6 v-4 h6 z"/>
+  </g>
+  <g class="orb-visor">
+    <rect x="50" y="94" width="140" height="94" rx="47" fill="url(#jv-visor)" stroke="rgba(0,229,255,.4)" stroke-width="1.5"/>
+    <g class="orb-face orb-face--idle"><g class="orb-eyes"><rect x="67" y="112" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="79" y="112" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="151" y="112" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="163" y="112" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="67" y="124" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="79" y="124" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="151" y="124" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="163" y="124" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="67" y="136" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="79" y="136" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="151" y="136" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="163" y="136" width="10" height="10" rx="2.5" fill="#00E5FF"/></g><rect x="55" y="136" width="10" height="10" rx="2.5" fill="#FF2E93"/><rect x="175" y="136" width="10" height="10" rx="2.5" fill="#FF2E93"/><rect x="79" y="160" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="151" y="160" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="91" y="172" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="103" y="172" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="115" y="172" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="127" y="172" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="139" y="172" width="10" height="10" rx="2.5" fill="#00E5FF"/></g>
+    <g class="orb-face orb-face--thinking"><rect x="55" y="100" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="67" y="100" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="139" y="100" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="151" y="100" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="55" y="112" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="67" y="112" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="139" y="112" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="151" y="112" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="91" y="160" width="10" height="10" rx="2.5" fill="#00E5FF" class="orb-dot orb-dot--1"/><rect x="115" y="160" width="10" height="10" rx="2.5" fill="#00E5FF" class="orb-dot orb-dot--2"/><rect x="139" y="160" width="10" height="10" rx="2.5" fill="#00E5FF" class="orb-dot orb-dot--3"/></g>
+    <g class="orb-face orb-face--celebrate"><rect x="79" y="112" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="151" y="112" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="67" y="124" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="91" y="124" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="139" y="124" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="163" y="124" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="55" y="136" width="10" height="10" rx="2.5" fill="#FF2E93"/><rect x="175" y="136" width="10" height="10" rx="2.5" fill="#FF2E93"/><rect x="79" y="148" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="151" y="148" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="79" y="160" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="91" y="160" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="103" y="160" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="115" y="160" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="127" y="160" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="139" y="160" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="151" y="160" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="91" y="172" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="103" y="172" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="115" y="172" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="127" y="172" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="139" y="172" width="10" height="10" rx="2.5" fill="#00E5FF"/></g>
+    <g class="orb-face orb-face--offline"><rect x="67" y="124" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="79" y="124" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="151" y="124" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="163" y="124" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="103" y="160" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="115" y="160" width="10" height="10" rx="2.5" fill="#00E5FF"/><rect x="127" y="160" width="10" height="10" rx="2.5" fill="#00E5FF"/></g>
+  </g>
+</svg>`;
 
 const sessions = new WeakMap();
 
@@ -176,23 +231,44 @@ export function renderJarvis(root, options = {}) {
   const shell = el("div", "campaign-shell jarvis-shell");
   shell.style.setProperty("--campaign-accent", "#FF2E93");
 
-  /* ------------------------------ encabezado ------------------------------ */
+  /* --------------------- encabezado: el orbe manda ----------------------
+     v0.53.0: el héroe de la maqueta — el orbe GRANDE presidiendo, el
+     nombre en neón y la línea de estado (conexión + racha real del
+     resumen). La cara cambia con setFace() según lo que la interfaz
+     ya distingue; es presentación pura, sin tocar lógica. */
+  const baseFace = jarvisConfigured() ? "idle" : "offline";
   const head = el("header", "jarvis-head");
-  const portrait = el("img", "jarvis-portrait");
-  portrait.src = "assets/jarvis.webp";
-  portrait.alt = "Jarvis, el robot compañero de la Zona IA";
-  portrait.addEventListener("error", () => { portrait.hidden = true; });
-  const headCopy = el("div", "jarvis-head-copy");
-  headCopy.append(
-    el("p", "campaign-eyebrow", "ZONA IA · TU COMPAÑERO"),
-    el("h2", "jarvis-name", "JARVIS"),
-    el("p", "jarvis-sub", "Robot compañero de la Zona IA. Te ayudo con el día, práctica y tus evidencias.")
-  );
+  const headTop = el("div", "jarvis-head-top");
+  headTop.append(el("p", "campaign-eyebrow", "ZONA IA · TU COMPAÑERO"));
   const close = el("button", "campaign-back jarvis-close", "Cerrar");
   close.type = "button";
   close.addEventListener("click", () => { if (typeof options.onClose === "function") options.onClose(); });
-  head.append(portrait, headCopy, close);
+  headTop.append(close);
+  const orb = el("div", "jarvis-orb");
+  orb.innerHTML = JARVIS_ORB_SVG;
+  orb.dataset.face = baseFace;
+  const status = el("p", "jarvis-status");
+  status.append(el("span", jarvisConfigured() ? "jarvis-status-on" : "jarvis-status-off",
+    jarvisConfigured() ? "EN LÍNEA" : "SIN CONEXIÓN"));
+  const racha = session.summary && session.summary.rachaDias;
+  if (typeof racha === "number" && racha > 0) {
+    status.append(" · ", el("span", "jarvis-status-streak", `RACHA DE ${racha} DÍA${racha === 1 ? "" : "S"} 🔥`));
+  }
+  head.append(headTop, orb, el("h2", "jarvis-name", "JARVIS"), status);
   shell.append(head);
+
+  /* La cara del orbe: reposo (o sin conexión) es la base; «pensando»
+     dura lo que dura la llamada en vuelo; «celebrando» es un gesto
+     breve (quiz perfecto, acción aplicada) y vuelve solo a la base. */
+  let faceTimer = null;
+  function setFace(face) {
+    orb.dataset.face = face;
+  }
+  function celebrate() {
+    setFace("celebrate");
+    if (faceTimer) clearTimeout(faceTimer);
+    faceTimer = setTimeout(() => { if (!controller.signal.aborted) setFace(baseFace); }, 2100);
+  }
 
   /* ------------------------------- bocadillo ------------------------------ */
   const bubble = el("div", "jarvis-bubble");
@@ -217,6 +293,35 @@ export function renderJarvis(root, options = {}) {
   /* --------------------------------- pie ---------------------------------- */
   const foot = el("p", "jarvis-foot");
   shell.append(foot);
+
+  /* --------------------- barra de pestañas (v0.53.0) ----------------------
+     La barra inferior de la maqueta: Chat/Tutor/Quiz/Banco siempre
+     visibles (sticky al pie del diálogo). Cada pestaña abre la MISMA
+     vista que ya abrían las acciones de arriba — es un segundo camino
+     visual, sin lógica nueva; el Banco gana por fin puerta propia. */
+  const tabbar = el("nav", "jarvis-tabbar");
+  tabbar.setAttribute("aria-label", "Secciones de Jarvis");
+  const tabs = {};
+  function makeTab(id, icon, label, onClick) {
+    const tab = el("button", "jarvis-tab");
+    tab.type = "button";
+    tab.append(el("span", "jarvis-tab-icon", icon), el("span", "jarvis-tab-label", label));
+    tab.addEventListener("click", onClick);
+    tabs[id] = tab;
+    return tab;
+  }
+  function setActiveTab(id) {
+    for (const [key, tab] of Object.entries(tabs)) {
+      tab.classList.toggle("jarvis-tab--active", key === id);
+    }
+  }
+  tabbar.append(
+    makeTab("chat", "💬", "CHAT", () => showChat()),
+    makeTab("tutor", "📚", "TUTOR", () => showTutor()),
+    makeTab("quiz", "🎯", "QUIZ", () => showQuizTopics()),
+    makeTab("banco", "📌", "BANCO", () => showBank())
+  );
+  shell.append(tabbar);
   root.append(shell);
 
   function renderFoot() {
@@ -245,8 +350,10 @@ export function renderJarvis(root, options = {}) {
       return;
     }
     setBubble("Un momento, estoy revisando tu ciudad…");
+    setFace("thinking");
     const result = await askJarvis("briefing", { summary: session.summary }, { signal: controller.signal });
     if (controller.signal.aborted) return;
+    setFace(baseFace);
     if (result.ok) {
       session.briefingText = result.text;
       setBubble(result.text);
@@ -258,6 +365,7 @@ export function renderJarvis(root, options = {}) {
 
   /* --------------------------------- quiz --------------------------------- */
   function showQuizTopics() {
+    setActiveTab("quiz");
     panel.replaceChildren();
     panel.append(el("h3", "jarvis-panel-title", "Practicar — elegí un tema"));
     const restantes = JARVIS_QUIZ_DAILY_LIMIT - session.counts.quizUsed;
@@ -277,11 +385,14 @@ export function renderJarvis(root, options = {}) {
   }
 
   async function startQuiz(topic) {
+    setActiveTab("quiz");
     panel.replaceChildren();
     panel.append(el("p", "jarvis-note", "Preparando tus preguntas…"));
+    setFace("thinking");
     const result = await askJarvis("quiz",
       { topic: topic.id, material: topicMaterial(topic) }, { signal: controller.signal });
     if (controller.signal.aborted) return;
+    setFace(baseFace);
     if (!result.ok) {
       panel.replaceChildren();
       panel.append(el("p", "jarvis-note",
@@ -343,6 +454,9 @@ export function renderJarvis(root, options = {}) {
           line += ` Ronda terminada: acertaste ${round.hits} de ${questions.length}.`;
         }
         feedback.replaceChildren(line);
+        /* v0.53.0 — quiz perfecto: el orbe celebra (lo dispara el juego
+           con el dato real de la ronda, nunca el modelo). */
+        if (isLast && round.hits === questions.length) celebrate();
         const nav = el("div", "jarvis-topics");
         if (!isLast) {
           nav.append(actionButton("Siguiente pregunta",
@@ -413,6 +527,7 @@ export function renderJarvis(root, options = {}) {
     const planSnapshot = structuredClone(session.plan);
     session.pendingCard = { requestId, name: action.name, args: action.args };
     card.append(
+      el("p", "jarvis-action-eyebrow", "🖐 JARVIS PROPONE"),
       el("p", "jarvis-action-title", desc.title),
       el("p", "jarvis-action-body", desc.body)
     );
@@ -441,6 +556,7 @@ export function renderJarvis(root, options = {}) {
         applyPlanLocally(action.name, action.args);
         session.pendingCard = null;
         renderFoot();
+        celebrate();
         card.classList.add("jarvis-action-card--applied");
         card.replaceChildren(
           el("p", "jarvis-action-title", `✅ Aplicado: ${desc.applied}`),
@@ -586,6 +702,7 @@ export function renderJarvis(root, options = {}) {
 
   /* --------------------------------- chat --------------------------------- */
   function showChat() {
+    setActiveTab("chat");
     panel.replaceChildren();
     panel.append(el("h3", "jarvis-panel-title", "Preguntar algo"));
     const log = el("div", "jarvis-chat-log");
@@ -609,7 +726,7 @@ export function renderJarvis(root, options = {}) {
     const input = el("textarea", "jarvis-input");
     input.rows = 3;
     input.placeholder = "Preguntame lo que sea de tu plan, tus campañas o tu preparación…";
-    const send = actionButton("Enviar", async () => {
+    const send = actionButton("➤", async () => {
       const message = String(input.value || "").trim();
       if (!message) return;
       send.disabled = true;
@@ -618,6 +735,7 @@ export function renderJarvis(root, options = {}) {
       log.append(el("p", "jarvis-msg jarvis-msg--user", message));
       const pending = el("p", "jarvis-msg jarvis-msg--jarvis", "Jarvis está escribiendo…");
       log.append(pending);
+      setFace("thinking");
 
       const result = await askJarvis("chat", {
         message,
@@ -625,6 +743,7 @@ export function renderJarvis(root, options = {}) {
         history: session.chatLog.slice(-6)
       }, { signal: controller.signal });
       if (controller.signal.aborted) return;
+      setFace(baseFace);
       if (result.ok) {
         if (result.text && result.text.trim()) {
           pending.replaceChildren(result.text);
@@ -656,13 +775,36 @@ export function renderJarvis(root, options = {}) {
         send.disabled = false;
       }
     });
+    /* v0.53.0 — el botón de envío de la maqueta: círculo rosa con la
+       flecha; el nombre accesible sigue siendo «Enviar». */
+    send.classList.add("jarvis-send-round");
+    send.setAttribute("aria-label", "Enviar");
+    send.title = "Enviar";
+
+    /* v0.53.0 — las preguntas rápidas de la maqueta, como píldoras
+       neón sobre el campo: dejan la pregunta escrita en el campo
+       (José la manda con el mismo botón de siempre, o la edita) y el
+       atajo al quiz. Ningún camino nuevo: el envío es el de siempre. */
+    const chips = el("div", "jarvis-quick-chips");
+    for (const text of ["¿Qué me falta hoy?", "¿Cómo va mi plan?"]) {
+      const chip = el("button", "jarvis-quick-chip", text);
+      chip.type = "button";
+      chip.addEventListener("click", () => { input.value = text; input.focus(); });
+      chips.append(chip);
+    }
+    const quizChip = el("button", "jarvis-quick-chip jarvis-quick-chip--quiz", "🎯 Quiz rápido");
+    quizChip.type = "button";
+    quizChip.addEventListener("click", () => showQuizTopics());
+    chips.append(quizChip);
+
     const row = el("div", "jarvis-send-row");
     row.append(input, send);
-    panel.append(row);
+    panel.append(chips, row);
   }
 
   /* ------------------------------- feedback ------------------------------- */
   function showFeedback() {
+    setActiveTab(null);
     panel.replaceChildren();
     panel.append(el("h3", "jarvis-panel-title", "Revisar mi evidencia"));
     const completed = Array.isArray(options.completedMissions) ? options.completedMissions : [];
@@ -716,12 +858,14 @@ export function renderJarvis(root, options = {}) {
       }
       submit.disabled = true;
       resultBox.replaceChildren(el("p", "jarvis-note", "Estoy leyendo tu evidencia…"));
+      setFace("thinking");
       const result = await askJarvis("feedback", {
         missionTitle: mission.title,
         deliverable: mission.deliverable,
         evidence: text,
       }, { signal: controller.signal });
       if (controller.signal.aborted) return;
+      setFace(baseFace);
       if (result.ok) {
         resultBox.replaceChildren(el("p", "jarvis-feedback-text", result.text));
         const recorded = typeof options.onUsage === "function" ? await options.onUsage("feedback") : null;
@@ -810,6 +954,7 @@ export function renderJarvis(root, options = {}) {
      activo. El pie dice cuántas van de 100 (y avisa desde las 90). */
 
   function showBank() {
+    setActiveTab("banco");
     panel.replaceChildren();
     panel.append(el("h3", "jarvis-panel-title", "📌 Mi banco de preguntas"));
     const total = session.bank.length;
@@ -943,6 +1088,7 @@ export function renderJarvis(root, options = {}) {
      llamadas, y no paga XP: repasar es el hábito, no la granja. */
 
   function showReview(entries, filterLabel) {
+    setActiveTab("banco");
     panel.replaceChildren();
     panel.append(el("h3", "jarvis-panel-title", `Repasar — ${filterLabel}`));
     if (!entries.length) {
@@ -987,6 +1133,7 @@ export function renderJarvis(root, options = {}) {
   }
 
   function showTutor() {
+    setActiveTab("tutor");
     panel.replaceChildren();
     panel.append(el("h3", "jarvis-panel-title", "Estudiar — preguntale a Jarvis de tus lecciones"));
 
@@ -1068,6 +1215,7 @@ export function renderJarvis(root, options = {}) {
 
       /* 3) La llamada: pregunta + extractos + historial del hilo. */
       pending.replaceChildren("Jarvis está pensando…");
+      setFace("thinking");
       const history = session.tutorThread ? session.tutorThread.history.slice(-6) : [];
       const result = await askTutor({
         question,
@@ -1076,6 +1224,7 @@ export function renderJarvis(root, options = {}) {
         history,
       }, { signal: controller.signal });
       if (controller.signal.aborted) return;
+      setFace(baseFace);
 
       if (!result.ok) {
         const line = result.reason === "notutor" ? TUTOR_NO_TUTOR
@@ -1157,6 +1306,7 @@ export function renderJarvis(root, options = {}) {
       send.disabled = session.counts.tutorUsed >= JARVIS_TUTOR_DAILY_LIMIT;
       if (session.counts.tutorUsed >= JARVIS_TUTOR_DAILY_LIMIT) showTutor();
     });
+    send.classList.add("jarvis-send-pill");
     input.addEventListener("keydown", (event) => {
       if (event.key === "Enter" && !event.shiftKey) {
         event.preventDefault();

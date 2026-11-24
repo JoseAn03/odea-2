@@ -464,6 +464,10 @@ await run("renderJarvis con el saludo en caché", () => {
   });
   const texto = root.textContent;
   const botones = root.querySelectorAll("button").length;
+  /* v0.53.0 — la nueva cara: el orbe por código preside (cara en
+     reposo), la línea de estado trae conexión y racha, y la barra
+     Chat/Tutor/Quiz/Banco suma 4 botones a los 7 de siempre (11). */
+  const orbe = root.querySelector(".jarvis-orb");
   return {
     pass:
       texto.includes("JARVIS") &&
@@ -472,11 +476,18 @@ await run("renderJarvis con el saludo en caché", () => {
       texto.includes("Practicar (quiz)") &&
       texto.includes("📚 Estudiar") &&
       texto.includes("Campaña Zona IA") &&
+      texto.includes("EN LÍNEA") &&
+      texto.includes("RACHA DE 3 DÍAS") &&
+      texto.includes("CHAT") &&
+      texto.includes("TUTOR") &&
+      texto.includes("QUIZ") &&
+      texto.includes("BANCO") &&
+      Boolean(orbe) && orbe.dataset.face === "idle" &&
       texto.includes("quiz XP 10/20") &&
       texto.includes("mensajes 1/20") &&
       texto.includes("tutor 0/15") &&
-      botones === 7,
-    detail: `${botones} botones · saludo en caché sin red`
+      botones === 11,
+    detail: `${botones} botones · orbe en reposo · saludo en caché sin red`
   };
 });
 
