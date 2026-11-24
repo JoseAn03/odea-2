@@ -397,10 +397,10 @@ function openDistrict(id) {
     return;
   }
   if (id === "eventos") {
-    /* La manzana del estadio abre el evento vigente (hoy el SJO Decision
-       Lab portado de ODEA 1) en el panel de campañas. */
+    /* La manzana del estadio abre el evento vigente (hoy Operación
+       Confirmación, el proyecto de WhatsApp de José) en el panel de campañas. */
     closePhone();
-    openCampaign("entrevista");
+    openCampaign("whatsapp");
     return;
   }
   if (id === "gamer" || id === "empleo") {
@@ -1001,7 +1001,7 @@ function openCampaign(id, inPhone = false) {
   }
   if (city) {
     if (id === "brete") city.focusDistrict("empleo");
-    else if (id === "eventos" || id === "entrevista") {
+    else if (id === "eventos" || id === "entrevista" || id === "whatsapp") {
       const r = eventosRect();
       city.camera.jumpTo(r.x + r.w / 2, r.y + r.h / 2, city.camera.clampZoom(0.8));
     } else if (id === "academia") {
@@ -2110,10 +2110,11 @@ function showPhoneMissions() {
      mostrar TODAS las campañas y sistemas activos, no solo El Brete y
      Zona Gamer. Las demás campañas se abren en el mismo teléfono; los
      sistemas vivos (Garaje e Ian) abren su panel, como desde la ciudad.
-     El SJO Decision Lab («eventos») queda fuera a propósito: es el evento
-     guardado, no el activo (hoy el activo es Operación Entrevista). */
+     El SJO Decision Lab («eventos») y Operación Entrevista («entrevista»)
+     quedan fuera a propósito: son los eventos guardados, no el activo
+     (hoy el activo es Operación Confirmación). */
   root.append(phoneEl("h4", "phone-screen-group", "Más campañas"));
-  for (const id of ["academia", "zonaia", "sabiduria", "entrevista"]) {
+  for (const id of ["academia", "zonaia", "sabiduria", "whatsapp"]) {
     const view = campaignView(bundle, id);
     const button = phoneEl("button", "campaign-phone-route", `${view.name} · ${view.done}/${view.total} · ${view.percent}%`);
     button.type = "button";
