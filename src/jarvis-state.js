@@ -1063,9 +1063,9 @@ export function buildProgressSummary(bundle, catalog, today) {
   };
 
   /* La próxima misión de campaña: primero el evento activo (Operación
-     Entrevista) y luego el resto de campañas en su orden del catálogo. */
+     Confirmación) y luego el resto de campañas en su orden del catálogo. */
   let proximaMisionCampana = null;
-  const order = ["entrevista", ...Object.keys(CAMPAIGNS).filter((id) => id !== "entrevista")];
+  const order = ["whatsapp", ...Object.keys(CAMPAIGNS).filter((id) => id !== "whatsapp")];
   for (const id of order) {
     const view = campaignView(bundle, id);
     if (!view) continue;
