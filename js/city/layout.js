@@ -59,6 +59,16 @@ export const MUNDOIAN_CELL = { col: 2, row: 2 };
    con sus dos pestañas. */
 export const MARCA_CELL = { col: 0, row: 1 };
 
+/* LA TORRE DE CONTROL: la manzana (2,3), al sur del Mundo de Ian.
+   Por decisión de José (2026-11-24) esta manzana es EXCLUSIVAMENTE
+   para la zona de inglés: era la mitad este del Distrito Empleo,
+   que se consolida en la (1,3) sin tocar el progreso career/hunt
+   (deriva de registros, no del bloque). El arte de la manzana en
+   city-map.webp (imagen única) no se redibuja en esta fase: el
+   sistema y su panel quedan completos y el rótulo/arte propio de la
+   Torre queda como paso de assets separado. */
+export const TORRE_CONTROL_CELL = { col: 2, row: 3 };
+
 export const WORLD_SIZE =
   GRID.margin * 2 + GRID.cols * GRID.block + (GRID.cols - 1) * GRID.road;
 
@@ -92,6 +102,11 @@ export function sabiduriaRect() {
 /** Rectángulo del Mundo de Ian (la manzana sureste del Hub). */
 export function mundoianRect() {
   return cellRect(MUNDOIAN_CELL.col, MUNDOIAN_CELL.row);
+}
+
+/** Rectángulo de La Torre de Control (la manzana (2,3)). */
+export function torreControlRect() {
+  return cellRect(TORRE_CONTROL_CELL.col, TORRE_CONTROL_CELL.row);
 }
 
 /** Rectángulo del Estudio Neón (la manzana de Barrio Vida). */
