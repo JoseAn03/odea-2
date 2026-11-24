@@ -106,7 +106,7 @@ function makeHero(root, state, view, brete) {
     state.options.onBack?.();
   });
   back.setAttribute("aria-label", state.options.compact ? "Volver al teléfono" : "Volver al mapa");
-  const code = node("span", "campaign-code", brete ? "DISTRITO 01 / BRETE" : text(view.id) === "eventos" ? "ZONA / EVENTOS" : text(view.id) === "entrevista" ? "ZONA / EVENTOS" : text(view.id) === "garaje" ? "DISTRITO 03 / GARAJE" : text(view.id) === "academia" ? "DISTRITO / ACADEMIA" : text(view.id) === "zonaia" ? "DISTRITO / ZONA IA" : text(view.id) === "sabiduria" ? "DISTRITO / UCR DE LA MENTE" : text(view.id) === "mundoian" ? "ZONA / MUNDO IAN" : "DISTRITO 02 / GAMER");
+  const code = node("span", "campaign-code", brete ? "DISTRITO 01 / BRETE" : text(view.id) === "eventos" ? "ZONA / EVENTOS" : text(view.id) === "entrevista" ? "ZONA / EVENTOS" : text(view.id) === "whatsapp" ? "ZONA / EVENTOS" : text(view.id) === "garaje" ? "DISTRITO 03 / GARAJE" : text(view.id) === "academia" ? "DISTRITO / ACADEMIA" : text(view.id) === "zonaia" ? "DISTRITO / ZONA IA" : text(view.id) === "sabiduria" ? "DISTRITO / UCR DE LA MENTE" : text(view.id) === "mundoian" ? "ZONA / MUNDO IAN" : "DISTRITO 02 / GAMER");
   top.append(back, code);
   const content = node("div", "campaign-hero-content");
   const eyebrow = node("p", "campaign-eyebrow", "MODO CAMPAÑA · TU SIGUIENTE NIVEL");
