@@ -19,8 +19,8 @@ export const GRID = {
 export const CLIPS_CELL = { col: 3, row: 0 };
 
 /* La Zona de EVENTOS: la manzana (0,3), esquina suroeste, la única sin
-   distrito. Ahí vive el estadio y el evento vigente (hoy el SJO Decision
-   Lab de ODEA 1); el evento rota, la zona se queda. */
+   distrito. Ahí vive el estadio y el evento vigente (hoy Operación
+   Confirmación); el evento rota, la zona se queda. */
 export const EVENTOS_CELL = { col: 0, row: 3 };
 
 /* La ACADEMIA: la manzana oeste del Distrito IA (1,0), el distrito que ya
