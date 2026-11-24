@@ -31,7 +31,7 @@ import { CAMPAIGNS, CAMPAIGN_MISSIONS } from "../src/campaigns.js";
 import { garageView } from "../src/garage-state.js";
 import { ianView } from "../src/ian-state.js";
 import { marcaView } from "../src/marca-state.js";
-import { inglesView } from "../src/ingles-state.js";
+import { inglesView, srsSession } from "../src/ingles-state.js";
 import { buildProgressSummary, dailyPlanView, jarvisView } from "../src/jarvis-state.js";
 import { newJarvisRequestId } from "../src/jarvis-actions.js";
 import { libretaView } from "../src/libreta-state.js";
@@ -1753,7 +1753,9 @@ function renderInglesPanel() {
   renderIngles(els.careerDialog, {
     view: inglesView(bundle, gameplayDate().date),
     onBack: () => closeCampaign(),
-    onComplete: (missionId) => saveInglesAction({ type: "ingles.complete", missionId })
+    onComplete: (missionId) => saveInglesAction({ type: "ingles.complete", missionId }),
+    onMutate: (mutation) => saveInglesAction(mutation),
+    getSrsSession: () => srsSession(bundle, gameplayDate().date)
   });
 }
 

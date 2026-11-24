@@ -419,8 +419,11 @@ export function applyMutation(draft, mutation, catalog, { at, date } = {}) {
 
   /* La Torre de Control (v0.55.0): el vivo de inglés — rutinas con
      reloj e hitos de una vez, con el Tope de Turno semanal aplicado
-     dentro del reducer (ingles-state), nunca en la UI. */
-  if (mutation && mutation.type === "ingles.complete") {
+     dentro del reducer (ingles-state), nunca en la UI. La Fase B
+     (v0.56.0) suma las herramientas (SRS, HVPT, voz, teclado): las
+     mutaciones nuevas van al mismo reducer y pagan 0 siempre. */
+  if (mutation && ["ingles.complete", "ingles.srsMark", "ingles.srsAdd",
+    "ingles.hvptAttempt", "ingles.voiceMark", "ingles.keysTest"].includes(mutation.type)) {
     return applyInglesMutation(draft, mutation, { at: atIso, date: dateKey });
   }
 
