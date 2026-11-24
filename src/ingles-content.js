@@ -356,3 +356,241 @@ export const LAB_PHRASE_BY_ID = new Map(LAB_PHRASES.map((p) => [p.id, p]));
 
 /* La prueba del teclado (§6.1.3): 5 frases del laboratorio. */
 export const KEYS_PHRASE_IDS = ["lab-01", "lab-05", "lab-09", "lab-11", "lab-14"];
+
+/* ==================================================================
+ * FASE C (v0.57.0): Escucha, dictado y banco de entrevista.
+ *
+ *  · LISTEN_CATALOG — el catálogo curado de escucha (§6.4 + §E.4):
+ *    34 fichas por niveles de velocidad (claro 10 · real 14 ·
+ *    rápido 10), cada una con acento, cobertura estimada y si trae
+ *    transcripción. Son enlaces externos: el juego NO puede saber
+ *    si viste el video (ninguna PWA puede), así que la evidencia de
+ *    campaña es el CONTROL LOCAL de 3 preguntas de las fichas que lo
+ *    traen (respuestas en el código, sin IA) y en rutinas basta
+ *    escuchar + anotar (honor system con registro, §6.4). Las
+ *    fichas con `series` comparten presentador: son la escucha
+ *    estrecha (narrow listening) de la misión de la Fase 3.
+ *  · DICTATION_CLIPS — los textos de referencia del dictado: el
+ *    modelo los lee con el TTS del dispositivo a velocidad real y
+ *    el % de palabras correctas se calcula EN LOCAL comparando lo
+ *    escrito contra el texto (bolsa de palabras). Ese % alimenta
+ *    el Tablero de OÍDO (§6.5) y la misión «Torre sorda».
+ *  · BANK_QUESTIONS — las 18 tarjetas del banco de entrevista
+ *    (§6.3 + §E.4): pregunta con su «qué busca» y la respuesta
+ *    modelo QUE YA ES DE JOSÉ (su material real de Envista: pitch,
+ *    estrella, brecha, validación) como semilla editable — el
+ *    banco guarda SU texto (patrón Libreta), sus intentos con
+ *    tiempo y su historial de pasadas. Las que no traen semilla
+ *    las escribe él: escribirlas ES parte del aprendizaje
+ *    (planificación estratégica, Ellis 2005).
+ *  · RESCUE_PHRASES — las frases de rescate del screening (§6.3.3):
+ *    pedir repetición es profesional; se entrenan como bloques.
+ * ================================================================== */
+
+const check = (q, options, answer) => ({ q, options, answer });
+
+export const LISTEN_CATALOG = [
+  /* ---------------- Nivel CLARO (10) ---------------- */
+  { id: "esc-c01", title: "VOA Learning English · Let's Learn English", kind: "Serie de lecciones", url: "https://learningenglish.voanews.com/", minutes: 30, accent: "us", speed: "claro", coverage: "fluye", transcript: true, series: "voa",
+    desc: "Lecciones graduadas con audio lento y claro y texto completo: el peldaño de entrada del catálogo." },
+  { id: "esc-c02", title: "BBC 6 Minute English · episodio de la semana", kind: "Podcast BBC", url: "https://www.bbc.co.uk/learningenglish/english/features/6-minute-english", minutes: 6, accent: "uk", speed: "claro", coverage: "fluye", transcript: true, series: "bbc6",
+    desc: "Dos presentadores, un tema, seis minutos, con transcripción y vocabulario explicado. Escucha estrecha: la misma voz, muchas veces." },
+  { id: "esc-c03", title: "BBC 6 Minute English · otro episodio (misma serie)", kind: "Podcast BBC", url: "https://www.bbc.co.uk/learningenglish/english/features/6-minute-english", minutes: 6, accent: "uk", speed: "claro", coverage: "fluye", transcript: true, series: "bbc6",
+    desc: "La segunda pasada de la escucha estrecha: mismo presentador, tema nuevo. La familiaridad con UNA voz acelera todo lo demás." },
+  { id: "esc-c04", title: "BBC · The English We Speak", kind: "Serie BBC", url: "https://www.bbc.co.uk/learningenglish/english/features/the-english-we-speak", minutes: 3, accent: "uk", speed: "claro", coverage: "fluye", transcript: true, series: "bbc6",
+    desc: "Expresiones reales del inglés de todos los días, en cápsulas de 3 minutos con transcripción." },
+  { id: "esc-c05", title: "Rachel's English · pronunciación en frases", kind: "Video de pronunciación", url: "https://www.youtube.com/@rachelsenglish", minutes: 10, accent: "us", speed: "claro", coverage: "fluye", transcript: true,
+    desc: "Pronunciación estadounidense explicada despacio: linking, reducciones y ritmo, con subtítulos." },
+  { id: "esc-c06", title: "Tim Urban (TED) · Inside the mind of a master procrastinator", kind: "Charla TED", url: "https://www.ted.com/talks/tim_urban_inside_the_mind_of_a_master_procrastinator", minutes: 14, accent: "us", speed: "claro", coverage: "fluye", transcript: true,
+    desc: "Divertida y clara: el mono de la gratificación instantánea contra el monstruo del pánico. Perfecta para el primer control de comprensión.",
+    check: [
+      check("¿Qué dos «personajes» pelean en la cabeza del procrastinador, según Tim Urban?", ["El jefe y el empleado", "El tomador de decisiones racional y el mono de la gratificación instantánea", "El niño y el adulto"], 1),
+      check("¿Qué es lo único que asusta al mono y lo hace salir corriendo?", ["El calendario", "El monstruo del pánico, cuando la fecha límite está encima", "El jefe enojado"], 1),
+      check("¿Cuál es el mensaje final de la charla?", ["Procrastinar no tiene ningún costo", "Todos procrastinamos en algo, y conviene mirar en qué", "Solo los estudiantes procrastinan"], 1)
+    ] },
+  { id: "esc-c07", title: "Amy Cuddy (TED) · Your body language may shape who you are", kind: "Charla TED", url: "https://www.ted.com/talks/amy_cuddy_your_body_language_may_shape_who_you_are", minutes: 21, accent: "us", speed: "claro", coverage: "fluye", transcript: true,
+    desc: "Presencia y lenguaje corporal: material directo para entrevistas, a ritmo claro y con transcripción.",
+    check: [
+      check("¿De qué trata principalmente la charla?", ["De cómo vestirse para una entrevista", "De cómo el lenguaje corporal afecta cómo nos ven y cómo nos sentimos", "De cómo memorizar respuestas"], 1),
+      check("¿Qué son las «poses de poder» (power poses) en la charla?", ["Posturas expansivas y abiertas que asociamos con confianza", "Ejercicios de gimnasio antes de la entrevista", "Gestos para intimidar al entrevistador"], 0),
+      check("¿Cuál es su consejo famoso al final?", ["«Fingilo hasta que lo logrés» (fake it till you become it)", "«Nunca mostrés nervios»", "«Hablá más fuerte que todos»"], 0)
+    ] },
+  { id: "esc-c08", title: "English with Lucy · inglés para entrevistas y trabajo", kind: "Video de inglés laboral", url: "https://www.youtube.com/@EnglishwithLucy", minutes: 12, accent: "uk", speed: "claro", coverage: "fluye", transcript: true,
+    desc: "Inglés británico claro, pensado para el trabajo: entrevistas, reuniones y frases profesionales." },
+  { id: "esc-c09", title: "Speak English with Vanessa · conversación real", kind: "Video de conversación", url: "https://www.youtube.com/@SpeakEnglishWithVanessa", minutes: 15, accent: "us", speed: "claro", coverage: "fluye", transcript: true,
+    desc: "Conversación estadounidense a ritmo amable, con las frases tal como se dicen en la vida real." },
+  { id: "esc-c10", title: "VOA Learning English · English in a Minute", kind: "Serie de cápsulas", url: "https://learningenglish.voanews.com/", minutes: 2, accent: "us", speed: "claro", coverage: "fluye", transcript: true, series: "voa",
+    desc: "Una expresión por minuto, explicada con ejemplos: el bocado más corto del catálogo." },
+
+  /* ---------------- Nivel REAL (14) ---------------- */
+  { id: "esc-r01", title: "Hans Rosling (TED) · The best stats you've ever seen", kind: "Charla TED", url: "https://www.ted.com/talks/hans_rosling_the_best_stats_you_ve_ever_seen", minutes: 19, accent: "otro", speed: "real", coverage: "fluye", transcript: true,
+    desc: "EL clásico de los datos en vivo: 200 países, 200 años, ingresos y salud moviéndose. Energía alta, vocabulario accesible.",
+    check: [
+      check("¿Qué muestra Rosling con su gráfico animado?", ["El precio del petróleo por año", "Cómo cambiaron los ingresos y la esperanza de vida de 200 países en 200 años", "Las ventas de una empresa sueca"], 1),
+      check("¿Cuál es su gran punto sobre los datos?", ["Que los datos aburren a todos", "Que con buenos datos el mundo se entiende distinto de lo que creemos", "Que solo los estadísticos deben mirar datos"], 1),
+      check("¿Qué objeto usa como puntero y ayuda en el escenario?", ["Un láser de oficina", "Una vara larga de profesor", "Un control remoto"], 1)
+    ] },
+  { id: "esc-r02", title: "David McCandless (TED) · The beauty of data visualization", kind: "Charla TED", url: "https://www.ted.com/talks/david_mccandless_the_beauty_of_data_visualization", minutes: 18, accent: "uk", speed: "real", coverage: "fluye", transcript: true,
+    desc: "Visualización de datos contada por un diseñador-periodista británico: tu oficio, en inglés británico.",
+    check: [
+      check("¿Cómo llama McCandless a los datos en la charla?", ["«El nuevo petróleo» solamente", "«El nuevo suelo»: un medio fértil para cultivar visualizaciones", "«La nueva moneda»"], 1),
+      check("¿Qué hace con cifras enormes, como miles de millones de dólares?", ["Las ignora porque confunden", "Las pone en contexto, comparándolas entre sí", "Las convierte todas a euros"], 1),
+      check("¿Cuál es su idea central?", ["Que una buena visualización deja ver patrones que la tabla esconde", "Que los gráficos siempre mienten", "Que el diseño importa más que el dato"], 0)
+    ] },
+  { id: "esc-r03", title: "Alex The Analyst · Data Analyst Portfolio Project", kind: "Video proyecto (YouTube)", url: "https://www.youtube.com/@AlexTheAnalyst", minutes: 40, accent: "us", speed: "real", coverage: "exige", transcript: true, series: "alex",
+    desc: "Su video insignia: un proyecto completo de portafolio de analista, paso a paso. Buscalo por el título en su canal.",
+    check: [
+      check("¿Qué construye Alex en el video del proyecto de portafolio?", ["Una tienda en línea", "Un proyecto de análisis completo para mostrar en el portafolio (limpieza y exploración de datos)", "Un videojuego de datos"], 1),
+      check("¿Qué herramientas aparecen en su flujo de trabajo?", ["SQL, Excel y herramientas de visualización como Tableau/Power BI", "Solo Word y PowerPoint", "Únicamente Python"], 0),
+      check("¿Para qué sirve el proyecto, según el video?", ["Para venderlo a una empresa", "Para demostrar habilidades reales al buscar trabajo de analista", "Para un examen universitario"], 1)
+    ] },
+  { id: "esc-r04", title: "Alex The Analyst · SQL para analistas (misma serie)", kind: "Video tutorial (YouTube)", url: "https://www.youtube.com/@AlexTheAnalyst", minutes: 30, accent: "us", speed: "real", coverage: "exige", transcript: true, series: "alex",
+    desc: "Escucha estrecha, segunda voz del mismo presentador: SQL explicado trabajando, a velocidad real." },
+  { id: "esc-r05", title: "Alex The Analyst · Excel/Tableau (misma serie)", kind: "Video tutorial (YouTube)", url: "https://www.youtube.com/@AlexTheAnalyst", minutes: 30, accent: "us", speed: "real", coverage: "exige", transcript: true, series: "alex",
+    desc: "Tercera pasada con la misma voz: cuando una voz ya «fluye», el oído descansa y la velocidad deja de doler." },
+  { id: "esc-r06", title: "Luke Barousse · Cómo ser analista de datos", kind: "Video de carrera (YouTube)", url: "https://www.youtube.com/@LukeBarousse", minutes: 15, accent: "us", speed: "real", coverage: "fluye", transcript: true,
+    desc: "Carrera de analista contada con datos por un analista: mercado, salarios y ruta de aprendizaje." },
+  { id: "esc-r07", title: "CodeBasics · Business Insights 360 (proyecto Power BI)", kind: "Video proyecto (YouTube)", url: "https://www.youtube.com/@codebasics", minutes: 35, accent: "in", speed: "real", coverage: "exige", transcript: true,
+    desc: "Acento indio a velocidad real: el proyecto insignia de Power BI del canal, un tablero de negocio completo para una empresa ficticia de hardware.",
+    check: [
+      check("¿Qué se construye en el proyecto Business Insights 360?", ["Un sitio web de ventas", "Un tablero (dashboard) de negocio en Power BI con vistas de ventas, finanzas y más", "Una base de datos desde cero en papel"], 1),
+      check("¿La empresa del proyecto es…?", ["Una empresa real de la India", "Una empresa ficticia de hardware (AtliQ) creada para el proyecto", "La empresa del presentador"], 1),
+      check("¿Para qué presenta el canal este proyecto?", ["Como portafolio: demuestra el trabajo completo de un analista, de datos a decisiones", "Como examen de certificación oficial", "Como publicidad de Power BI"], 0)
+    ] },
+  { id: "esc-r08", title: "Krish Naik · datos y entrevistas técnicas", kind: "Video técnico (YouTube)", url: "https://www.youtube.com/@krishnaik06", minutes: 25, accent: "in", speed: "real", coverage: "exige", transcript: true,
+    desc: "Acento indio técnico: ciencia de datos y preparación de entrevistas, con subtítulos." },
+  { id: "esc-r09", title: "Data Stories · podcast de visualización", kind: "Podcast", url: "https://datastori.es/", minutes: 45, accent: "us", speed: "real", coverage: "exige", transcript: false,
+    desc: "Conversaciones con gente que vive de contar datos: el podcast clásico de la visualización." },
+  { id: "esc-r10", title: "Not So Standard Deviations · podcast de datos", kind: "Podcast", url: "https://www.nssdeviations.com/", minutes: 40, accent: "us", speed: "real", coverage: "exige", transcript: false,
+    desc: "Dos estadísticos hablando de datos y de la profesión, con humor y sin guion de curso." },
+  { id: "esc-r11", title: "Guy in a Cube · Power BI en serio", kind: "Video técnico (YouTube)", url: "https://www.youtube.com/@GuyInACube", minutes: 12, accent: "us", speed: "real", coverage: "exige", transcript: true,
+    desc: "Power BI explicado por dos ingenieros del producto: tu herramienta diaria, en inglés real." },
+  { id: "esc-r12", title: "The Data Exchange · podcast de la industria", kind: "Podcast", url: "https://thedataexchange.media/", minutes: 40, accent: "us", speed: "real", coverage: "exige", transcript: false,
+    desc: "Entrevistas con líderes de datos e IA: vocabulario de industria a velocidad de conversación." },
+  { id: "esc-r13", title: "Madeline Mann · «Tell me about yourself»", kind: "Video de entrevistas (YouTube)", url: "https://www.youtube.com/@SelfMadeMillennial", minutes: 10, accent: "us", speed: "real", coverage: "fluye", transcript: true,
+    desc: "La respuesta a la pregunta que abre todo screening, con su fórmula famosa. Escucha con robo útil: va directo a tu banco.",
+    check: [
+      check("¿Qué estructura recomienda Madeline Mann para «Tell me about yourself»?", ["Pasado, presente y futuro, en orden libre", "Presente, pasado, futuro: dónde estás, qué te trajo, a dónde vas", "Solo hablar del futuro"], 1),
+      check("¿Cuánto debería durar la respuesta, según su consejo?", ["Unos 30 segundos exactos", "Alrededor de 1–2 minutos, enfocada en lo relevante para el puesto", "Cinco minutos con toda la historia"], 1),
+      check("¿Qué error marca como el más común?", ["Hablar demasiado bajo", "Contar toda la vida desde la infancia en vez de lo relevante para el rol", "Hacer preguntas al final"], 1)
+    ] },
+  { id: "esc-r14", title: "Linda Raynier · entrevistas y carrera", kind: "Video de entrevistas (YouTube)", url: "https://www.youtube.com/@LindaRaynier", minutes: 12, accent: "us", speed: "real", coverage: "fluye", transcript: true,
+    desc: "Consejos de entrevista directos y practicables, a velocidad de conversación real." },
+
+  /* ---------------- Nivel RÁPIDO (10) ---------------- */
+  { id: "esc-f01", title: "Wendover Productions · logística y aviación", kind: "Video ensayo (YouTube)", url: "https://www.youtube.com/@Wendoverproductions", minutes: 15, accent: "us", speed: "rapido", coverage: "exige", transcript: true,
+    desc: "Narración rápida sobre cómo se mueve el mundo: aerolíneas, envíos, logística. Tu industria, a velocidad nativa plena." },
+  { id: "esc-f02", title: "Mark Rober · ingeniería que se disfruta", kind: "Video (YouTube)", url: "https://www.youtube.com/@MarkRober", minutes: 15, accent: "us", speed: "rapido", coverage: "exige", transcript: true,
+    desc: "Ingeniería contada rápido y con energía: el oído trabaja, el tema entretiene." },
+  { id: "esc-f03", title: "Veritasium · ciencia con acento australiano", kind: "Video (YouTube)", url: "https://www.youtube.com/@veritasium", minutes: 14, accent: "otro", speed: "rapido", coverage: "exige", transcript: true,
+    desc: "Otra orilla del inglés: acento australiano, ritmo rápido, temas que atrapan." },
+  { id: "esc-f04", title: "Krish Naik · sesión de preguntas en vivo", kind: "Video en vivo (YouTube)", url: "https://www.youtube.com/@krishnaik06", minutes: 30, accent: "in", speed: "rapido", coverage: "exige", transcript: true,
+    desc: "El mismo acento indio de la fase real, pero en vivo y sin guion: más rápido y menos limpio. El examen del oído." },
+  { id: "esc-f05", title: "CodeBasics · proyecto avanzado de datos", kind: "Video proyecto (YouTube)", url: "https://www.youtube.com/@codebasics", minutes: 30, accent: "in", speed: "rapido", coverage: "exige", transcript: true,
+    desc: "Acento indio en modo proyecto largo: vocabulario técnico denso a velocidad real de trabajo." },
+  { id: "esc-f06", title: "Ken Jee · carrera en datos, sin vueltas", kind: "Video de carrera (YouTube)", url: "https://www.youtube.com/@KenJee_ds", minutes: 12, accent: "us", speed: "rapido", coverage: "exige", transcript: true,
+    desc: "Ciencia de datos y carrera hablados rápido y directo: densidad alta por minuto." },
+  { id: "esc-f07", title: "Tina Huang · datos y tecnología", kind: "Video (YouTube)", url: "https://www.youtube.com/@TinaHuang1", minutes: 12, accent: "us", speed: "rapido", coverage: "exige", transcript: true,
+    desc: "Datos, IA y carrera a ritmo de creadora: rápido, claro en estructura, exigente en velocidad." },
+  { id: "esc-f08", title: "BBC News · segmento de negocios", kind: "Noticias (web)", url: "https://www.bbc.com/news/business", minutes: 5, accent: "uk", speed: "rapido", coverage: "exige", transcript: false,
+    desc: "Noticias de negocios en británico de noticiero: la velocidad a la que el mundo cuenta la plata." },
+  { id: "esc-f09", title: "The Economist · videos de economía", kind: "Video ensayo (YouTube)", url: "https://www.youtube.com/@TheEconomist", minutes: 10, accent: "uk", speed: "rapido", coverage: "exige", transcript: true,
+    desc: "Economía global en británico denso y rápido: el peldaño alto del catálogo." },
+  { id: "esc-f10", title: "Wall Street Journal · videos de negocios", kind: "Video (YouTube)", url: "https://www.youtube.com/@WSJ", minutes: 10, accent: "us", speed: "rapido", coverage: "exige", transcript: true,
+    desc: "Negocios y mercados en estadounidense de redacción: rápido, preciso, sin pausas de cortesía." }
+];
+
+export const LISTEN_BY_ID = new Map(LISTEN_CATALOG.map((m) => [m.id, m]));
+
+/* Los acentos que el hito «Tres acentos» (ingles-h9) vigila. */
+export const LISTEN_ACCENTS = {
+  us: "EE. UU.", uk: "Británico", "in": "Indio", otro: "Otro"
+};
+
+/* ------------------------------------------------------------------
+ * DICTADO DE REFERENCIA (§6.4 carril intensivo + §6.5 OÍDO): textos
+ * fijos en código que el TTS lee a velocidad real. El % se calcula
+ * en local (bolsa de palabras contra el texto) y se registra con
+ * `ingles.dictation`: es el número medible de la habilidad OÍDO.
+ * dic-05 es el clip largo de la misión «Torre sorda» (~2 min).
+ * ------------------------------------------------------------------ */
+export const DICTATION_CLIPS = [
+  { id: "dic-1", level: 1, title: "La mañana en el aeropuerto",
+    text: "Good morning. The first flights arrive at six, and the office opens at five. I check the bookings, print the list, and count the cars. Today we have forty reservations and only thirty eight cars ready." },
+  { id: "dic-2", level: 1, title: "El reporte diario",
+    text: "Every morning I download the data and build the daily report. Before, the report took two hours by hand. Now an agent prepares the numbers, and I check the totals. If a number does not match, I find the error before the meeting." },
+  { id: "dic-3", level: 2, title: "La llamada del cliente",
+    text: "Good afternoon, thank you for calling. Your reservation is under your name for Friday at nine. The car is ready at the airport office, and the price includes full insurance and unlimited mileage. Please bring your license and a credit card for the deposit." },
+  { id: "dic-4", level: 2, title: "La reunión del lunes",
+    text: "In the Monday meeting we review the numbers of the week. Bookings went up twelve percent compared to last month, but the no show rate also increased. The team decided to send a confirmation message the day before each pickup and measure the result for two weeks." },
+  { id: "dic-5", level: 3, title: "Torre sorda · el clip largo de referencia",
+    text: "Last month I audited the numbers of our operation because something did not feel right. The report said that fifteen percent of our customers never showed up to pick up their cars, and that number was driving big decisions. I compared the report with the source data, line by line, and I found the problem: some reservations were counted twice, once when they were created and once when they were modified. I fixed the logic, added a daily check of the totals, and the real rate came down to nine percent. The lesson stayed with me. A wrong number is worse than no number, because people decide with it. Since that day, I never trust a number I cannot reconcile, and I teach the same rule to everyone who works with my dashboards." },
+  { id: "dic-6", level: 3, title: "El hallazgo (tu historia, en dictado)",
+    text: "I automated our daily report. It went from two hours to fifteen minutes, and it saved the team more than ten hours every week. The agent downloads the data in the morning, Python cleans it, and the dashboard is ready before the first meeting. My manager asked me how I did it, and I explained every step with the numbers in front of us." }
+];
+
+export const DICTATION_BY_ID = new Map(DICTATION_CLIPS.map((c) => [c.id, c]));
+
+/* ------------------------------------------------------------------
+ * BANCO DE ENTREVISTA (§6.3 + §E.4): 18 tarjetas. `seed` es la
+ * respuesta modelo de José (su material real de noviembre) que la
+ * tarjeta muestra hasta que él guarda la suya; sin seed, la escribe
+ * él. `target` es el tiempo guía en segundos cuando la tarjeta es
+ * de contrarreloj (la estrella: 90 → 70 → 50).
+ * ------------------------------------------------------------------ */
+export const BANK_QUESTIONS = [
+  { id: "bank-01", q: "Tell me about yourself.", hint: "La apertura de todo screening: quién sos, tu caja de herramientas, tu sello (automatización e IA aplicada) y qué buscás. Sin leer, en cerca de un minuto.", target: 60,
+    seed: "I am a data analyst at ANC Rent a Car, at Juan Santamaría Airport in Costa Rica. I have worked with data for about two years. I work with Python, SQL, Power BI, Tableau and Excel. My thing is building automations and applied AI agents that save real hours: I turned a two-hour daily report into fifteen minutes. Now I am studying Marketing at university, and I am looking to grow into marketing analytics with a global team." },
+  { id: "bank-02", q: "What do you do in your current role?", hint: "Tu día real: las 500+ reservas, los tableros que la operación abre cada mañana y para qué decide con ellos.", target: 60,
+    seed: "I am responsible for the daily operation reports. I analyze more than five hundred reservations a day for Alamo, Enterprise and National, and I build the Power BI dashboards the operation uses to plan the day: fleet availability, car movements between offices, returns and bookings." },
+  { id: "bank-03", q: "Tell me about a time you improved a process.", hint: "Tu historia estrella en STAR: situación (2 horas manuales), acción (agente + Python/VBA + n8n a Power BI), resultado (15 minutos, 10+ horas por semana). La del contrarreloj: 90 → 70 → 50 s.", target: 90,
+    seed: "Our daily operation report took about two hours, done by hand every morning. I built an agent that downloads the data, Python and VBA clean and build it, and n8n runs it automatically into Power BI. The report now takes fifteen minutes. We save more than ten hours a week, and the team works with numbers it can trust." },
+  { id: "bank-04", q: "Tell me about a mistake you found — or one you made.", hint: "Tu doble conteo del no-show contado como fortaleza de auditoría: qué encontraste, qué corregiste y la lección («never trust a number you cannot reconcile»).", target: 75,
+    seed: "Auditing our no-show numbers, I found the report was counting some reservations twice, so the rate looked worse than it was. I fixed the logic and added a daily totals check. My lesson: never trust a number you cannot reconcile." },
+  { id: "bank-05", q: "Why are you looking for a new job?", hint: "En positivo, sin hablar mal de ANC: crecimiento hacia marketing analytics y equipos globales. Una o dos frases.", target: 40,
+    seed: "I am grateful for my time at ANC — I learned real operations there. I am looking for growth: I want to move into marketing analytics, work with global teams, and keep building data products. That is also why I am studying Marketing." },
+  { id: "bank-06", q: "Why this company? Why marketing analytics?", hint: "El puente: el puesto junta tus dos mundos (datos y el marketing que estudiás) y tu línea de los primeros 30 días (auditar fuentes, documentar definiciones, primer dashboard).", target: 60,
+    seed: "This role joins my two worlds: data and marketing. I audit marketing-style data every day — funnels, drop-offs, performance dashboards — and I am studying Marketing at university. In my first thirty days I would audit the data sources, document the definitions, and build the first dashboard, like I did in my current job." },
+  { id: "bank-07", q: "What are your salary expectations?", hint: "Validación pura: corta, directa, sin disculpas y sin negociar contra vos mismo. Tu cifra definida: ₡750.000 brutos al mes.", target: 15,
+    seed: "My expected salary is 750,000 colones gross per month." },
+  { id: "bank-08", q: "When can you start?", hint: "Validación pura: disponibilidad inmediata, dicha en una frase tranquila.", target: 15,
+    seed: "I am available to start immediately." },
+  { id: "bank-09", q: "What is your greatest weakness?", hint: "La debilidad sin miedo: tu inglés hablado, con la prueba viva de tu plan («…and I am training it daily») — esta Torre es parte de la respuesta.", target: 60,
+    seed: "My spoken English. At my last screening they told me my level was not high enough yet — so now I train it every day: pronunciation, listening at real speed, and interview practice. It is improving fast, because I use English eight hours a day at the airport." },
+  { id: "bank-10", q: "What is your greatest strength?", hint: "Tu fortaleza con evidencia: convertir datos desordenados en decisiones, auditando antes de calcular.", target: 45,
+    seed: "I turn messy data into decisions. I audit before I calculate: I check totals, duplicates and definitions first, and then I automate what repeats. The result is numbers the team can trust, delivered fast." },
+  { id: "bank-11", q: "Why should we hire you?", hint: "El cierre de venta: experiencia real (no solo cursos), automatización con números y la carrera en curso. Tres frases, sin humo.", target: 45,
+    seed: "Because I bring real data experience, not just courses: two years analyzing five hundred reservations a day, automations that save ten hours a week, and a marketing degree in progress. I learn fast, and I prove it with work, not words." },
+  { id: "bank-12", q: "Can you explain what a JOIN is?", hint: "Inglés técnico simple: qué es, la llave que comparten y un ejemplo con TUS tablas (reservas × oficinas). Sin jerga innecesaria.", target: 60,
+    seed: "A JOIN combines two tables using a key they share. For example, I join the reservations table with the offices table on the office code, so each booking shows its office name. The type of join decides what happens with rows that have no match." },
+  { id: "bank-13", q: "Tell me about the dashboards you build.", hint: "Tus tableros reales de Power BI y la idea que los ordena: cada tablero nace de una decisión, no del dato que haya.", target: 60,
+    seed: "I build Power BI dashboards the operation opens every morning: bookings, fleet availability, no-shows and revenue. Each one starts from a decision — what the team needs to decide today — not from the data we happen to have." },
+  { id: "bank-14", q: "How do you make sure your data is correct?", hint: "Tu método de calidad: conciliar totales, duplicados, faltantes y definiciones — con el caso del doble conteo como prueba.", target: 60,
+    seed: "I reconcile. I compare the totals between the source and the report, check for duplicates and missing values, and validate the definitions with the team. Once I found our no-show report counting reservations twice — that check is now automatic, every day." },
+  { id: "bank-15", q: "Tell me about a challenge or a disagreement at work.", hint: "Escribila vos en STAR: la situación, tu tarea, qué hiciste y el resultado con números. Si hubo desacuerdo, contá cómo lo resolviste con datos, no con volumen." },
+  { id: "bank-16", q: "Where do you see yourself in five years?", hint: "Tu dirección real: marketing analytics con equipos globales, liderando productos de datos. Que suene a plan, no a frase de cajón.", target: 45,
+    seed: "Working in marketing analytics with a global team, leading data products — dashboards and automations that marketing and operations use to decide. I am building that path now: the degree, the certificates, and projects like this one." },
+  { id: "bank-17", q: "What do you know about GA4 and digital measurement?", hint: "Los 4 conceptos en una frase cada uno (evento, conversión, UTM, atribución) y tu plan: la auditoría de datos que ya hacés se transfiere directo.", target: 75,
+    seed: "An event is any action we measure — a click, a view, a conversion. A conversion is the event that is worth money, like a lead or a sale. UTMs are tags on links that tell us which campaign brought each visit, and attribution decides which channel gets the credit. I am learning GA4 now, and my data audit experience transfers directly." },
+  { id: "bank-18", q: "Do you have any questions for us?", hint: "Tus 3 preguntas de siempre: el equipo y a quién reportás, las herramientas de medición que usan hoy, y cómo se ve el éxito en 6 meses. Decir «no» resta puntos.", target: 45,
+    seed: "Yes, three. How is the team structured, and who would I report to? What tools do you use today for measurement and dashboards? And how does success look in this role in the first six months?" }
+];
+
+export const BANK_BY_ID = new Map(BANK_QUESTIONS.map((q) => [q.id, q]));
+
+/* Las frases de rescate (§6.3.3): pedir repetición es profesional.
+ * Viven también como tarjetas de producción del deck Entrevista. */
+export const RESCUE_PHRASES = [
+  "Sorry, could you repeat that, please?",
+  "Could you speak a little slower, please?",
+  "Just to confirm — you are asking about…?"
+];
+
+/* Fuentes válidas de la bitácora de errores (§6.3.2). */
+export const ERROR_SOURCES = {
+  dictogloss: "Dictogloss / dictado",
+  simulacro: "Simulacro",
+  ab: "Ciclo A/B",
+  llamada: "Llamada real",
+  manual: "A mano"
+};
