@@ -31,6 +31,7 @@ import { CAMPAIGNS, CAMPAIGN_MISSIONS } from "../src/campaigns.js";
 import { garageView } from "../src/garage-state.js";
 import { ianView } from "../src/ian-state.js";
 import { marcaView } from "../src/marca-state.js";
+import { inglesView } from "../src/ingles-state.js";
 import { buildProgressSummary, dailyPlanView, jarvisView } from "../src/jarvis-state.js";
 import { newJarvisRequestId } from "../src/jarvis-actions.js";
 import { libretaView } from "../src/libreta-state.js";
@@ -44,6 +45,7 @@ import {
 import { renderGarage } from "./garage-ui.js";
 import { renderIan } from "./ian-ui.js";
 import { renderMarca } from "./marca-ui.js";
+import { renderIngles } from "./ingles-ui.js";
 import { renderJarvis } from "./jarvis-ui.js";
 import { renderShop } from "./shop-ui.js";
 import { renderInventory } from "./inventory-ui.js";
@@ -53,7 +55,7 @@ import { renderLibreta } from "./libreta-ui.js";
 import { fmt } from "./format.js";
 import { equippedLook, shopItem } from "../src/shop.js";
 import { DISTRICTS } from "./districts.js";
-import { academiaRect, cellRect, clipsRect, eventosRect, jarvisRect, marcaRect, mundoianRect, pointInRect, sabiduriaRect, zonaiaRect } from "./city/layout.js";
+import { academiaRect, cellRect, clipsRect, eventosRect, jarvisRect, marcaRect, mundoianRect, pointInRect, sabiduriaRect, torreControlRect, zonaiaRect } from "./city/layout.js";
 import { newPlayerBundle } from "../src/new-player.js";
 import {
   TAB_MOCHILA,
@@ -208,6 +210,8 @@ let ianOpen = false;
 let ianWritePending = false;
 let marcaOpen = false;
 let marcaWritePending = false;
+let inglesOpen = false;
+let inglesWritePending = false;
 let jarvisOpen = false;
 let jarvisWritePending = false;
 let libretaUi = { mode: "list", noteId: null };
@@ -411,6 +415,16 @@ function openDistrict(id) {
        queda a un botón dentro, como el archivo de Empleo en El Brete. */
     closePhone();
     openGarage();
+    return;
+  }
+  if (id === "torrecontrol") {
+    /* La manzana (2,3) abre LA TORRE DE CONTROL (decisión de José,
+       2026-11-24): la zona de inglés vive ahí en exclusiva. Era la
+       mitad este del Distrito Empleo, que se consolida en la (1,3)
+       — su puerta (El Brete) sigue abriendo desde esa manzana y el
+       progreso career/hunt no se toca: deriva de registros. */
+    closePhone();
+    openIngles();
     return;
   }
   if (id === "vida" || id === "marca") {
@@ -772,6 +786,7 @@ function openInventoryStandalone(fromShop = false) {
     garageOpen = false;
     ianOpen = false;
     marcaOpen = false;
+    inglesOpen = false;
     jarvisOpen = false;
     dailyStandalone = false;
     careerReturnFocus = document.activeElement;
@@ -965,6 +980,7 @@ function openCampaign(id, inPhone = false) {
   garageOpen = false;
   ianOpen = false;
   marcaOpen = false;
+  inglesOpen = false;
   jarvisOpen = false;
   if (walkOn) setWalk(false);
   if (viewSession) viewSession.capture();
@@ -1012,11 +1028,12 @@ function openCampaign(id, inPhone = false) {
 }
 
 function closeCampaign() {
-  if (!careerId && !garageOpen && !ianOpen && !marcaOpen && !jarvisOpen) return;
+  if (!careerId && !garageOpen && !ianOpen && !marcaOpen && !inglesOpen && !jarvisOpen) return;
   careerId = null;
   garageOpen = false;
   ianOpen = false;
   marcaOpen = false;
+  inglesOpen = false;
   jarvisOpen = false;
   els.careerBackdrop.hidden = true;
   if (viewSession) viewSession.restore();
@@ -1030,6 +1047,7 @@ function renderActiveCampaign() {
   if (garageOpen && !inPhone) { renderGaragePanel(); return; }
   if (ianOpen && !inPhone) { renderIanPanel(); return; }
   if (marcaOpen && !inPhone) { renderMarcaPanel(); return; }
+  if (inglesOpen && !inPhone) { renderInglesPanel(); return; }
   if (jarvisOpen && !inPhone) { renderJarvisPanel(); return; }
   const id = inPhone ? phoneView : careerId;
   if (!id || !bundle) return;
@@ -1377,6 +1395,7 @@ function openDailyStandalone() {
   garageOpen = false;
   ianOpen = false;
   marcaOpen = false;
+  inglesOpen = false;
   jarvisOpen = false;
   shopStandalone = false;
   careerReturnFocus = document.activeElement;
@@ -1417,6 +1436,7 @@ function openShopStandalone() {
   garageOpen = false;
   ianOpen = false;
   marcaOpen = false;
+  inglesOpen = false;
   jarvisOpen = false;
   dailyStandalone = false;
   careerReturnFocus = document.activeElement;
@@ -1499,6 +1519,7 @@ function openGarage() {
   careerReturnFocus = document.activeElement;
   careerId = null;
   marcaOpen = false;
+  inglesOpen = false;
   garageOpen = true;
   els.careerBackdrop.hidden = false;
   els.careerDialog.focus({ preventScroll: true });
@@ -1586,6 +1607,7 @@ function openIan() {
   careerReturnFocus = document.activeElement;
   careerId = null;
   marcaOpen = false;
+  inglesOpen = false;
   ianOpen = true;
   els.careerBackdrop.hidden = false;
   els.careerDialog.focus({ preventScroll: true });
@@ -1699,6 +1721,69 @@ async function saveMarcaAction(mutation) {
   }
 }
 
+/* ------------------- La Torre de Control viva (inglés) ------------------- */
+
+function openIngles() {
+  if (!bundle || !catalog) return;
+  dailyStandalone = false;
+  shopStandalone = false;
+  garageOpen = false;
+  ianOpen = false;
+  marcaOpen = false;
+  jarvisOpen = false;
+  if (walkOn) setWalk(false);
+  if (viewSession) viewSession.capture();
+  hideSheetRaw();
+  hideOverlayRaw();
+  closePhone();
+  careerReturnFocus = document.activeElement;
+  careerId = null;
+  inglesOpen = true;
+  els.careerBackdrop.hidden = false;
+  els.careerDialog.focus({ preventScroll: true });
+  if (city) {
+    const r = torreControlRect();
+    city.camera.jumpTo(r.x + r.w / 2, r.y + r.h / 2, city.camera.clampZoom(0.8));
+  }
+  renderInglesPanel();
+}
+
+function renderInglesPanel() {
+  if (!inglesOpen || !bundle) return;
+  renderIngles(els.careerDialog, {
+    view: inglesView(bundle, gameplayDate().date),
+    onBack: () => closeCampaign(),
+    onComplete: (missionId) => saveInglesAction({ type: "ingles.complete", missionId })
+  });
+}
+
+async function saveInglesAction(mutation) {
+  if (inglesWritePending) return { text: "Ya hay un registro en curso.", kind: "error" };
+  inglesWritePending = true;
+  try {
+    const result = await applyGameplayMutationLocked(storage, catalog, mutation, gameplayDate());
+    if (result.status !== "applied") {
+      const messages = {
+        DUPLICATE: "Eso ya estaba registrado hoy; no se pagó otra vez.",
+        QUOTA_EXCEEDED: "No hay espacio para guardar. Exportá un respaldo y liberá espacio antes de continuar.",
+        CONCURRENT_CHANGE: "Otra pestaña cambió el progreso. Revisá el registro antes de volver a intentar."
+      };
+      refresh();
+      setTimeout(renderInglesPanel, 1100);
+      return { text: messages[result.error?.code] ||
+        (result.status === "duplicate" ? messages.DUPLICATE :
+          `No se pudo guardar (${result.error?.code || "error"}). No se otorgaron premios.`), kind: "error" };
+    }
+    refresh();
+    setTimeout(renderInglesPanel, 500);
+    return null;
+  } catch (error) {
+    return { text: "No se pudo guardar. Tu progreso anterior sigue intacto; exportá un respaldo y reintentá.", kind: "error" };
+  } finally {
+    inglesWritePending = false;
+  }
+}
+
 /* ------------------------- Jarvis, el compañero -------------------------
    El robotcito de la Zona IA (v0.38.0): vive en el mismo #career-dialog
    de las campañas, con su propia bandera como el Garaje e Ian. La IA es
@@ -1713,6 +1798,7 @@ function openJarvis() {
   garageOpen = false;
   ianOpen = false;
   marcaOpen = false;
+  inglesOpen = false;
   if (walkOn) setWalk(false);
   if (viewSession) viewSession.capture();
   hideSheetRaw();
@@ -2051,6 +2137,13 @@ function showPhoneMissions() {
   marcaBtn.type = "button";
   marcaBtn.addEventListener("click", () => { closePhone(); openMarca(); });
   root.append(marcaBtn);
+  /* v0.55.0: La Torre de Control (inglés) se suma a Sistemas vivos
+     con su conteo de hitos, como el Garaje, Ian y el Estudio. */
+  const ingles = inglesView(bundle, gameplayDate().date);
+  const inglesBtn = phoneEl("button", "campaign-phone-route", `La Torre de Control · ${ingles.hitosDone}/${ingles.hitosTotal} hitos`);
+  inglesBtn.type = "button";
+  inglesBtn.addEventListener("click", () => { closePhone(); openIngles(); });
+  root.append(inglesBtn);
   if (els.phoneHome) els.phoneHome.hidden = true;
   root.hidden = false;
 }
@@ -2064,6 +2157,7 @@ function showPhoneMap() {
   root.replaceChildren(phoneEl("h3", "phone-screen-title", "Destinos de Costa Neón"),
     phoneEl("p", "phone-screen-sub", "Elegí un destino. Se abre su localización en el mapa."));
   for (const destination of [{ id: "gamer", name: "Zona Gamer · Estudio de clips" },
+    { id: "torrecontrol", name: "La Torre de Control · Inglés" },
     ...DISTRICTS.map((d) => ({ id: d.id, name: d.id === "empleo" ? "El Brete · Analista de datos" : d.id === "vida" ? "Estudio Neón · Marca personal" : d.name }))]) {
     const button = phoneEl("button", "campaign-phone-route", destination.name);
     button.type = "button";
@@ -2579,6 +2673,7 @@ async function boot() {
       else if (garageOpen) closeCampaign();
       else if (ianOpen) closeCampaign();
       else if (marcaOpen) closeCampaign();
+      else if (inglesOpen) closeCampaign();
       else if (jarvisOpen) closeCampaign();
       else if (dailyStandalone) closeDailyStandalone();
       else if (inventoryStandalone) closeInventoryStandalone();
