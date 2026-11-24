@@ -421,9 +421,14 @@ export function applyMutation(draft, mutation, catalog, { at, date } = {}) {
      reloj e hitos de una vez, con el Tope de Turno semanal aplicado
      dentro del reducer (ingles-state), nunca en la UI. La Fase B
      (v0.56.0) suma las herramientas (SRS, HVPT, voz, teclado): las
-     mutaciones nuevas van al mismo reducer y pagan 0 siempre. */
+     mutaciones nuevas van al mismo reducer y pagan 0 siempre. La
+     Fase C (v0.57.0) suma banco de entrevista, escucha, bitácora,
+     medición EF SET y simulacros: mismo reducer, 0 paga propia —
+     solo otorgan los hitos cuya evidencia es el registro. */
   if (mutation && ["ingles.complete", "ingles.srsMark", "ingles.srsAdd",
-    "ingles.hvptAttempt", "ingles.voiceMark", "ingles.keysTest"].includes(mutation.type)) {
+    "ingles.hvptAttempt", "ingles.voiceMark", "ingles.keysTest",
+    "ingles.bankSave", "ingles.bankTry", "ingles.listenCheck", "ingles.dictation",
+    "ingles.errorAdd", "ingles.errorRemove", "ingles.efset", "ingles.mock"].includes(mutation.type)) {
     return applyInglesMutation(draft, mutation, { at: atIso, date: dateKey });
   }
 
