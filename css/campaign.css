@@ -1042,6 +1042,77 @@ button.jarvis-tutor-chip--lesson { cursor: pointer; }
 .jarvis-tutor-bank { margin-top: 4px; }
 .jarvis-tutor-practice { justify-self: start; }
 
+/* ----------------- El banco de preguntas (v0.52.0) -----------------
+   El cuaderno de José dentro del diálogo: chips de módulo y tarjetas
+   con la familia visual del Tutor (📚 cian / 💬 gris ya viven arriba);
+   el repaso revela la respuesta en verde, como el feedback. */
+.jarvis-bank-save { justify-self: start; }
+.jarvis-bank-saved {
+  justify-self: start; margin: 0;
+  font-size: 12.5px; font-weight: 700; color: #3ED97A;
+}
+.jarvis-bank-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.jarvis-bank-chip {
+  appearance: none; font: inherit; cursor: pointer;
+  padding: 7px 12px; border-radius: 999px;
+  border: 1px solid var(--campaign-line);
+  background: var(--campaign-panel); color: var(--campaign-muted);
+  font-size: 12.5px; font-weight: 700; letter-spacing: .03em;
+}
+.jarvis-bank-chip--active {
+  border-color: #00E5FF; color: #00E5FF;
+  background: linear-gradient(125deg, rgba(0, 229, 255, .12), transparent 60%), var(--campaign-panel);
+}
+.jarvis-bank-search { margin-bottom: 12px; }
+.jarvis-bank-review { margin-bottom: 6px; }
+.jarvis-bank-group {
+  margin: 16px 0 8px; color: var(--campaign-muted);
+  font: 700 11.5px/1.5 var(--campaign-mono); letter-spacing: .05em; text-transform: uppercase;
+}
+.jarvis-bank-entry {
+  padding: 12px 14px; margin-bottom: 10px;
+  border: 1px solid var(--campaign-line); border-radius: 12px;
+  background: var(--campaign-panel);
+}
+.jarvis-bank-q { font-weight: 700; font-size: 14.5px; line-height: 1.45; }
+.jarvis-bank-a {
+  margin-top: 6px; font-size: 14px; line-height: 1.55; color: #CDEBFF;
+  white-space: pre-wrap; overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.jarvis-bank-a--open { display: block; -webkit-line-clamp: unset; }
+.jarvis-bank-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
+.jarvis-bank-date { color: var(--campaign-muted); font: 700 11px/1.5 var(--campaign-mono); }
+.jarvis-bank-toggle, .jarvis-bank-del {
+  appearance: none; font: inherit; cursor: pointer;
+  background: transparent; border: 1px solid var(--campaign-line);
+  color: var(--campaign-muted); border-radius: 8px;
+  padding: 4px 10px; font-size: 12px; font-weight: 700;
+}
+.jarvis-bank-del { margin-left: auto; }
+.jarvis-bank-del--confirm { border-color: #FF2E93; color: #FF2E93; margin-left: 0; }
+.jarvis-bank-confirm-label { font-size: 12.5px; font-weight: 700; color: #FFB3D1; }
+.jarvis-bank-foot {
+  margin-top: 14px; color: var(--campaign-muted);
+  font: 700 11px/1.5 var(--campaign-mono); letter-spacing: .04em;
+}
+.jarvis-review-progress {
+  color: var(--campaign-muted); margin-bottom: 10px;
+  font: 700 11px/1.5 var(--campaign-mono); letter-spacing: .04em;
+}
+.jarvis-review-module {
+  color: #FF2E93; margin-bottom: 8px;
+  font: 700 11.5px/1.5 var(--campaign-mono); letter-spacing: .05em; text-transform: uppercase;
+}
+.jarvis-review-q { font-size: 17px; font-weight: 800; line-height: 1.45; margin-bottom: 14px; }
+.jarvis-review-a {
+  padding: 14px 16px; margin-bottom: 12px;
+  border: 1px solid rgba(62, 217, 122, .4); border-radius: 12px;
+  background: rgba(62, 217, 122, .08); color: #EAFBF1;
+  font-size: 14.5px; line-height: 1.6; white-space: pre-wrap;
+}
+.jarvis-review-done { font-size: 15px; font-weight: 700; margin-bottom: 12px; }
+
 /* El reflejo en el panel Hoy: pastilla de foco, ⭐ manual, franja del
    día ocupado y la sección «Para mañana». */
 .jarvis-focus-pill {

@@ -11,6 +11,7 @@
  *     quizXpByDate: { "2026-11-20": 10 },          // XP de quiz por día
  *     usage: { "2026-11-20": { quiz, chat, feedback, calls } },
  *     briefing: { date, text } | null,             // saludo del día en caché
+ *     bank: [ { id, q, a, kind, ref, module, date, at } ],  // v0.52.0: el banco (§3.4), ≤ 100
  *   }
  *
  * El XP de quiz suma al bucket «career» vía derive() (jarvisRewards):
@@ -49,6 +50,16 @@ export const JARVIS_FEEDBACK_DAILY_LIMIT = 5;
 /* v0.51.0 — el Tutor de Estudio (diseño maestro §3.6): preguntar no
    paga XP ni monedas; el tope solo acota las llamadas al Worker. */
 export const JARVIS_TUTOR_DAILY_LIMIT = 15;
+/* v0.52.0 — el Banco de preguntas (diseño maestro §3.4): guardar y
+   repasar tampoco pagan XP ni monedas. Estos topes son de FORMA y de
+   tamaño del save (100 entradas, pregunta ≤300, respuesta ≤1.200) y
+   se validan estrictos en jarvisProblems, antes de guardar. */
+export const JARVIS_BANK_CAP = 100;
+export const JARVIS_BANK_Q_MAX = 300;
+export const JARVIS_BANK_A_MAX = 1200;
+export const JARVIS_BANK_REF_MAX = 120;
+export const JARVIS_BANK_MODULE_MAX = 40;
+export const JARVIS_BANK_ID_MAX = 64;
 export const ENTREVISTA_FECHA = "2026-11-24";
 
 const USAGE_KINDS = ["quiz", "chat", "feedback", "calls"];
@@ -128,6 +139,57 @@ function cleanActions(raw) {
   return out;
 }
 
+/* v0.52.0 — una entrada del banco, limpia para lectura: la misma forma
+   estricta que jarvisProblems exige al guardar. Lo que no cuadra no se
+   pinta (la validación dura vive en jarvisProblems y en bankSave). */
+function cleanBankEntry(raw) {
+  if (!isPlainObject(raw)) return null;
+  const id = typeof raw.id === "string" ? raw.id : "";
+  if (!id || id.length > JARVIS_BANK_ID_MAX) return null;
+  if (typeof raw.q !== "string" || !raw.q || raw.q.length > JARVIS_BANK_Q_MAX) return null;
+  if (typeof raw.a !== "string" || !raw.a || raw.a.length > JARVIS_BANK_A_MAX) return null;
+  if (raw.kind !== "lesson" && raw.kind !== "extra") return null;
+  const ref = raw.ref === undefined ? null : raw.ref;
+  if (ref !== null && (typeof ref !== "string" || ref.length > JARVIS_BANK_REF_MAX)) return null;
+  const module = raw.module === undefined ? null : raw.module;
+  if (module !== null && (typeof module !== "string" || module.length > JARVIS_BANK_MODULE_MAX)) return null;
+  if (!isDateKey(raw.date)) return null;
+  if (typeof raw.at !== "number" || !Number.isFinite(raw.at) || raw.at < 0) return null;
+  return { id, q: raw.q, a: raw.a, kind: raw.kind, ref, module, date: raw.date, at: raw.at };
+}
+
+function cleanBank(raw) {
+  if (!Array.isArray(raw)) return [];
+  const seen = new Set();
+  const out = [];
+  for (const entry of raw) {
+    const clean = cleanBankEntry(entry);
+    if (!clean || seen.has(clean.id)) continue;
+    seen.add(clean.id);
+    out.push(clean);
+  }
+  return out;
+}
+
+/** El banco agrupado por módulo (derivación de lectura, §3.4.2): los
+    grupos nacen en el orden de su entrada más reciente y dentro de
+    cada grupo manda el orden del array (lo más reciente primero).
+    El grupo de las extras lleva `module: null`. */
+export function jarvisBankGroups(bank) {
+  const groups = [];
+  const byModule = new Map();
+  for (const entry of Array.isArray(bank) ? bank : []) {
+    const key = entry.module || null;
+    if (!byModule.has(key)) {
+      const group = { module: key, entries: [] };
+      byModule.set(key, group);
+      groups.push(group);
+    }
+    byModule.get(key).entries.push(entry);
+  }
+  return groups;
+}
+
 /** Estado de Jarvis normalizado (lectura segura ante cualquier guardado). */
 export function jarvisStateOf(bundle) {
   const raw = isPlainObject(bundle?.play?.jarvis) ? bundle.play.jarvis : {};
@@ -176,7 +238,12 @@ export function jarvisStateOf(bundle) {
   }
   const actions = cleanActions(raw.actions);
 
-  return { quizXpByDate, usage, briefing, dayPlan, actions };
+  /* v0.52.0 — el banco: clave opcional aditiva con la misma regla de
+     siempre. Ausente = banco vacío en memoria; el save no se toca
+     hasta el primer 📌 y PLAY_VERSION no sube. */
+  const bank = cleanBank(raw.bank);
+
+  return { quizXpByDate, usage, briefing, dayPlan, actions, bank };
 }
 
 /** Vista del día: topes restantes y el saludo en caché, si es de hoy. */
@@ -199,6 +266,11 @@ export function jarvisView(bundle, today) {
     /* v0.51.0: el Tutor del día (usadas y restantes, para el pie). */
     tutorHoy: usageToday.tutor || 0,
     tutorRestantes: Math.max(0, JARVIS_TUTOR_DAILY_LIMIT - (usageToday.tutor || 0)),
+    /* v0.52.0: el banco — conteo, entradas limpias (lo más reciente
+       primero) y la agrupación por módulo para su vista (§5.3). */
+    bankCount: state.bank.length,
+    bankEntries: state.bank,
+    bankGroups: jarvisBankGroups(state.bank),
   };
 }
 
@@ -408,6 +480,55 @@ export function jarvisProblems(bundle) {
     }
   }
 
+  /* v0.52.0 — forma ESTRICTA del banco (§3.4.2/§6.3): topes duros de
+     cantidad (100) y de largo por campo. Una forma que no cuadra
+     invalida la escritura ANTES de guardar, como en Reales. */
+  if (raw.bank !== undefined) {
+    if (!Array.isArray(raw.bank)) {
+      problems.push("play.jarvis.bank debe ser una lista");
+    } else {
+      if (raw.bank.length > JARVIS_BANK_CAP) {
+        problems.push(`play.jarvis.bank supera el máximo de ${JARVIS_BANK_CAP} entradas`);
+      }
+      const seen = new Set();
+      raw.bank.forEach((entry, index) => {
+        const at = `play.jarvis.bank[${index}]`;
+        if (!isPlainObject(entry)) {
+          problems.push(`${at} debe ser un objeto`);
+          return;
+        }
+        if (typeof entry.id !== "string" || !entry.id || entry.id.length > JARVIS_BANK_ID_MAX) {
+          problems.push(`${at}.id debe ser un texto no vacío de hasta ${JARVIS_BANK_ID_MAX} caracteres`);
+        } else if (seen.has(entry.id)) {
+          problems.push(`${at}.id está duplicado: ${entry.id}`);
+        } else {
+          seen.add(entry.id);
+        }
+        if (typeof entry.q !== "string" || !entry.q || entry.q.length > JARVIS_BANK_Q_MAX) {
+          problems.push(`${at}.q debe ser un texto no vacío de hasta ${JARVIS_BANK_Q_MAX} caracteres`);
+        }
+        if (typeof entry.a !== "string" || !entry.a || entry.a.length > JARVIS_BANK_A_MAX) {
+          problems.push(`${at}.a debe ser un texto no vacío de hasta ${JARVIS_BANK_A_MAX} caracteres`);
+        }
+        if (entry.kind !== "lesson" && entry.kind !== "extra") {
+          problems.push(`${at}.kind debe ser "lesson" o "extra"`);
+        }
+        if (entry.ref !== null && entry.ref !== undefined &&
+          (typeof entry.ref !== "string" || entry.ref.length > JARVIS_BANK_REF_MAX)) {
+          problems.push(`${at}.ref debe ser un texto de hasta ${JARVIS_BANK_REF_MAX} caracteres o null`);
+        }
+        if (entry.module !== null && entry.module !== undefined &&
+          (typeof entry.module !== "string" || entry.module.length > JARVIS_BANK_MODULE_MAX)) {
+          problems.push(`${at}.module debe ser un texto de hasta ${JARVIS_BANK_MODULE_MAX} caracteres o null`);
+        }
+        if (!isDateKey(entry.date)) problems.push(`${at}.date no es una fecha válida`);
+        if (typeof entry.at !== "number" || !Number.isFinite(entry.at) || entry.at < 0) {
+          problems.push(`${at}.at debe ser un número ≥ 0`);
+        }
+      });
+    }
+  }
+
   return problems;
 }
 
@@ -424,6 +545,25 @@ function ensureState(draft) {
 function usageOf(state, date) {
   if (!isPlainObject(state.usage[date])) state.usage[date] = emptyUsage();
   return state.usage[date];
+}
+
+/* v0.52.0 — el contenido de una entrada del banco, validado estricto
+   ANTES de guardar (§6.3): la UI manda la pregunta y la respuesta ya
+   recortadas a los topes; aquí NADA se recorta — lo que no cuadra se
+   rechaza entero (BAD_BANK_ENTRY) y el save no se toca. La fecha y la
+   hora las estampa la mutación desde el contexto, como en la Libreta. */
+function cleanBankInput(raw) {
+  if (!isPlainObject(raw)) return null;
+  const id = typeof raw.id === "string" ? raw.id : "";
+  if (!id || id.length > JARVIS_BANK_ID_MAX) return null;
+  if (typeof raw.q !== "string" || !raw.q || raw.q.length > JARVIS_BANK_Q_MAX) return null;
+  if (typeof raw.a !== "string" || !raw.a || raw.a.length > JARVIS_BANK_A_MAX) return null;
+  if (raw.kind !== "lesson" && raw.kind !== "extra") return null;
+  const ref = raw.ref === undefined ? null : raw.ref;
+  if (ref !== null && (typeof ref !== "string" || !ref || ref.length > JARVIS_BANK_REF_MAX)) return null;
+  const module = raw.module === undefined ? null : raw.module;
+  if (module !== null && (typeof module !== "string" || !module || module.length > JARVIS_BANK_MODULE_MAX)) return null;
+  return { id, q: raw.q, a: raw.a, kind: raw.kind, ref, module };
 }
 
 /**
@@ -562,6 +702,37 @@ export function applyJarvisMutation(draft, mutation, { date, at, catalog } = {})
     };
   }
 
+  /* ---- v0.52.0 · EL BANCO DE PREGUNTAS (§3.4) ----
+     Guardar y borrar son mutaciones del JUEGO (el 📌 y el ✕ de José),
+     jamás algo que el modelo haga o afirme: Jarvis ni se entera. Sin
+     XP y sin monedas — el banco escribe SOLO play.jarvis.bank, y
+     derive() ni lo mira. Al tope de 100, guardar exige borrar una
+     primero (JARVIS_BANK_CAP): FIFO silencioso, nunca. */
+  if (mutation.type === "jarvis.bankSave") {
+    if (!Array.isArray(state.bank)) state.bank = [];
+    const entry = cleanBankInput(mutation.entry);
+    if (!entry) return no("BAD_BANK_ENTRY");
+    if (state.bank.some((saved) => saved.id === entry.id)) return dup();
+    if (state.bank.length >= JARVIS_BANK_CAP) return no("JARVIS_BANK_CAP");
+    const atMs = Date.parse(at);
+    state.bank.unshift({
+      ...entry,
+      date,
+      at: Number.isFinite(atMs) ? atMs : Date.now(),
+    });
+    return { changed: true, duplicate: false, reason: null, paths: ["play.jarvis.bank"] };
+  }
+
+  if (mutation.type === "jarvis.bankRemove") {
+    if (!Array.isArray(state.bank)) state.bank = [];
+    const bankId = typeof mutation.bankId === "string" ? mutation.bankId : "";
+    const index = state.bank.findIndex((saved) => saved.id === bankId);
+    /* Id inexistente = ya no está: DUPLICATE sin cambios (§6.3). */
+    if (index < 0) return dup();
+    state.bank.splice(index, 1);
+    return { changed: true, duplicate: false, reason: null, paths: ["play.jarvis.bank"] };
+  }
+
   return no("UNKNOWN_MUTATION");
 }
 
@@ -662,6 +833,12 @@ export function buildProgressSummary(bundle, catalog, today) {
       feedbackRestantes: view.feedbackRestantes,
       acciones: view.accionesHoy,
     },
+    /* v0.52.0 — la línea del banco en el briefing (§2.5): el resumen
+       lleva el conteo SOLO si hay ≥ 3 guardadas sin repasar, para no
+       naggear. El Worker puede usarlo en su saludo y el saludo local
+       (jarvisLocalGreeting) lo dice tal cual. Como el repaso de v1 no
+       guarda calificaciones (§3.4.3), «sin repasar» = guardadas. */
+    bancoSinRepasar: view.bankCount >= 3 ? view.bankCount : null,
     accionesContext,
   };
 }
