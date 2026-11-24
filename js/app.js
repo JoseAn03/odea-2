@@ -1511,11 +1511,29 @@ function openGarage() {
 
 function renderGaragePanel() {
   if (!garageOpen || !bundle) return;
+  const today = gameplayDate().date;
+  const view = garageView(bundle, today);
+  /* v0.54.0 — los snoozes de Jarvis (§3.4): una rutina vencida o por
+     vencer con snooze vigente se pinta «pospuesta hasta…» con su
+     botón de despertar, y sale de la tarjeta «Esta semana toca». El
+     reloj de la rutina NO se toca: sigue vencida, solo calla el aviso. */
+  const snoozes = jarvisView(bundle, today).snoozes || {};
+  const snoozedUntil = (mission) => {
+    const until = snoozes[`garaje:${mission.id}`];
+    return typeof until === "string" && until >= today ? until : null;
+  };
+  for (const mission of view.missions) {
+    if (mission.state !== "vencida" && mission.state !== "por-vencer") continue;
+    const until = snoozedUntil(mission);
+    if (until) mission.snoozedUntil = until;
+  }
+  view.week = view.week.filter((mission) => !snoozedUntil(mission));
   renderGarage(els.careerDialog, {
-    view: garageView(bundle, gameplayDate().date),
+    view,
     onBack: () => closeCampaign(),
     onComplete: (missionId) => saveGarageAction({ type: "garage.complete", missionId }),
     onKm: (vehicle, km) => saveGarageAction({ type: "garage.km", vehicle, km }),
+    onWakeSnooze: (missionId) => saveGarageAction({ type: "jarvis.snoozeClear", routineId: missionId }),
     onArchive: () => {
       closeCampaign();
       closePhone();
@@ -1746,6 +1764,20 @@ function renderJarvisPanel() {
        por la misma ruta única. Sin XP, sin monedas, sin Worker. */
     onBankSave: (entry) => saveJarvisAction({ type: "jarvis.bankSave", entry }),
     onBankRemove: (bankId) => saveJarvisAction({ type: "jarvis.bankRemove", bankId }),
+    /* v0.54.0 — el cruce a la Libreta (§3.5): la nota la crea/borra el
+       JUEGO con las mutaciones de la Libreta de siempre, por la misma
+       ruta única; Jarvis solo registra la acción con su refId. El id
+       lo genera el juego, jamás la IA. */
+    onLibretaCreate: async (text) => {
+      const id = (typeof crypto !== "undefined" && crypto.randomUUID)
+        ? crypto.randomUUID()
+        : `nota_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
+      const created = await saveJarvisAction({ type: "libreta.create", id, titulo: "", texto: text });
+      return created && (created.status === "applied" || created.status === "duplicate")
+        ? { ok: true, noteId: id }
+        : { ok: false };
+    },
+    onLibretaDelete: (noteId) => saveJarvisAction({ type: "libreta.delete", id: noteId }),
     onOpenZonaIA: () => { closeCampaign(); openCampaign("zonaia"); },
     /* v0.51.0 — el Tutor: el catálogo (para el índice local de
        lecciones, que lee su clave `daily`) y la apertura de la campaña
@@ -1777,7 +1809,14 @@ function jarvisHasNews(bundle2) {
   try {
     const today = gameplayDate().date;
     const garage = garageView(bundle2, today);
-    if (garage.missions.some((mission) => mission.state === "vencida" || mission.state === "por-vencer")) return true;
+    /* v0.54.0: una rutina con snooze vigente no enciende el «!» (§3.4). */
+    const snoozes = jarvisView(bundle2, today).snoozes || {};
+    const garageUrgent = garage.missions.some((mission) => {
+      if (mission.state !== "vencida" && mission.state !== "por-vencer") return false;
+      const until = snoozes[`garaje:${mission.id}`];
+      return !(typeof until === "string" && until >= today);
+    });
+    if (garageUrgent) return true;
     const ian = ianView(bundle2, today);
     if (ian.missions.some((mission) => mission.state === "vencida" || mission.state === "por-vencer")) return true;
     const dias = Math.round((Date.parse("2026-11-24T00:00:00.000Z") - Date.parse(`${today}T00:00:00.000Z`)) / 86400000);
