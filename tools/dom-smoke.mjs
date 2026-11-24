@@ -178,6 +178,18 @@ class NodeStub {
     }
     return null;
   }
+
+  /* v0.57.0: renderCampaign (js/campaign-ui.js) guarda el foco al
+     repintar con root.contains(focused); el DOM mínimo lo respalda
+     caminando sus hijos, como el classList de v0.52.0. */
+  contains(node) {
+    if (!(node instanceof NodeStub)) return false;
+    if (node === this) return true;
+    for (const child of this.children) {
+      if (child instanceof NodeStub && child.contains(node)) return true;
+    }
+    return false;
+  }
 }
 
 class TextStub extends NodeStub {
@@ -937,6 +949,25 @@ await run("renderContrato al 3/3 activa RECLAMAR y dispara onClaim con la semana
   return {
     pass: !!btn && btn.disabled === false && claimed === view.weekKey,
     detail: "el reclamo sale por la mutación contrato.claim de app.js"
+  };
+});
+
+/* ----------------- Operación Confirmación (v0.57.0) ------------------ */
+
+const { renderCampaign } = await cargar("js/campaign-ui.js");
+const { campaignView } = await cargar("src/campaign-state.js");
+
+await run("renderCampaign: el panel real de Operación Confirmación (v0.57.0)", () => {
+  const root = montar();
+  const view = campaignView(bundle, "whatsapp");
+  renderCampaign(root, { view, onComplete: async () => ({ ok: true }), onBack() {} });
+  const texto = root.textContent;
+  return {
+    pass:
+      texto.includes("Operación Confirmación") &&
+      texto.includes("El problema en números") &&
+      texto.includes("ZONA / EVENTOS"),
+    detail: "el evento activo abre su panel con la primera misión y su etiqueta de zona"
   };
 });
 
