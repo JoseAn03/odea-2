@@ -41,7 +41,7 @@ test("partida nueva: cero XP, cero monedas, perfil vacío y campañas listas sin
 });
 
 test("campañas: 96 misiones únicas, 8 capítulos de 6 por ruta y entregables completos", () => {
-  const rutas = Object.entries(CAMPAIGNS).filter(([id]) => !["eventos", "garaje", "academia", "zonaia", "sabiduria", "mundoian", "entrevista"].includes(id));
+  const rutas = Object.entries(CAMPAIGNS).filter(([id]) => !["eventos", "garaje", "academia", "zonaia", "sabiduria", "mundoian", "entrevista", "whatsapp"].includes(id));
   const misiones = rutas.flatMap(([, c]) => c.chapters.flatMap((ch) => ch.missions));
   assert.equal(misiones.length, 96);
   assert.equal(new Set(misiones.map((m) => m.id)).size, 96);
@@ -483,4 +483,46 @@ test("entrevista: Operación Entrevista, 14 misiones libres y el Decision Lab gu
   const full = campaignView(saved(s), "entrevista");
   assert.equal(full.done, 14);
   assert.equal(full.rank, "Listo para la entrevista", "el rango final del evento");
+});
+
+test("whatsapp: Operación Confirmación, 14 misiones en orden y el set EXO//AUTÓMATA", () => {
+  const c = CAMPAIGNS.whatsapp;
+  assert.equal(c.name, "Operación Confirmación");
+  assert.ok(!c.freeOrder, "secuencial: el proyecto avanza en orden, fase por fase");
+  assert.equal(c.image, "assets/slots/whatsapp.svg", "la escena del teléfono y el carro");
+  assert.deepEqual(c.chapters.map((ch) => ch.missions.length), [3, 3, 3, 3, 2]);
+  const ms = c.chapters.flatMap((ch) => ch.missions);
+  assert.equal(ms.length, 14);
+  assert.equal(ms.reduce((a, m) => a + m.xp, 0), 1020);
+  assert.equal(ms.reduce((a, m) => a + m.coins, 0), 68);
+  assert.equal(ms[0].id, "whatsapp-01");
+  assert.equal(ms[0].title, "El problema en números");
+  assert.equal(ms[13].id, "whatsapp-14");
+  assert.equal(ms[13].title, "La demo para venderlo");
+  assert.equal(ms[13].xp, 110);
+  assert.equal(ms[13].coins, 16);
+  for (const m of ms) {
+    assert.equal(m.campaignId, "whatsapp");
+    assert.ok(m.title && m.brief && m.deliverable);
+    assert.equal(m.steps.length, 3);
+  }
+  /* El evento anterior y el guardado quedan intactos. */
+  assert.equal(CAMPAIGNS.entrevista.chapters.flatMap((ch) => ch.missions).length, 14);
+  assert.equal(CAMPAIGNS.eventos.chapters.flatMap((ch) => ch.missions).length, 14);
+  /* Candado secuencial de verdad: la 02 no se puede completar antes que la 01. */
+  const s = fresh();
+  assert.equal(complete(s, "whatsapp-02").error.code, "MISSION_LOCKED", "el proyecto avanza en orden");
+  const view = campaignView(saved(s), "whatsapp");
+  assert.equal(view.total, 14);
+  assert.ok(view.chapters[0].missions[0].unlocked, "la primera misión nace desbloqueada");
+  assert.ok(!view.chapters[0].missions[1].unlocked, "la segunda espera a la primera");
+  const before = campaignRewards(saved(s));
+  assert.equal(complete(s, "whatsapp-01").status, "applied");
+  const after = campaignRewards(saved(s));
+  assert.equal(after.career - before.career, 70, "la misión 1 paga +70 XP");
+  assert.equal(after.coins - before.coins, 4, "la misión 1 paga +₡4");
+  for (let i = 2; i <= 14; i++) complete(s, `whatsapp-${String(i).padStart(2, "0")}`);
+  const full = campaignView(saved(s), "whatsapp");
+  assert.equal(full.done, 14);
+  assert.equal(full.rank, "Automatizador de Reservas", "el rango final del evento");
 });
