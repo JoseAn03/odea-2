@@ -36,8 +36,8 @@ const index = buildTutorIndex(CAMPAIGNS, catalog.daily);
 
 /* ------------------------------ 1. el índice ------------------------------ */
 
-test("tutor-index: el corpus son los 510 documentos reales (342 campañas + 168 diarias)", () => {
-  assert.equal(index.total, 510);
+test("tutor-index: el corpus son los 524 documentos reales (356 campañas + 168 diarias)", () => {
+  assert.equal(index.total, 524);
 });
 
 test("tutor-index: batería de preguntas reales — la lección esperada es el top-1", () => {
