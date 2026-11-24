@@ -23,8 +23,10 @@ import {
   JARVIS_QUIZ_DAILY_LIMIT,
   JARVIS_QUIZ_XP,
   JARVIS_QUIZ_XP_PER_HIT,
+  JARVIS_TUTOR_DAILY_LIMIT,
 } from "../src/jarvis-state.js";
-import { askJarvis, jarvisConfigured } from "./jarvis-client.js";
+import { buildTutorIndex, searchTutor, threadReusable } from "../src/tutor-index.js";
+import { askJarvis, askTutor, jarvisConfigured } from "./jarvis-client.js";
 import {
   JARVIS_ACT_DAILY_LIMIT,
   describeJarvisAction,
@@ -132,7 +134,17 @@ export function renderJarvis(root, options = {}) {
       quizUsed: JARVIS_QUIZ_DAILY_LIMIT - ((options.view && options.view.quizRestantes) || 0),
       chatUsed: JARVIS_CHAT_DAILY_LIMIT - ((options.view && options.view.chatRestantes) || 0),
       feedbackUsed: JARVIS_FEEDBACK_DAILY_LIMIT - ((options.view && options.view.feedbackRestantes) || 0),
+      /* v0.51.0 — el Tutor: preguntas usadas hoy (vista: tutorHoy). */
+      tutorUsed: (options.view && options.view.tutorHoy) || 0,
     },
+    /* v0.51.0 — el Tutor vive en la sesión del diálogo: el hilo (tema,
+       extractos e historial) NO se guarda, como el historial del chat;
+       el índice se construye perezoso en memoria (src/tutor-index.js). */
+    tutorLog: [],
+    tutorThread: null,
+    tutorMode: "auto",
+    tutorIndex: null,
+    tutorIndexFailed: false,
     chatLog: [],
     /* v0.50.0 — manos: contador de acciones aplicadas hoy, el plan del
        día conocido (para re-validar propuestas contra el estado vivo) y
@@ -183,6 +195,7 @@ export function renderJarvis(root, options = {}) {
     actionButton("¿Qué hago hoy?", () => showBriefing(false)),
     actionButton("Practicar (quiz)", () => showQuizTopics()),
     actionButton("Preguntar algo", () => showChat()),
+    actionButton("📚 Estudiar", () => showTutor()),
     actionButton("Revisar mi evidencia", () => showFeedback()),
     actionButton("Campaña Zona IA", () => { if (typeof options.onOpenZonaIA === "function") options.onOpenZonaIA(); })
   );
@@ -199,6 +212,7 @@ export function renderJarvis(root, options = {}) {
       ` · rondas con XP: ${session.counts.quizUsed}/${JARVIS_QUIZ_DAILY_LIMIT}` +
       ` · mensajes ${session.counts.chatUsed}/${JARVIS_CHAT_DAILY_LIMIT}` +
       ` · revisiones ${session.counts.feedbackUsed}/${JARVIS_FEEDBACK_DAILY_LIMIT}` +
+      ` · tutor ${session.counts.tutorUsed}/${JARVIS_TUTOR_DAILY_LIMIT}` +
       ` · Acciones de hoy: ${session.actUsed}/${JARVIS_ACT_DAILY_LIMIT}`);
   }
   renderFoot();
@@ -605,6 +619,234 @@ export function renderJarvis(root, options = {}) {
     /* Con los selects ya en el documento, su value es confiable:
        se pueblan las misiones y la evidencia precargada. */
     syncMissions();
+  }
+
+  /* --------------------- el Tutor de Estudio (v0.51.0) ---------------------
+     Diseño maestro §3/§5.2: José escribe preguntas y Jarvis responde
+     DESDE su material real. El JUEGO busca en el índice local
+     (src/tutor-index.js) y manda al Worker solo los extractos que
+     superan el umbral; sin extractos, la pregunta es EXTRA y su chip
+     «💬 Fuera de tu material» lo pinta el juego según la bandera
+     validada — nunca depende de que el modelo lo confiese. La cita se
+     valida dos veces (Worker + cliente, jarvis-client.js) y el chip
+     muestra la referencia del extracto REAL enviado. Preguntar no
+     paga XP: solo consume el contador jarvis.usage «tutor» (15/día).
+     El hilo vive en la sesión; lo que José quiera conservar irá al
+     banco (v0.52.0, aquí solo su vista «en preparación»). */
+
+  const TUTOR_NOT_FOUND =
+    "Eso no lo encontré en tu material, José. Puede estar con otras palabras — probá nombrando el módulo — o te lo respondo como pregunta extra, marcado como fuera de tu material.";
+  const TUTOR_NO_TUTOR =
+    "Todavía no estoy conectado con mi modo tutor: falta actualizar mi cerebro en Cloudflare. Mientras tanto, el juego completo sigue con vos.";
+  const TUTOR_LIMIT =
+    "Hoy ya me preguntaste 15 veces, José — buenísimo ritmo. Mañana seguimos con el Tutor.";
+  const TUTOR_OFFLINE =
+    "Estoy sin conexión ahorita: no puedo pensar respuestas nuevas, pero el juego completo sigue con vos.";
+
+  function getTutorIndex() {
+    if (session.tutorIndex || session.tutorIndexFailed) return session.tutorIndex;
+    try {
+      session.tutorIndex = buildTutorIndex(CAMPAIGNS, options.catalog || null);
+    } catch {
+      /* Sin índice no hay fundamentación posible: toda pregunta cae a
+         extra etiquetada, y el diálogo jamás se rompe por el Tutor. */
+      session.tutorIndexFailed = true;
+    }
+    return session.tutorIndex;
+  }
+
+  function tutorChipNode(chip) {
+    if (!chip) return null;
+    if (chip.kind === "lesson") {
+      const canOpen = chip.campaignId && chip.campaignId !== "diarias" &&
+        CAMPAIGNS[chip.campaignId] && typeof options.onOpenCampaign === "function";
+      const node = el(canOpen ? "button" : "p", "jarvis-tutor-chip jarvis-tutor-chip--lesson",
+        `📚 ${chip.label}`);
+      if (canOpen) {
+        node.type = "button";
+        node.title = "Abrir la lección en su campaña";
+        node.addEventListener("click", () => options.onOpenCampaign(chip.campaignId));
+      }
+      return node;
+    }
+    if (chip.kind === "extra") {
+      return el("p", "jarvis-tutor-chip jarvis-tutor-chip--extra", "💬 Fuera de tu material");
+    }
+    return null;
+  }
+
+  function showBankPlaceholder() {
+    panel.replaceChildren();
+    panel.append(el("h3", "jarvis-panel-title", "📌 Mi banco de preguntas"));
+    panel.append(el("p", "jarvis-note",
+      "Tu banco llega en la próxima fase: vas a guardar las respuestas útiles del Tutor con un toque 📌, " +
+      "organizadas por módulo, y repasarlas sin conexión como tarjetas. Por ahora el Tutor ya responde desde tu material."));
+    panel.append(actionButton("Volver al Tutor", () => showTutor()));
+  }
+
+  function showTutor() {
+    panel.replaceChildren();
+    panel.append(el("h3", "jarvis-panel-title", "Estudiar — preguntale a Jarvis de tus lecciones"));
+
+    const modes = el("div", "jarvis-tutor-modes");
+    for (const [id, label] of [["auto", "Automático"], ["material", "De mi material"], ["libre", "Pregunta libre"]]) {
+      const chip = el("button", `jarvis-tutor-mode${session.tutorMode === id ? " jarvis-tutor-mode--active" : ""}`, label);
+      chip.type = "button";
+      chip.addEventListener("click", () => { session.tutorMode = id; showTutor(); });
+      modes.append(chip);
+    }
+    panel.append(modes);
+
+    if (session.tutorThread && session.tutorThread.topicLabel) {
+      panel.append(el("p", "jarvis-tutor-topic", `Tema: ${session.tutorThread.topicLabel}`));
+    }
+
+    const log = el("div", "jarvis-chat-log jarvis-tutor-log");
+    for (const entry of session.tutorLog) {
+      log.append(el("p", entry.role === "user" ? "jarvis-msg jarvis-msg--user" : "jarvis-msg jarvis-msg--jarvis", entry.text));
+      const chipNode = tutorChipNode(entry.chip);
+      if (chipNode) log.append(chipNode);
+    }
+    panel.append(log);
+
+    const bankButton = actionButton("📌 Mi banco (0)", () => showBankPlaceholder());
+    bankButton.classList.add("jarvis-tutor-bank");
+
+    if (session.counts.tutorUsed >= JARVIS_TUTOR_DAILY_LIMIT) {
+      panel.append(el("p", "jarvis-note", TUTOR_LIMIT), bankButton);
+      return;
+    }
+    if (!jarvisConfigured()) {
+      panel.append(el("p", "jarvis-note", TUTOR_OFFLINE), bankButton);
+      return;
+    }
+
+    const input = el("textarea", "jarvis-input jarvis-tutor-input");
+    input.rows = 3;
+    input.maxLength = 1000;
+    input.placeholder = "Preguntame de tus lecciones: un JOIN, un curso de la Academia, un agente…";
+    const send = actionButton("Preguntar", async () => {
+      const question = String(input.value || "").trim();
+      if (!question) return;
+      send.disabled = true;
+      input.disabled = true;
+      session.tutorLog.push({ role: "user", text: question });
+      log.append(el("p", "jarvis-msg jarvis-msg--user", question));
+      const pending = el("p", "jarvis-msg jarvis-msg--jarvis", "Buscando en tu material…");
+      log.append(pending);
+
+      /* 1) Búsqueda local: ¿hay extractos sobre el umbral? En modo
+         libre no se busca (extra declarada). En seguimiento sin
+         resultados nuevos, se reusan los extractos del hilo (§3.3). */
+      let extracts = [];
+      if (session.tutorMode !== "libre") {
+        const index = getTutorIndex();
+        extracts = index ? searchTutor(index, question) : [];
+        /* Seguimiento: se reusan los extractos del hilo SOLO si la
+           pregunta no introduce un concepto específico nuevo
+           (threadReusable): un tema nuevo jamás hereda citas ajenas. */
+        if (!extracts.length && session.tutorMode === "auto" &&
+          session.tutorThread && session.tutorThread.extracts.length &&
+          threadReusable(index, question, session.tutorThread.extracts.map((extract) => extract.ref))) {
+          extracts = session.tutorThread.extracts;
+        }
+      }
+
+      /* 2) «De mi material» sin match: responde el JUEGO, local, sin
+         gastar llamada ni contador (§3.2). */
+      if (session.tutorMode === "material" && !extracts.length) {
+        pending.replaceChildren(TUTOR_NOT_FOUND);
+        session.tutorLog.push({ role: "jarvis", text: TUTOR_NOT_FOUND, chip: null });
+        input.disabled = false;
+        send.disabled = false;
+        return;
+      }
+
+      /* 3) La llamada: pregunta + extractos + historial del hilo. */
+      pending.replaceChildren("Jarvis está pensando…");
+      const history = session.tutorThread ? session.tutorThread.history.slice(-6) : [];
+      const result = await askTutor({
+        question,
+        summary: session.summary,
+        extracts: extracts.map((extract) => ({ ref: extract.ref, label: extract.label, text: extract.extract })),
+        history,
+      }, { signal: controller.signal });
+      if (controller.signal.aborted) return;
+
+      if (!result.ok) {
+        const line = result.reason === "notutor" ? TUTOR_NO_TUTOR
+          : result.reason === "limit" ? TUTOR_LIMIT
+          : result.reason === "offline" ? "No pude responder (sin conexión o el servicio falló). Probá de nuevo en un rato."
+          : "Algo falló con mi modo tutor. Probá de nuevo en un rato.";
+        pending.replaceChildren(line);
+        session.tutorLog.push({ role: "jarvis", text: line, chip: null });
+        input.disabled = false;
+        send.disabled = false;
+        return;
+      }
+
+      /* 4) La respuesta validada: el chip sale del ref RE-VERIFICADO
+         contra los extractos enviados, no de la prosa del modelo. */
+      let chip = { kind: "extra" };
+      let cited = null;
+      if (result.grounded && result.ref) {
+        cited = extracts.find((extract) => extract.ref === result.ref) || null;
+        if (cited) {
+          chip = { kind: "lesson", label: cited.label, ref: cited.ref, campaignId: cited.campaignId };
+        }
+      }
+      pending.replaceChildren(result.text);
+      const chipNode = tutorChipNode(chip);
+      if (chipNode) log.append(chipNode);
+
+      /* 5) El hilo: tema, extractos e historial para seguimientos. */
+      const previousModule = session.tutorThread ? session.tutorThread.topicLabel : null;
+      if (!session.tutorThread) session.tutorThread = { topicLabel: null, extracts: [], history: [] };
+      if (extracts.length) {
+        session.tutorThread.extracts = extracts;
+        session.tutorThread.topicLabel = extracts[0].moduleLabel;
+        if (previousModule && previousModule !== extracts[0].moduleLabel) {
+          log.append(el("p", "jarvis-msg jarvis-msg--game", `Cambiamos de tema: esto ya es de ${extracts[0].moduleLabel}.`));
+        }
+      }
+      session.tutorThread.history.push(
+        { role: "user", text: question },
+        { role: "jarvis", text: result.text }
+      );
+      session.tutorLog.push({ role: "jarvis", text: result.text, chip });
+
+      /* 6) «Practicar esto»: el puente de una vía al quiz (§3.5), con
+         las reglas y topes del quiz de siempre. */
+      if (chip.kind === "lesson" && cited) {
+        const topic = QUIZ_TOPICS.find((item) => item.campaignId === cited.campaignId);
+        if (topic) {
+          const practice = actionButton("Practicar esto", () => startQuiz(topic));
+          practice.classList.add("jarvis-tutor-practice");
+          log.append(practice);
+        }
+      }
+
+      /* 7) El consumo: SOLO el contador del Tutor, vía la ruta única.
+         Preguntar no paga XP ni monedas, hoy ni nunca (§3.5). */
+      const recorded = typeof options.onUsage === "function" ? await options.onUsage("tutor") : null;
+      if (recorded && recorded.status === "applied") {
+        session.counts.tutorUsed += 1;
+        renderFoot();
+      }
+      input.value = "";
+      input.disabled = false;
+      send.disabled = session.counts.tutorUsed >= JARVIS_TUTOR_DAILY_LIMIT;
+      if (session.counts.tutorUsed >= JARVIS_TUTOR_DAILY_LIMIT) showTutor();
+    });
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        send.click();
+      }
+    });
+    const row = el("div", "jarvis-send-row");
+    row.append(input, send);
+    panel.append(row, bankButton);
   }
 
   /* ------------------------------ saludo inicial --------------------------- */

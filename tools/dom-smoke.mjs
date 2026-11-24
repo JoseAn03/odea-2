@@ -446,10 +446,12 @@ await run("renderJarvis con el saludo en caché", () => {
       texto.includes("Saludo en caché de prueba") &&
       texto.includes("¿Qué hago hoy?") &&
       texto.includes("Practicar (quiz)") &&
+      texto.includes("📚 Estudiar") &&
       texto.includes("Campaña Zona IA") &&
       texto.includes("quiz XP 10/20") &&
       texto.includes("mensajes 1/20") &&
-      botones === 6,
+      texto.includes("tutor 0/15") &&
+      botones === 7,
     detail: `${botones} botones · saludo en caché sin red`
   };
 });

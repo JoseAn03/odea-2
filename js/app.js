@@ -1743,6 +1743,11 @@ function renderJarvisPanel() {
     onAct: (mutation) => saveJarvisAction(mutation),
     onActUndo: (mutation) => saveJarvisAction(mutation),
     onOpenZonaIA: () => { closeCampaign(); openCampaign("zonaia"); },
+    /* v0.51.0 — el Tutor: el catálogo (para el índice local de
+       lecciones, que lee su clave `daily`) y la apertura de la campaña
+       de una cita al tocar su chip. */
+    catalog,
+    onOpenCampaign: (campaignId) => { closeCampaign(); openCampaign(campaignId); },
     onClose: () => closeCampaign()
   });
 }
