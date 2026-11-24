@@ -162,9 +162,15 @@ function makeWeekCard(state, view) {
 function makeMission(state, mission) {
   const card = node("article", `garage-mission garage-mission--${mission.state}`);
   const top = node("div", "garage-mission-top");
+  /* v0.54.0 — el snooze de Jarvis (§3.4): la rutina sigue vencida o
+     por vencer (su reloj no se tocó), pero el chip lo dice callado:
+     «pospuesta hasta…», con su botón de despertar el aviso. */
+  const chip = mission.snoozedUntil
+    ? node("span", "garage-chip garage-chip--pospuesta", `🔕 POSPUESTA HASTA ${fmtDate(mission.snoozedUntil)}`)
+    : node("span", `garage-chip garage-chip--${mission.state}`, mission.label);
   top.append(
     node("h3", "garage-mission-title", mission.title),
-    node("span", `garage-chip garage-chip--${mission.state}`, mission.label)
+    chip
   );
   card.append(top);
   card.append(node("p", "garage-mission-brief", mission.brief));
@@ -208,6 +214,15 @@ function makeMission(state, mission) {
     }
   );
   card.append(action);
+  if (mission.snoozedUntil && typeof state.options.onWakeSnooze === "function") {
+    const wake = button("campaign-button garage-wake", "🔔 Despertar aviso", async () => {
+      wake.disabled = true;
+      const result = await state.options.onWakeSnooze(mission.id);
+      state.message = result || { text: "Aviso despierto: el Garaje vuelve a recordarte esta rutina.", kind: "success" };
+      redraw(state.root, state);
+    });
+    card.append(wake);
+  }
   return card;
 }
 
@@ -250,7 +265,7 @@ function paint(root, state) {
   root.replaceChildren(shell);
 }
 
-export function renderGarage(root, { view, onComplete, onKm, onBack, onArchive } = {}) {
+export function renderGarage(root, { view, onComplete, onKm, onBack, onArchive, onWakeSnooze } = {}) {
   if (!root || typeof root.replaceChildren !== "function") {
     throw new TypeError("renderGarage necesita un elemento raíz del DOM.");
   }
@@ -259,7 +274,7 @@ export function renderGarage(root, { view, onComplete, onKm, onBack, onArchive }
     state = { root, message: null, view: null, options: null };
     sessions.set(root, state);
   }
-  state.options = { view, onComplete, onKm, onBack, onArchive };
+  state.options = { view, onComplete, onKm, onBack, onArchive, onWakeSnooze };
   paint(root, state);
   return root;
 }

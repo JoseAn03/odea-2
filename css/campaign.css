@@ -884,6 +884,9 @@
 .garage-chip--vencida { background: rgba(255, 107, 107, .18); color: #FF8A8A; }
 .garage-chip--sin-registro { background: rgba(119, 234, 210, .14); color: var(--campaign-accent); }
 .garage-chip--completada { background: rgba(62, 217, 122, .18); color: #3ED97A; }
+/* v0.54.0 — el aviso dormido por Jarvis: cian tranquilo, sin alarma. */
+.garage-chip--pospuesta { background: rgba(0, 229, 255, .14); color: #00E5FF; }
+.garage-wake { margin-top: 8px; }
 .garage-mission-brief { margin: 8px 0 0; color: #d7dee2; font-size: 13.5px; }
 .garage-steps { margin: 8px 0 0; padding-left: 18px; color: var(--campaign-muted); font-size: 12.5px; }
 .garage-steps li { margin-top: 2px; }
