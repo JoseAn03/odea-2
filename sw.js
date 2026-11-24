@@ -17,7 +17,7 @@
  * anterior sigue controlando la pestaña, su caché queda intacto y no se
  * mezclan assets de dos versiones. `activate` borra los cachés viejos.
  */
-const CACHE_VERSION = "odea2-v0.54.0-fase7";
+const CACHE_VERSION = "odea2-v0.55.0-fase7";
 
 const SHELL = [
   "./",
@@ -70,6 +70,7 @@ const SHELL = [
   "./js/garage-ui.js",
   "./js/ian-ui.js",
   "./js/marca-ui.js",
+  "./js/ingles-ui.js",
   "./js/jarvis-ui.js",
   "./js/jarvis-client.js",
   "./js/jarvis-config.js",
@@ -112,6 +113,7 @@ const SHELL = [
   "./src/garage-state.js",
   "./src/ian-state.js",
   "./src/marca-state.js",
+  "./src/ingles-state.js",
   "./src/jarvis-state.js",
   "./src/tutor-index.js",
   "./src/jarvis-actions.js",
