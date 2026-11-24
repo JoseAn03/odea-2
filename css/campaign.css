@@ -909,34 +909,99 @@
   background: linear-gradient(125deg, rgba(255, 197, 61, .12), transparent 60%), var(--campaign-panel);
 }
 
-/* ---------------- Jarvis (v0.38.0): el compañero de la Zona IA ---------------- */
-.jarvis-shell { padding: 22px 20px 26px; }
-.jarvis-head { display: flex; align-items: center; gap: 16px; }
-.jarvis-portrait {
-  width: 84px; height: 84px; flex: none; object-fit: cover;
-  border-radius: 16px; border: 1px solid rgba(0, 229, 255, .45);
-  box-shadow: 0 0 22px rgba(0, 229, 255, .25);
-  background: #0B1520;
+/* ---------------- Jarvis: el compañero de la Zona IA ----------------
+   v0.53.0 — LA NUEVA CARA (la maqueta «El orbe manda» que eligió
+   José): el orbe grande dibujado por código preside la pantalla, con
+   su cara-pantalla de píxeles y sus estados; nombre en neón y línea
+   de estado; el briefing en tarjeta cian; las acciones y las
+   preguntas rápidas como píldoras neón; burbujas rosa (José) y
+   marino (Jarvis); y la barra de pestañas Chat/Tutor/Quiz/Banco
+   siempre visible al pie del diálogo. */
+.jarvis-shell {
+  padding: 22px 20px 26px;
+  background:
+    radial-gradient(620px 320px at 50% -70px, rgba(0, 229, 255, .12), transparent 62%),
+    radial-gradient(520px 280px at 88% 30px, rgba(255, 46, 147, .08), transparent 60%),
+    var(--campaign-ink);
 }
-.jarvis-head-copy { min-width: 0; flex: 1 1 auto; }
-.jarvis-name {
-  color: #fff8ec; font: 700 34px/1.05 var(--campaign-display); letter-spacing: .06em;
+.jarvis-head { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.jarvis-head-top {
+  display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 12px;
 }
-.jarvis-sub { margin-top: 6px !important; color: var(--campaign-muted); font-size: 13px; }
 .jarvis-close { flex: none; }
+.jarvis-orb {
+  width: min(196px, 58vw); margin-top: 8px;
+  filter: drop-shadow(0 14px 26px rgba(0, 229, 255, .16));
+  animation: jv-float 3.4s ease-in-out infinite alternate;
+}
+.jarvis-orb svg { display: block; width: 100%; height: auto; }
+.jarvis-orb .orb-face, .jarvis-orb .orb-sparkles { display: none; }
+.jarvis-orb[data-face="idle"] .orb-face--idle { display: block; }
+.jarvis-orb[data-face="thinking"] .orb-face--thinking { display: block; }
+.jarvis-orb[data-face="celebrate"] .orb-face--celebrate { display: block; }
+.jarvis-orb[data-face="celebrate"] .orb-sparkles {
+  display: block; transform-box: fill-box; transform-origin: center;
+  animation: jv-spark .45s ease-in-out infinite alternate;
+}
+.jarvis-orb[data-face="celebrate"] svg { animation: jv-jump .6s ease-in-out 3; }
+.jarvis-orb[data-face="celebrate"] .orb-antenna-tip { filter: drop-shadow(0 0 7px #FF2E93); }
+.jarvis-orb[data-face="thinking"] .orb-antenna-tip { animation: jv-dot .5s ease-in-out infinite; }
+.jarvis-orb[data-face="offline"] .orb-visor { opacity: .55; }
+.orb-face--idle .orb-eyes {
+  transform-box: fill-box; transform-origin: center;
+  animation: jv-blink 4.8s infinite;
+}
+.orb-dot { animation: jv-dot 1.05s ease-in-out infinite; }
+.orb-dot--2 { animation-delay: .18s; }
+.orb-dot--3 { animation-delay: .36s; }
+@keyframes jv-float { from { transform: translateY(-4px); } to { transform: translateY(5px); } }
+@keyframes jv-jump {
+  0%, 100% { transform: translateY(0); } 30% { transform: translateY(-12px); }
+  60% { transform: translateY(0); } 80% { transform: translateY(-6px); }
+}
+@keyframes jv-blink { 0%, 91%, 100% { transform: scaleY(1); } 94% { transform: scaleY(.1); } 97% { transform: scaleY(1); } }
+@keyframes jv-dot { 0%, 100% { opacity: .2; } 50% { opacity: 1; } }
+@keyframes jv-spark { from { opacity: .25; transform: scale(.85); } to { opacity: 1; transform: scale(1.12); } }
+@media (prefers-reduced-motion: reduce) {
+  .jarvis-orb, .jarvis-orb svg, .orb-face--idle .orb-eyes, .orb-dot,
+  .jarvis-orb[data-face="celebrate"] .orb-sparkles { animation: none !important; }
+}
+.jarvis-name {
+  margin-top: 10px !important;
+  color: #FFFFFF; font: 700 40px/1.1 Georgia, "Times New Roman", serif;
+  letter-spacing: .34em; text-indent: .34em;
+  text-shadow: 0 0 18px rgba(0, 229, 255, .55), 0 0 46px rgba(0, 229, 255, .25);
+}
+.jarvis-status {
+  margin-top: 8px !important;
+  font: 700 12px/1.5 var(--campaign-mono); letter-spacing: .14em;
+}
+.jarvis-status-on { color: #00E5FF; text-shadow: 0 0 10px rgba(0, 229, 255, .5); }
+.jarvis-status-off { color: #8FA6BC; }
+.jarvis-status-streak { color: #FF2E93; }
 .jarvis-bubble {
   position: relative; margin-top: 20px; padding: 16px 18px;
-  border: 1px solid rgba(0, 229, 255, .35); border-radius: 16px;
-  background: #0E2231; color: #EAF6FF;
+  border: 1px solid rgba(0, 229, 255, .45); border-radius: 18px;
+  background: linear-gradient(160deg, #0E2231, #0A1826); color: #EAF6FF;
+  box-shadow: 0 0 24px rgba(0, 229, 255, .10), inset 0 0 24px rgba(0, 229, 255, .04);
 }
 .jarvis-bubble::before {
-  content: ""; position: absolute; top: -8px; left: 34px; width: 14px; height: 14px;
-  background: #0E2231; border-left: 1px solid rgba(0, 229, 255, .35);
-  border-top: 1px solid rgba(0, 229, 255, .35); transform: rotate(45deg);
+  content: ""; position: absolute; top: -8px; left: 50%; margin-left: -7px; width: 14px; height: 14px;
+  background: #0E2231; border-left: 1px solid rgba(0, 229, 255, .45);
+  border-top: 1px solid rgba(0, 229, 255, .45); transform: rotate(45deg);
 }
 .jarvis-bubble-text { font-size: 15px; line-height: 1.6; white-space: pre-wrap; }
-.jarvis-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
-.jarvis-action { flex: 1 1 150px; }
+.jarvis-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 9px; margin-top: 18px; }
+.jarvis-actions .jarvis-action, .jarvis-topics .jarvis-action {
+  flex: 0 1 auto; min-height: 40px; padding: 9px 16px;
+  border: 1px solid rgba(0, 229, 255, .5); border-radius: 999px;
+  background: rgba(0, 229, 255, .05); color: #AEE9FF;
+  font-size: 12.5px; box-shadow: none;
+}
+.jarvis-actions .jarvis-action:hover:not(:disabled), .jarvis-topics .jarvis-action:hover:not(:disabled) {
+  background: rgba(0, 229, 255, .13); box-shadow: 0 0 14px rgba(0, 229, 255, .25);
+  transform: none; filter: none;
+}
 .jarvis-panel { margin-top: 20px; }
 .jarvis-panel:empty { display: none; }
 .jarvis-panel-title { color: #f7f0e4; font-size: 19px; line-height: 1.35; margin-bottom: 12px; }
@@ -950,16 +1015,35 @@
   max-width: 88%; padding: 10px 13px; border-radius: 14px;
   font-size: 14px; line-height: 1.55; white-space: pre-wrap;
 }
-.jarvis-msg--user { justify-self: end; background: #173A2E; color: #DFF7EA; }
-.jarvis-msg--jarvis { justify-self: start; background: #122A3D; color: #EAF6FF; }
+.jarvis-msg--user {
+  justify-self: end; color: #FFFFFF;
+  background: linear-gradient(135deg, #FF2E93, #D81B74);
+  border-radius: 18px 18px 6px 18px;
+  box-shadow: 0 4px 16px rgba(255, 46, 147, .25);
+}
+.jarvis-msg--jarvis {
+  justify-self: start; color: #EAF6FF; background: #101E33;
+  border: 1px solid rgba(0, 229, 255, .16);
+  border-radius: 18px 18px 18px 6px;
+}
 .jarvis-send-row { display: flex; gap: 10px; align-items: stretch; }
 .jarvis-input, .jarvis-select {
-  width: 100%; padding: 11px 13px; border-radius: 10px;
-  border: 1px solid var(--campaign-line); background: #0d1622; color: #f5f6ed;
+  width: 100%; padding: 11px 13px; border-radius: 14px;
+  border: 1px solid rgba(0, 229, 255, .25); background: #0D1626; color: #f5f6ed;
   font: inherit; margin: 4px 0 12px;
 }
 .jarvis-send-row .jarvis-input { margin: 0; flex: 1 1 auto; }
 .jarvis-send-row .jarvis-action { flex: 0 0 auto; }
+.jarvis-send-pill, .jarvis-send-round {
+  border-color: transparent; color: #FFFFFF;
+  background: linear-gradient(135deg, #FF2E93, #E91E7F);
+  box-shadow: 0 4px 16px rgba(255, 46, 147, .35);
+}
+.jarvis-send-pill { border-radius: 999px; padding: 12px 26px; }
+.jarvis-send-round {
+  width: 52px; min-width: 52px; height: 52px; min-height: 52px;
+  border-radius: 50%; padding: 0; font-size: 19px; align-self: center;
+}
 .jarvis-feedback-text {
   padding: 14px 16px; border: 1px solid rgba(62, 217, 122, .4); border-radius: 12px;
   background: rgba(62, 217, 122, .08); color: #EAFBF1; font-size: 14px;
@@ -969,34 +1053,75 @@
   margin-top: 22px !important; padding-top: 12px;
   border-top: 1px solid var(--campaign-line);
   color: var(--campaign-muted); font: 700 11px/1.5 var(--campaign-mono); letter-spacing: .04em;
+  text-align: center;
 }
+.jarvis-quick-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 2px 0 12px; }
+.jarvis-quick-chip {
+  appearance: none; font: inherit; cursor: pointer;
+  padding: 8px 14px; border-radius: 999px;
+  border: 1px solid rgba(0, 229, 255, .45); background: rgba(0, 229, 255, .04);
+  color: #AEE9FF; font-size: 12.5px; font-weight: 700;
+}
+.jarvis-quick-chip:hover { background: rgba(0, 229, 255, .12); }
+.jarvis-quick-chip--quiz {
+  border-color: rgba(255, 46, 147, .6); color: #FFB3D1; background: rgba(255, 46, 147, .06);
+}
+.jarvis-quick-chip--quiz:hover { background: rgba(255, 46, 147, .14); }
+.jarvis-tabbar {
+  position: sticky; bottom: 0; z-index: 5;
+  display: flex; gap: 4px;
+  margin: 22px -20px -26px; padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+  background: rgba(7, 11, 22, .94); backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(0, 229, 255, .22);
+}
+.jarvis-tab {
+  flex: 1 1 0; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  appearance: none; background: transparent; border: none; cursor: pointer;
+  padding: 6px 2px; border-radius: 10px; color: #8FA6BC;
+  font: 700 10.5px/1.3 var(--campaign-mono); letter-spacing: .1em;
+}
+.jarvis-tab-icon { font-size: 20px; line-height: 1.1; filter: grayscale(.45); opacity: .7; }
+.jarvis-tab--active { color: #00E5FF; text-shadow: 0 0 12px rgba(0, 229, 255, .45); }
+.jarvis-tab--active .jarvis-tab-icon { filter: none; opacity: 1; }
 
 /* ----------------- Jarvis con manos (v0.50.0) -----------------
-   La tarjeta de acción: familia visual del panel de campañas (azul
-   marino, borde cian, línea de acento rosada). Aceptar = rosado lleno;
-   Descartar = fantasma. Lo aplicado se atenúa; lo viejo (stale) pierde
-   los botones y se lee en gris. */
+   La tarjeta de acción. v0.53.0 la viste como la maqueta: borde rosa
+   completo con resplandor, ceja «🖐 JARVIS PROPONE», Aceptar = cian
+   lleno, Descartar = fantasma claro y Deshacer = enlace. Lo aplicado
+   se atenúa en verde; lo viejo (stale) pierde los botones y se lee
+   en gris. */
 .jarvis-action-card {
   justify-self: stretch; max-width: 100%;
-  padding: 14px 16px; border-radius: 12px;
-  background: #0d2136; color: #EAF6FF;
-  border: 1px solid #00E5FF; border-top: 3px solid #FF2E93;
-  box-shadow: 0 0 0 1px rgba(0, 229, 255, .15), 0 6px 18px rgba(0, 0, 0, .35);
+  padding: 14px 16px; border-radius: 16px;
+  background: linear-gradient(160deg, #17143A, #0D2136); color: #EAF6FF;
+  border: 1px solid rgba(255, 46, 147, .65);
+  box-shadow: 0 0 22px rgba(255, 46, 147, .16), 0 6px 18px rgba(0, 0, 0, .35);
+}
+.jarvis-action-eyebrow {
+  color: #FF2E93; font: 800 11px/1.5 var(--campaign-mono);
+  letter-spacing: .12em; margin-bottom: 6px;
 }
 .jarvis-action-title { font-weight: 800; font-size: 15px; line-height: 1.4; }
 .jarvis-action-body { margin-top: 6px; font-size: 14px; line-height: 1.55; color: #CDEBFF; }
-.jarvis-action-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+.jarvis-action-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 12px; }
 .jarvis-action-accept {
-  padding: 10px 22px; border: none; border-radius: 10px; cursor: pointer;
-  background: #FF2E93; color: #fff; font-weight: 800; font-size: 14px;
+  padding: 11px 26px; border: none; border-radius: 999px; cursor: pointer;
+  background: #00E5FF; color: #052A33; font-weight: 800; font-size: 14px;
+  box-shadow: 0 0 16px rgba(0, 229, 255, .35);
 }
 .jarvis-action-accept:disabled { opacity: .55; cursor: default; }
-.jarvis-action-discard, .jarvis-action-undo {
-  padding: 10px 18px; border-radius: 10px; cursor: pointer;
-  background: transparent; color: #9fd8ef; font-weight: 700; font-size: 14px;
-  border: 1px solid rgba(0, 229, 255, .5);
+.jarvis-action-discard {
+  padding: 11px 20px; border-radius: 999px; cursor: pointer;
+  background: transparent; color: #EAF6FF; font-weight: 700; font-size: 14px;
+  border: 1px solid rgba(234, 246, 255, .4);
 }
 .jarvis-action-discard:disabled { opacity: .55; cursor: default; }
+.jarvis-action-undo {
+  padding: 8px 6px; border: none; border-radius: 8px; cursor: pointer;
+  background: transparent; color: #9fd8ef; font-weight: 700; font-size: 13.5px;
+  text-decoration: underline;
+}
+.jarvis-action-undo:disabled { opacity: .55; cursor: default; }
 .jarvis-action-card--applied { opacity: .82; border-color: rgba(62, 217, 122, .65); border-top-color: #3ED97A; }
 .jarvis-action-card--stale { opacity: .65; border-color: var(--campaign-line); border-top-color: #5b7186; }
 .jarvis-action-card--collapsed { padding: 8px 14px; }
@@ -1112,6 +1237,21 @@ button.jarvis-tutor-chip--lesson { cursor: pointer; }
   font-size: 14.5px; line-height: 1.6; white-space: pre-wrap;
 }
 .jarvis-review-done { font-size: 15px; font-weight: 700; margin-bottom: 12px; }
+
+/* v0.53.0 — guardar y practicar como enlaces de texto bajo la
+   respuesta, como en la maqueta: el 📌 en rosa y el puente al quiz
+   en cian, sin caja de botón. */
+.jarvis-bank-save, .jarvis-tutor-practice {
+  min-height: 0; padding: 4px 2px; border: none; border-radius: 6px;
+  background: transparent; box-shadow: none; font-size: 13px;
+  justify-content: flex-start;
+}
+.jarvis-bank-save { color: #FF7FB8; }
+.jarvis-tutor-practice { color: #7FE7FF; }
+.jarvis-bank-save:hover:not(:disabled), .jarvis-tutor-practice:hover:not(:disabled) {
+  background: transparent; box-shadow: none; transform: none; filter: none;
+  text-decoration: underline;
+}
 
 /* El reflejo en el panel Hoy: pastilla de foco, ⭐ manual, franja del
    día ocupado y la sección «Para mañana». */
