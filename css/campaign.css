@@ -1003,6 +1003,45 @@
 .jarvis-action-discarded { font-size: 13px; color: var(--campaign-muted); font-style: italic; }
 .jarvis-msg--game { justify-self: start; background: rgba(62, 217, 122, .12); color: #DFF7EA; border: 1px solid rgba(62, 217, 122, .4); }
 
+/* ----------------- El Tutor de Estudio (v0.51.0) -----------------
+   La vista de estudio del diálogo: selector de modo, hilo con sus
+   respuestas y el chip de fuente que pinta EL JUEGO (📚 cita validada
+   en cian; 💬 extra en gris). Nada de esto lo dibuja el modelo. */
+.jarvis-tutor-modes { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.jarvis-tutor-mode {
+  appearance: none; font: inherit; cursor: pointer;
+  padding: 7px 12px; border-radius: 999px;
+  border: 1px solid var(--campaign-line);
+  background: var(--campaign-panel); color: var(--campaign-muted);
+  font-size: 12.5px; font-weight: 700; letter-spacing: .03em;
+}
+.jarvis-tutor-mode--active {
+  border-color: #00E5FF; color: #00E5FF;
+  background: linear-gradient(125deg, rgba(0, 229, 255, .12), transparent 60%), var(--campaign-panel);
+}
+.jarvis-tutor-topic {
+  color: #FF2E93; font: 700 11.5px/1.5 var(--campaign-mono);
+  letter-spacing: .05em; margin-bottom: 10px; text-transform: uppercase;
+}
+.jarvis-tutor-log { margin-bottom: 14px; }
+.jarvis-tutor-chip {
+  justify-self: start; max-width: 88%; margin: 0; text-align: left;
+  padding: 5px 11px; border-radius: 999px;
+  font: 700 11.5px/1.6 var(--campaign-mono); letter-spacing: .02em;
+}
+.jarvis-tutor-chip--lesson {
+  appearance: none; font-family: var(--campaign-mono);
+  background: rgba(0, 229, 255, .1); color: #9fe8ff;
+  border: 1px solid rgba(0, 229, 255, .45);
+}
+button.jarvis-tutor-chip--lesson { cursor: pointer; }
+.jarvis-tutor-chip--extra {
+  background: rgba(139, 152, 171, .12); color: #9fb0c3;
+  border: 1px solid rgba(139, 152, 171, .35);
+}
+.jarvis-tutor-bank { margin-top: 4px; }
+.jarvis-tutor-practice { justify-self: start; }
+
 /* El reflejo en el panel Hoy: pastilla de foco, ⭐ manual, franja del
    día ocupado y la sección «Para mañana». */
 .jarvis-focus-pill {
