@@ -12,6 +12,8 @@
  *     usage: { "2026-11-20": { quiz, chat, feedback, calls } },
  *     briefing: { date, text } | null,             // saludo del día en caché
  *     bank: [ { id, q, a, kind, ref, module, date, at } ],  // v0.52.0: el banco (§3.4), ≤ 100
+ *     snoozes: { "garaje:<id>": "YYYY-MM-DD" },    // v0.54.0: avisos del Garaje dormidos (§3.4)
+ *     drafts: { <draftId>: { missionId, missionTitle, text, date, at } },  // v0.54.0: borradores (§3.6), ≤ 5
  *   }
  *
  * El XP de quiz suma al bucket «career» vía derive() (jarvisRewards):
@@ -33,7 +35,10 @@ import {
   JARVIS_ACT_DAILY_LIMIT,
   JARVIS_ACTION_NAMES,
   JARVIS_ACTIONS,
+  JARVIS_DRAFTS_MAX,
+  JARVIS_DRAFT_TEXT_MAX,
   JARVIS_REQUEST_ID_PATTERN,
+  addDaysKey,
   jarvisActionArgsShape,
   jarvisActionPrevShape,
   jarvisAppliedIntact,
@@ -93,6 +98,12 @@ function emptyUsage() {
 export const JARVIS_DAYPLAN_MAX_DAYS = 62;
 export const JARVIS_ACTIONS_MAX = 200;
 export const JARVIS_ACTIONS_KEEP_DAYS = 30;
+/* v0.54.0 — MANOS QUE CRUZAN (diseño de manos §3.4/§6.3): los snoozes
+   del Garaje viven en play.jarvis.snoozes (≤40, con fecha válida) y
+   los borradores de evidencia en play.jarvis.drafts (≤5, FIFO). Son
+   claves opcionales aditivas: PLAY_VERSION no sube. */
+export const JARVIS_SNOOZES_MAX = 40;
+export { JARVIS_DRAFTS_MAX };
 
 function isValidTs(value) {
   return typeof value === "string" && value.length > 0 && Number.isFinite(Date.parse(value));
@@ -134,9 +145,65 @@ function cleanActions(raw) {
       at: record.at,
       undone: record.undone,
       prev: structuredClone(record.prev),
+      /* v0.54.0: la nota de la Libreta que respalda un cruce (su id);
+         solo la trae create_libreta_note. */
+      ...(typeof record.refId === "string" && record.refId.length > 0 && record.refId.length <= 80
+        ? { refId: record.refId }
+        : {}),
     };
   }
   return out;
+}
+
+/* v0.54.0 — los snoozes del Garaje, limpios para lectura: claves
+   «garaje:<id>» con fecha válida. Lo que no cuadra no se lee (la
+   validación dura vive en jarvisProblems, antes de guardar). */
+function cleanSnoozes(raw) {
+  const out = {};
+  if (!isPlainObject(raw)) return out;
+  for (const [key, until] of Object.entries(raw)) {
+    if (!/^garaje:[^:]{1,64}$/.test(key)) continue;
+    if (!isDateKey(until)) continue;
+    out[key] = until;
+  }
+  return out;
+}
+
+/* v0.54.0 — un borrador de evidencia, limpio para lectura: la misma
+   forma estricta que jarvisProblems exige al guardar. */
+function cleanDraftEntry(raw) {
+  if (!isPlainObject(raw)) return null;
+  if (typeof raw.text !== "string" || !raw.text || raw.text.length > JARVIS_DRAFT_TEXT_MAX) return null;
+  if (raw.missionId !== null && raw.missionId !== undefined &&
+    (typeof raw.missionId !== "string" || !raw.missionId || raw.missionId.length > 64)) return null;
+  if (raw.missionTitle !== null && raw.missionTitle !== undefined &&
+    (typeof raw.missionTitle !== "string" || raw.missionTitle.length > 200)) return null;
+  if (!isDateKey(raw.date) || !isValidTs(raw.at)) return null;
+  return {
+    missionId: raw.missionId ?? null,
+    missionTitle: raw.missionTitle ?? null,
+    text: raw.text,
+    date: raw.date,
+    at: raw.at,
+  };
+}
+
+function cleanDrafts(raw) {
+  const out = {};
+  if (!isPlainObject(raw)) return out;
+  for (const [id, entry] of Object.entries(raw)) {
+    if (!id || id.length > 80) continue;
+    const clean = cleanDraftEntry(entry);
+    if (clean) out[id] = clean;
+  }
+  return out;
+}
+
+/** Los borradores como lista con su id, del más reciente al más viejo. */
+function draftList(drafts) {
+  return Object.entries(drafts || {})
+    .map(([id, entry]) => ({ id, ...entry }))
+    .sort((a, b) => String(b.at).localeCompare(String(a.at)) || String(b.id).localeCompare(String(a.id)));
 }
 
 /* v0.52.0 — una entrada del banco, limpia para lectura: la misma forma
@@ -243,7 +310,13 @@ export function jarvisStateOf(bundle) {
      hasta el primer 📌 y PLAY_VERSION no sube. */
   const bank = cleanBank(raw.bank);
 
-  return { quizXpByDate, usage, briefing, dayPlan, actions, bank };
+  /* v0.54.0 — los cruces: snoozes y borradores, misma regla aditiva.
+     Ausentes = mapas vacíos en memoria; el save no se toca hasta la
+     primera acción que cruza y PLAY_VERSION no sube. */
+  const snoozes = cleanSnoozes(raw.snoozes);
+  const drafts = cleanDrafts(raw.drafts);
+
+  return { quizXpByDate, usage, briefing, dayPlan, actions, bank, snoozes, drafts };
 }
 
 /** Vista del día: topes restantes y el saludo en caché, si es de hoy. */
@@ -271,6 +344,12 @@ export function jarvisView(bundle, today) {
     bankCount: state.bank.length,
     bankEntries: state.bank,
     bankGroups: jarvisBankGroups(state.bank),
+    /* v0.54.0: los cruces — snoozes vigentes o no (la UI filtra por
+       fecha) y los borradores para el selector del formulario de
+       feedback, del más reciente al más viejo. */
+    snoozes: state.snoozes,
+    drafts: draftList(state.drafts),
+    draftCount: Object.keys(state.drafts).length,
   };
 }
 
@@ -283,14 +362,43 @@ export function jarvisDailyContext(bundle, catalog, today) {
   const route = routeForDay(bundle, catalog, today);
   const state = jarvisStateOf(bundle);
   const plan = state.dayPlan[today] || { focusId: null, order: null, busy: null };
+  const dailies = route
+    ? route.missions.map((m) => ({ id: m.id, title: m.title, completed: Boolean(m.completed) }))
+    : [];
+  /* v0.54.0 — el universo de los cruces, con la MISMA verdad viva:
+     el Garaje entero según garageView (para validar el snooze contra
+     el estado real, no contra el resumen), los snoozes y borradores
+     guardados, y el mapa id→título de TODAS las misiones de campaña
+     más las diarias de hoy (el universo cerrado de draft_evidence,
+     §3.6). Este contexto es LOCAL (reducer y tests): lo que viaja al
+     Worker es el resumen, con su propio recorte (§6.3). */
+  const garage = garageView(bundle, today);
+  const missionTitles = {};
+  for (const campaign of Object.values(CAMPAIGNS)) {
+    for (const chapter of campaign.chapters || []) {
+      for (const mission of chapter.missions || []) {
+        if (mission && typeof mission.id === "string") missionTitles[mission.id] = mission.title;
+      }
+    }
+  }
+  for (const daily of dailies) missionTitles[daily.id] = daily.title;
   return {
     date: today,
-    dailies: route
-      ? route.missions.map((m) => ({ id: m.id, title: m.title, completed: Boolean(m.completed) }))
-      : [],
+    dailies,
     focusId: plan.focusId,
     order: plan.order,
     busy: plan.busy,
+    garage: garage.missions.map((m) => ({
+      id: m.id,
+      name: `${VEHICLE_SHORT[m.vehicle] || m.vehicleName || m.vehicle}: ${m.title}`,
+      state: m.state,
+      kind: m.kind,
+    })),
+    garageComplete: true,
+    snoozes: state.snoozes,
+    drafts: draftList(state.drafts),
+    draftCount: Object.keys(state.drafts).length,
+    missionTitles,
   };
 }
 
@@ -476,6 +584,71 @@ export function jarvisProblems(bundle) {
         if (!jarvisActionPrevShape(record.name, record.prev)) {
           problems.push(`${at}.prev no tiene la forma exacta de ${record.name}`);
         }
+        /* v0.54.0: el cruce a la Libreta respalda su registro con el
+           id de la nota creada (refId): obligatorio y con forma. */
+        if (record.name === "create_libreta_note") {
+          if (typeof record.refId !== "string" || !record.refId || record.refId.length > 80) {
+            problems.push(`${at}.refId debe ser el id de la nota creada (hasta 80 caracteres)`);
+          } else if (isPlainObject(record.prev) && record.prev.noteId !== record.refId) {
+            problems.push(`${at}.prev.noteId debe coincidir con refId`);
+          }
+        } else if (record.refId !== undefined) {
+          problems.push(`${at}.refId solo existe en create_libreta_note`);
+        }
+      }
+    }
+  }
+
+  /* v0.54.0 — forma ESTRICTA de los cruces (§6.3): snoozes ≤40 con
+     clave «garaje:<id>» y fecha válida; borradores ≤5 con su forma
+     exacta. Una forma que no cuadra invalida la escritura ANTES de
+     guardar, como todo lo de las manos. */
+  if (raw.snoozes !== undefined) {
+    if (!isPlainObject(raw.snoozes)) {
+      problems.push("play.jarvis.snoozes debe ser un objeto");
+    } else {
+      const keys = Object.keys(raw.snoozes);
+      if (keys.length > JARVIS_SNOOZES_MAX) {
+        problems.push(`play.jarvis.snoozes supera el máximo de ${JARVIS_SNOOZES_MAX} entradas`);
+      }
+      for (const [key, until] of Object.entries(raw.snoozes)) {
+        const at = `play.jarvis.snoozes.${key}`;
+        if (!/^garaje:[^:]{1,64}$/.test(key)) {
+          problems.push(`${at} no es una clave de snooze válida («garaje:<id>»)`);
+        }
+        if (!isDateKey(until)) problems.push(`${at} debe ser una fecha válida (el «hasta» del snooze)`);
+      }
+    }
+  }
+
+  if (raw.drafts !== undefined) {
+    if (!isPlainObject(raw.drafts)) {
+      problems.push("play.jarvis.drafts debe ser un objeto");
+    } else {
+      const ids = Object.keys(raw.drafts);
+      if (ids.length > JARVIS_DRAFTS_MAX) {
+        problems.push(`play.jarvis.drafts supera el máximo de ${JARVIS_DRAFTS_MAX} borradores`);
+      }
+      for (const [draftId, entry] of Object.entries(raw.drafts)) {
+        const at = `play.jarvis.drafts.${draftId}`;
+        if (!draftId || draftId.length > 80) {
+          problems.push(`${at} no es un id de borrador válido`);
+          continue;
+        }
+        if (!isPlainObject(entry)) { problems.push(`${at} debe ser un objeto`); continue; }
+        if (entry.missionId !== null && entry.missionId !== undefined &&
+          (typeof entry.missionId !== "string" || !entry.missionId || entry.missionId.length > 64)) {
+          problems.push(`${at}.missionId debe ser un id de hasta 64 caracteres o null`);
+        }
+        if (entry.missionTitle !== null && entry.missionTitle !== undefined &&
+          (typeof entry.missionTitle !== "string" || entry.missionTitle.length > 200)) {
+          problems.push(`${at}.missionTitle debe ser un texto de hasta 200 caracteres o null`);
+        }
+        if (typeof entry.text !== "string" || !entry.text || entry.text.length > JARVIS_DRAFT_TEXT_MAX) {
+          problems.push(`${at}.text debe ser un texto no vacío de hasta ${JARVIS_DRAFT_TEXT_MAX} caracteres`);
+        }
+        if (!isDateKey(entry.date)) problems.push(`${at}.date no es una fecha válida`);
+        if (!isValidTs(entry.at)) problems.push(`${at}.at debe ser una fecha ISO válida`);
       }
     }
   }
@@ -621,8 +794,12 @@ export function applyJarvisMutation(draft, mutation, { date, at, catalog } = {})
   /* ---- v0.50.0 · JARVIS CON MANOS: aplicar / deshacer una acción ----
      Tercera validación (la verdad final): todo se re-valida contra el
      borrador real con el catálogo jarvis-actions.js. Fail-closed:
-     desconocida, mal formada o vieja = no se toca nada. El efecto vive
-     SOLO en play.jarvis.dayPlan[date]; el registro, en play.jarvis.actions. */
+     desconocida, mal formada o vieja = no se toca nada. Las 3 de
+     Diarias viven en play.jarvis.dayPlan[date]; los cruces de la Fase
+     D (v0.54.0) viven en play.jarvis.snoozes / play.jarvis.drafts, y
+     la nota del cruce a la Libreta la creó el JUEGO antes (§3.5):
+     aquí solo se registra, respaldada por su refId. El registro de
+     todo, siempre en play.jarvis.actions. */
   if (mutation.type === "jarvis.act" || mutation.type === "jarvis.actUndo") {
     if (!isPlainObject(state.dayPlan)) state.dayPlan = {};
     if (!isPlainObject(state.actions)) state.actions = {};
@@ -635,6 +812,78 @@ export function applyJarvisMutation(draft, mutation, { date, at, catalog } = {})
       if (!record || record.undone) return dup();
       const action = JARVIS_ACTIONS[record.name];
       if (!action) return no("ACTION_UNKNOWN");
+
+      if (action.cross === "snooze") {
+        if (!isPlainObject(state.snoozes)) state.snoozes = {};
+        const key = `garaje:${record.args.routineId}`;
+        const appliedUntil = addDaysKey(record.date, record.args.days);
+        const current = typeof state.snoozes[key] === "string" ? state.snoozes[key] : null;
+        if (current === appliedUntil) {
+          /* Sigue vivo el snooze de ESTA acción: se restaura el anterior. */
+          if (record.prev.until) state.snoozes[key] = record.prev.until;
+          else delete state.snoozes[key];
+        } else if (current !== null || record.prev.until) {
+          /* El snooze vivo ya no es el de esta acción (otro lo
+             reemplazó), o José lo despertó a mano y había un snooze
+             anterior que NO debe resucitar: el deshacer no pisa lo
+             que él hizo después (§7.2 #9). */
+          return no("ACTION_STALE");
+        }
+        /* current === null y prev.until === null: José ya lo despertó
+           a mano; el efecto no existe y solo se marca el registro. */
+        record.undone = true;
+        return {
+          changed: true, duplicate: false, reason: null,
+          paths: ["play.jarvis.snoozes", `play.jarvis.actions.${requestId}`],
+        };
+      }
+
+      if (action.cross === "draft") {
+        if (!isPlainObject(state.drafts)) state.drafts = {};
+        const entry = state.drafts[requestId];
+        /* Un borrador no se edita desde ningún panel: si el texto vivo
+           difiere del aplicado, fail-closed. Si ya no está (un FIFO
+           posterior lo sacó), no hay nada que borrar. */
+        if (entry && entry.text !== record.args.text) return no("ACTION_STALE");
+        if (entry) delete state.drafts[requestId];
+        /* El desalojado por el FIFO vuelve SOLO si hay lugar: si un
+           borrador posterior ocupa el cupo, su propio deshacer lo
+           restaurará — nunca se supera el tope de 5. */
+        if (record.prev.evicted && !state.drafts[record.prev.evicted.id] &&
+          Object.keys(state.drafts).length < JARVIS_DRAFTS_MAX) {
+          const ev = record.prev.evicted;
+          state.drafts[ev.id] = {
+            missionId: ev.missionId, missionTitle: ev.missionTitle,
+            text: ev.text, date: ev.date, at: ev.at,
+          };
+        }
+        record.undone = true;
+        return {
+          changed: true, duplicate: false, reason: null,
+          paths: ["play.jarvis.drafts", `play.jarvis.actions.${requestId}`],
+        };
+      }
+
+      if (action.cross === "libreta") {
+        /* La nota es de José: si la editó a mano después, el deshacer
+           NO la toca ni marca nada (§3.5). Si sigue intacta (o ya no
+           existe), aquí solo se marca el registro: el borrado lo
+           despacha la UI con libreta.delete tras este OK — la
+           mutación de la Libreta de siempre, no este reducer. */
+        const notes = isPlainObject(draft.play?.libreta) && Array.isArray(draft.play.libreta.notes)
+          ? draft.play.libreta.notes : [];
+        const note = notes.find((n) => isPlainObject(n) && n.id === record.refId);
+        if (note && (note.texto !== record.args.text ||
+          (typeof note.titulo === "string" ? note.titulo : "") !== "")) {
+          return no("ACTION_STALE");
+        }
+        record.undone = true;
+        return {
+          changed: true, duplicate: false, reason: null,
+          paths: [`play.jarvis.actions.${requestId}`],
+        };
+      }
+
       const entry = isPlainObject(state.dayPlan[record.date])
         ? state.dayPlan[record.date]
         : { focusId: null, order: null, busy: null };
@@ -662,19 +911,65 @@ export function applyJarvisMutation(draft, mutation, { date, at, catalog } = {})
     const code = validateJarvisAction(ctx, name, mutation.args);
     if (code) return no(code);
     const args = structuredClone(mutation.args);
-    const prev = action.prevOf(ctx);
-    const entry = isPlainObject(state.dayPlan[date])
-      ? state.dayPlan[date]
-      : { focusId: null, order: null, busy: null };
-    if (!isPlainObject(entry)) return no("ACTION_BAD_ARGS");
-    const cleanEntry = {
-      focusId: typeof entry.focusId === "string" ? entry.focusId : null,
-      order: Array.isArray(entry.order) ? [...entry.order] : null,
-      busy: isPlainObject(entry.busy) ? structuredClone(entry.busy) : null,
-    };
-    action.applyTo(cleanEntry, args);
-    state.dayPlan[date] = cleanEntry;
-    state.actions[requestId] = { name, args, date, at: ts, undone: false, prev };
+    const record = { name, args, date, at: ts, undone: false, prev: null };
+    const paths = [`play.jarvis.actions.${requestId}`, `play.jarvis.usage.${date}`];
+
+    if (action.cross === "snooze") {
+      /* §3.4: solo se duerme el AVISO — play.garaje y su reloj jamás
+         se tocan; la rutina sigue vencida/por vencer en su panel. */
+      if (!isPlainObject(state.snoozes)) state.snoozes = {};
+      record.prev = action.prevOf(ctx, args);
+      state.snoozes[`garaje:${args.routineId}`] = addDaysKey(date, args.days);
+      paths.unshift("play.jarvis.snoozes");
+    } else if (action.cross === "draft") {
+      /* §3.6: el borrador se guarda con su misión resuelta DESDE el
+         catálogo (jamás desde la IA) y el FIFO saca el más viejo —
+         el desalojado queda en la foto para poder deshacer. */
+      if (!isPlainObject(state.drafts)) state.drafts = {};
+      record.prev = action.prevOf(ctx, args);
+      if (record.prev.evicted) delete state.drafts[record.prev.evicted.id];
+      state.drafts[requestId] = {
+        missionId: args.missionId ?? null,
+        missionTitle: args.missionId ? (ctx.missionTitles[args.missionId] ?? null) : null,
+        text: args.text,
+        date,
+        at: ts,
+      };
+      paths.unshift("play.jarvis.drafts");
+    } else if (action.cross === "libreta") {
+      /* §3.5 — orden registro-DESPUÉS: la nota YA la creó la UI con
+         libreta.create (tras el «Aceptar») y su id viaja como refId.
+         Sin una nota real que respalde el registro — con EXACTAMENTE
+         el texto dictado y sin título — no se registra nada:
+         fail-closed, como todo lo de las manos. */
+      const refId = typeof mutation.refId === "string" ? mutation.refId : "";
+      if (!refId || refId.length > 80) return no("ACTION_BAD_ARGS");
+      const notes = isPlainObject(draft.play?.libreta) && Array.isArray(draft.play.libreta.notes)
+        ? draft.play.libreta.notes : [];
+      const note = notes.find((n) => isPlainObject(n) && n.id === refId);
+      if (!note || note.texto !== args.text ||
+        (typeof note.titulo === "string" ? note.titulo : "") !== "") {
+        return no("ACTION_BAD_ARGS");
+      }
+      record.prev = { noteId: refId };
+      record.refId = refId;
+    } else {
+      record.prev = action.prevOf(ctx, args);
+      const entry = isPlainObject(state.dayPlan[date])
+        ? state.dayPlan[date]
+        : { focusId: null, order: null, busy: null };
+      if (!isPlainObject(entry)) return no("ACTION_BAD_ARGS");
+      const cleanEntry = {
+        focusId: typeof entry.focusId === "string" ? entry.focusId : null,
+        order: Array.isArray(entry.order) ? [...entry.order] : null,
+        busy: isPlainObject(entry.busy) ? structuredClone(entry.busy) : null,
+      };
+      action.applyTo(cleanEntry, args);
+      state.dayPlan[date] = cleanEntry;
+      paths.unshift(`play.jarvis.dayPlan.${date}`);
+    }
+
+    state.actions[requestId] = record;
     usage.act = (usage.act || 0) + 1;
     /* Podas (§6.3): dayPlan ≤ 62 días y actions ≤ 200 con ventana de
        30 días — el registro se mantiene en pocos KB. */
@@ -692,14 +987,23 @@ export function applyJarvisMutation(draft, mutation, { date, at, catalog } = {})
     while (actionIds.length > JARVIS_ACTIONS_MAX) {
       delete state.actions[actionIds.shift()];
     }
-    return {
-      changed: true, duplicate: false, reason: null,
-      paths: [
-        `play.jarvis.dayPlan.${date}`,
-        `play.jarvis.actions.${requestId}`,
-        `play.jarvis.usage.${date}`,
-      ],
-    };
+    return { changed: true, duplicate: false, reason: null, paths };
+  }
+
+  /* ---- v0.54.0 · DESPERTAR UN AVISO DEL GARAJE A MANO (§3.4) ----
+     El chip «pospuesta hasta…» del Garaje se despierta con un toque:
+     se borra el snooze si existe (el «!» y el briefing vuelven a
+     contar la rutina). No es una acción de Jarvis: no consume cupo,
+     no entra al registro y no pasa por el Worker. Si no había snooze,
+     es duplicate (nada que hacer). */
+  if (mutation.type === "jarvis.snoozeClear") {
+    const routineId = typeof mutation.routineId === "string" ? mutation.routineId : "";
+    if (!routineId || routineId.length > 64) return no("ACTION_BAD_ARGS");
+    if (!isPlainObject(state.snoozes)) state.snoozes = {};
+    const key = `garaje:${routineId}`;
+    if (!(key in state.snoozes)) return dup();
+    delete state.snoozes[key];
+    return { changed: true, duplicate: false, reason: null, paths: ["play.jarvis.snoozes"] };
   }
 
   /* ---- v0.52.0 · EL BANCO DE PREGUNTAS (§3.4) ----
@@ -775,8 +1079,17 @@ export function buildProgressSummary(bundle, catalog, today) {
   }
 
   const garage = garageView(bundle, today);
+  /* v0.54.0 — la supresión del snooze ocurre AQUÍ, al componer la
+     vista (§3.4): una rutina con snooze vigente (until ≥ hoy) no
+     aparece en el briefing ni en el contexto de acciones, aunque su
+     reloj sigue corriendo y su panel la muestra pospuesta. */
+  const snoozes = jarvisStateOf(bundle).snoozes;
+  const isSnoozed = (mission) => {
+    const until = snoozes[`garaje:${mission.id}`];
+    return typeof until === "string" && until >= today;
+  };
   const garajePorVencer = garage.missions
-    .filter((mission) => mission.state === "vencida" || mission.state === "por-vencer")
+    .filter((mission) => (mission.state === "vencida" || mission.state === "por-vencer") && !isSnoozed(mission))
     .slice(0, 3)
     .map((mission) => `${VEHICLE_SHORT[mission.vehicle] || mission.vehicleName}: ${mission.title}`);
 
@@ -785,18 +1098,32 @@ export function buildProgressSummary(bundle, catalog, today) {
      existe para Jarvis. El Worker v3 lo ignora; el v4 lo usa para
      validar tool_calls. El resumen completo se mantiene ≤ 3 KB. */
   const ctx = jarvisDailyContext(bundle, catalog, today);
+  /* v0.54.0 — el universo de draft_evidence (§3.6): la próxima misión
+     pendiente y desbloqueada de CADA campaña, con su id real — el
+     Worker solo puede citar ids de esta lista (o de las diarias). */
+  const misiones = [];
+  for (const id of Object.keys(CAMPAIGNS)) {
+    const view2 = campaignView(bundle, id);
+    if (!view2) continue;
+    const next = view2.chapters
+      .flatMap((chapter) => chapter.missions)
+      .find((mission) => !mission.completed && mission.unlocked);
+    if (next) misiones.push({ id: next.id, titulo: next.title });
+    if (misiones.length >= 12) break;
+  }
   const accionesContext = {
     diarias: ctx.dailies.map((d) => ({
       id: d.id, titulo: d.title, hecha: d.completed, foco: ctx.focusId === d.id,
     })),
     garajePorVencer: garage.missions
-      .filter((mission) => mission.state === "vencida" || mission.state === "por-vencer")
+      .filter((mission) => (mission.state === "vencida" || mission.state === "por-vencer") && !isSnoozed(mission))
       .slice(0, 3)
       .map((mission) => ({
         id: mission.id,
         nombre: `${VEHICLE_SHORT[mission.vehicle] || mission.vehicleName}: ${mission.title}`,
         estado: mission.state,
       })),
+    misiones,
     diaOcupado: ctx.busy
       ? { minutes: ctx.busy.minutes, chosen: [...ctx.busy.chosen], deferred: [...ctx.busy.deferred] }
       : null,
