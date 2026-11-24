@@ -41,7 +41,7 @@ export function campaignView(bundle, id) {
     ...campaign, chapters, done, total: all.length,
     percent: Math.round(done / Math.max(1, all.length) * 100),
     next: all.find((m) => !m.completed) || null,
-    rank: done === all.length ? (id === "brete" ? "Ruta de analista completada" : id === "eventos" ? "Analista de Decisiones" : id === "entrevista" ? "Listo para la entrevista" : id === "garaje" ? "Mecánico de la casa" : id === "academia" ? "Analista Certificado" : id === "zonaia" ? "Arquitecto de Agentes" : id === "sabiduria" ? "Sabio con criterio" : id === "mundoian" ? "Pequeño Gran Hombre" : "Ruta profesional completada") :
+    rank: done === all.length ? (id === "brete" ? "Ruta de analista completada" : id === "eventos" ? "Analista de Decisiones" : id === "entrevista" ? "Listo para la entrevista" : id === "garaje" ? "Mecánico de la casa" : id === "academia" ? "Analista Certificado" : id === "zonaia" ? "Arquitecto de Agentes" : id === "sabiduria" ? "Sabio con criterio" : id === "mundoian" ? "Pequeño Gran Hombre" : id === "ingles" ? "Controlador Bilingüe" : "Ruta profesional completada") :
       done >= 36 ? "Profesional en práctica" : done >= 24 ? "Constructor de portafolio" :
       done >= 12 ? "En formación" : "Primeros pasos",
     applications: {
@@ -84,6 +84,20 @@ export function applyCampaignMutation(draft, mutation, { at, date }) {
     if (!campaign.freeOrder && !all.slice(0, index).every((m) => current.completions?.[m.id])) return no("MISSION_LOCKED");
     const evidence = clean(mutation.evidence, 2000);
     if (evidence.length < 12) return no("EVIDENCE_REQUIRED");
+    /* LA TORRE (v0.57.0): cuatro misiones de DESPEGUE piden el
+       registro que la misma Torre ya guarda — la palabra sin el
+       registro no completa (honestidad del diseño §6.4/§6.5). Se
+       lee play.ingles directo, sin crear estado. */
+    if (mission.campaignId === "ingles") {
+      const ing = plain(draft?.play?.ingles) ? draft.play.ingles : {};
+      const dictRef = plain(ing.listen) && Array.isArray(ing.listen.dictRef) ? ing.listen.dictRef : [];
+      const mockTries = plain(ing.mock) && Array.isArray(ing.mock.tries) ? ing.mock.tries : [];
+      const efset = plain(ing.efset) ? ing.efset : null;
+      if (mission.id === "ingles-39" && !dictRef.length) return no("DICTATION_REQUIRED");
+      if (mission.id === "ingles-52" && !mockTries.length) return no("MOCK_REQUIRED");
+      if (mission.id === "ingles-53" && !efset) return no("EFSET_REQUIRED");
+      if (mission.id === "ingles-54" && !(efset && plain(efset.second))) return no("EFSET_SECOND_REQUIRED");
+    }
     const state = ensureState(draft);
     state.completions[mission.id] = {
       missionId: mission.id, campaignId: mission.campaignId, date, at, evidence,
