@@ -68,6 +68,31 @@ export function parseChatAction(data) {
   return { name: action.name, args: action.args };
 }
 
+/**
+ * v0.51.0 — el sobre del Tutor (Worker v5): { type: "tutor", text,
+ * grounded, ref }. Aquí se valida la FORMA y se RE-VERIFICA la cita
+ * contra los extractos que el cliente envió (diseño maestro §6.1/§6.3):
+ * el Worker ya degrada una cita inventada, pero la muralla final es
+ * del cliente — si `grounded: true` trae un ref que NO está entre los
+ * enviados, la respuesta se muestra como extra (grounded: false).
+ * Función pura y exportada para tests, como parseChatAction.
+ */
+export function validateTutorAnswer(data, sentRefs) {
+  if (!data || typeof data !== "object" || Array.isArray(data)) return null;
+  if (data.type !== "tutor") return null;
+  const text = typeof data.text === "string" ? data.text.trim() : "";
+  if (!text) return null;
+  if (typeof data.grounded !== "boolean") return null;
+  const refs = Array.isArray(sentRefs) ? sentRefs : [];
+  let grounded = data.grounded;
+  let ref = typeof data.ref === "string" ? data.ref : null;
+  if (!grounded || !ref || !refs.includes(ref)) {
+    grounded = false;
+    ref = null;
+  }
+  return { text, grounded, ref };
+}
+
 export async function askJarvis(type, payload, { signal } = {}) {
   if (!jarvisConfigured()) return { ok: false, error: "not-configured" };
 
@@ -110,6 +135,13 @@ export async function askJarvis(type, payload, { signal } = {}) {
       if (!text.trim() && !action) return { ok: false, error: "empty-text" };
       return { ok: true, text, ...(action ? { action } : {}) };
     }
+    if (type === "tutor") {
+      const sentRefs = (Array.isArray(payload && payload.extracts) ? payload.extracts : [])
+        .map((extract) => extract && extract.ref).filter((ref) => typeof ref === "string");
+      const answer = validateTutorAnswer(data, sentRefs);
+      if (!answer) return { ok: false, error: "invalid-tutor" };
+      return { ok: true, ...answer };
+    }
     if (typeof data.text !== "string" || !data.text.trim()) return { ok: false, error: "empty-text" };
     return { ok: true, text: data.text };
   } catch (error) {
@@ -118,4 +150,28 @@ export async function askJarvis(type, payload, { signal } = {}) {
     clearTimeout(timer);
     if (signal) signal.removeEventListener("abort", forwardAbort);
   }
+}
+
+/**
+ * v0.51.0 — askTutor(payload, { signal }): la puerta del Tutor con las
+ * razones del diseño maestro §6.3. `payload` = { question, summary,
+ * extracts: [{ ref, label, text }], history }. Devuelve
+ * { ok: true, text, grounded, ref } o { ok: false, reason } con
+ * reason ∈ "offline" | "limit" | "bad" | "notutor":
+ *  - "notutor": el Worker en vivo es v3/v4 y no conoce el tipo `tutor`
+ *    (responde 400) — la vista lo dice en lenguaje de Jarvis, jamás
+ *    como error técnico (§6.1.5 del diseño maestro).
+ *  - "limit": 429 del Worker.  "offline": sin configurar/red/timeout.
+ *  - "bad": 502 o sobre con forma inválida.
+ * Sin tocar storage, como todo el cliente.
+ */
+export async function askTutor(payload, { signal } = {}) {
+  const result = await askJarvis("tutor", payload, { signal });
+  if (result.ok) return result;
+  const reason =
+    result.error === "http-400" ? "notutor"
+    : result.error === "http-429" ? "limit"
+    : result.error === "not-configured" || result.error === "network" || result.error === "timeout" ? "offline"
+    : "bad";
+  return { ok: false, reason };
 }
