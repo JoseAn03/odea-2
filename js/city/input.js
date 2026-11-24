@@ -5,7 +5,7 @@
 
 import { districtAt } from "../districts.js";
 import { steerVector } from "./joystick.js";
-import { academiaRect, clipsRect, eventosRect, jarvisRect, mundoianRect, pointInRect, sabiduriaRect, zonaiaRect } from "./layout.js";
+import { academiaRect, clipsRect, eventosRect, jarvisRect, mundoianRect, pointInRect, sabiduriaRect, torreControlRect, zonaiaRect } from "./layout.js";
 
 export function createInput({ canvas, camera, onSelectDistrict, onInteract, onTapWorld, onSteer, walkModeActive }) {
   const pointers = new Map();
@@ -145,6 +145,7 @@ export function createInput({ canvas, camera, onSelectDistrict, onInteract, onTa
             else if (pointInRect(zonaiaRect(), world.x, world.y)) onSelectDistrict("zonaia");
             else if (pointInRect(sabiduriaRect(), world.x, world.y)) onSelectDistrict("sabiduria");
             else if (pointInRect(mundoianRect(), world.x, world.y)) onSelectDistrict("mundoian");
+            else if (pointInRect(torreControlRect(), world.x, world.y)) onSelectDistrict("torrecontrol");
             else if (district) onSelectDistrict(district.id);
           }
         }
