@@ -25,9 +25,28 @@
  * guarda son marcas, conteos y fechas — nunca audio, nunca notas
  * inventadas. Sin TTS o sin micrófono, la vista lo dice y el resto
  * de la Torre sigue entera.
+ *
+ * Fase C (v0.57.0): la Torre abre todo lo que quedaba anunciado:
+ *  · DESPEGUE — la campaña de estudio (58 misiones) se abre desde
+ *    su tarjeta con el sistema de campañas del juego; su progreso
+ *    llega por las opciones (campaign) y se abre con onOpenCampaign.
+ *  · ENTREVISTA — el banco de 18 tarjetas: la respuesta que José
+ *    escribe (con su respuesta real como semilla editable, nunca
+ *    autoguardada), los intentos cronometrados en la vista, las
+ *    frases de rescate, el registro de simulacros y la bitácora de
+ *    errores recurrentes (§6.3 y §6.4).
+ *  · ESCUCHA — el catálogo de 34 fichas con el ciclo metacognitivo
+ *    y el control local de 3 preguntas donde el material lo trae,
+ *    más el dictado de referencia: el TTS lee el clip, José escribe
+ *    lo que oyó y la comparación palabra por palabra (bolsa de
+ *    palabras) le da su % — el número de su habilidad Oído (§6.4).
+ *  · TABLERO — las 4 habilidades con sus niveles de Torre,
+ *    derivados por src/ingles-state.js SOLO de evidencia
+ *    registrada, y la medición EF SET con su registro (§6.5).
  */
 import {
-  SRS_DECKS, HVPT_CONTRASTS, LAB_PHRASES, LAB_PHRASE_BY_ID, KEYS_PHRASE_IDS
+  SRS_DECKS, HVPT_CONTRASTS, LAB_PHRASES, LAB_PHRASE_BY_ID, KEYS_PHRASE_IDS,
+  LISTEN_ACCENTS, DICTATION_CLIPS, DICTATION_BY_ID, RESCUE_PHRASES, ERROR_SOURCES
 } from "../src/ingles-content.js";
 
 const sessions = new WeakMap();
@@ -273,15 +292,66 @@ function makeToolEntries(state, view) {
     redraw(state.root, state);
   }));
   wrap.append(srsCard, labCard);
+
+  /* Fase C: banco de entrevista, escucha y Tablero. */
+  const fc = view.faseC;
+  const bankCard = node("section", "torre-tool-card");
+  bankCard.append(
+    node("h2", "torre-tool-title", "🎙️ Banco de entrevista"),
+    node("p", "torre-tool-text", `Las ${format(fc.bank.total)} preguntas del screening con TUS respuestas: ${format(fc.bank.answered)} escritas · ${format(fc.bank.twoPasses)} con dos pasadas grabadas. Tus respuestas reales ya vienen como semilla editable en la mayoría — nada se guarda hasta que tocás «Guardar».`)
+  );
+  bankCard.append(button("campaign-button campaign-button--primary", "Abrir el banco", () => {
+    state.sub = "bank";
+    redraw(state.root, state);
+  }));
+  const listenCard = node("section", "torre-tool-card");
+  listenCard.append(
+    node("h2", "torre-tool-title", "🎧 Escucha y dictado"),
+    node("p", "torre-tool-text", `${format(fc.listen.total)} materiales reales con el ciclo predecir → escuchar → verificar → anotar (${format(fc.listen.approved)} controles aprobados) y el dictado de referencia: tu % de palabras correctas es el número de tu oído (${format(fc.listen.dictCount)} dictados registrados).`)
+  );
+  listenCard.append(button("campaign-button campaign-button--primary", "Abrir Escucha", () => {
+    state.sub = "listen";
+    redraw(state.root, state);
+  }));
+  const boardCard = node("section", "torre-tool-card");
+  const levels = view.tablero.skills.map((s) => `${s.name} · Torre ${format(s.level)}`).join(" — ");
+  boardCard.append(
+    node("h2", "torre-tool-title", "📊 Tablero de Habilidad"),
+    node("p", "torre-tool-text", `Tus 4 habilidades con su nivel de Torre, calculado solo de evidencia registrada — nunca de XP ni de auto-declaraciones: ${levels}. Acá también registras tu medición EF SET.`)
+  );
+  boardCard.append(button("campaign-button campaign-button--primary", "Abrir el Tablero", () => {
+    state.sub = "board";
+    redraw(state.root, state);
+  }));
+  wrap.append(bankCard, listenCard, boardCard);
   return wrap;
 }
 
-function makeComingSoon() {
-  const card = node("section", "torre-coming");
-  card.append(node("h2", "torre-coming-title", "🚧 En construcción en esta Torre"));
-  card.append(node("p", "torre-coming-text",
-    "La campaña DESPEGUE (58 misiones de estudio) y el Tablero de Habilidad llegan en las próximas fases. La Fraseología y el Laboratorio ya abrieron: a practicar."));
-  return card;
+/* La tarjeta de la campaña DESPEGUE (Fase C): el progreso llega del
+   sistema de campañas vía las opciones; abrirla es salir al panel
+   de campaña del juego (onOpenCampaign). */
+function makeDespegue(state, view) {
+  const campaign = state.options.campaign;
+  const wrap = node("div", "torre-tools");
+  if (campaign) {
+    const card = node("section", "torre-tool-card torre-despegue");
+    card.append(
+      node("h2", "torre-tool-title", "🚀 DESPEGUE — la campaña de la Torre"),
+      node("p", "torre-tool-text", campaign.done >= campaign.total
+        ? `¡Campaña completa! ${format(campaign.done)} de ${format(campaign.total)} misiones · rango «Controlador Bilingüe» ganado.`
+        : `${format(campaign.done)} de ${format(campaign.total)} misiones · 5 fases: Voz, Fraseología, Oído, Entrevista y Medición. Sigue: «${campaign.next ? campaign.next.title : ""}». Al completarla: rango «Controlador Bilingüe».`)
+    );
+    card.append(button("campaign-button campaign-button--primary",
+      campaign.done >= campaign.total ? "Ver la campaña completa" : "Abrir la campaña DESPEGUE",
+      () => state.options.onOpenCampaign?.()));
+    wrap.append(card);
+  }
+  const faseD = node("section", "torre-coming");
+  faseD.append(node("h2", "torre-coming-title", "📻 Próxima fase en esta Torre"));
+  faseD.append(node("p", "torre-coming-text",
+    "Fase D: Radio Jarvis en inglés — la rutina «Radio con Jarvis» con su modo de conversación en inglés dentro del chat. Todo lo demás de la Torre ya abrió: vivo, Fraseología, Laboratorio, banco, escucha, Tablero y DESPEGUE."));
+  wrap.append(faseD);
+  return wrap;
 }
 
 function paintHome(root, state) {
@@ -310,7 +380,7 @@ function paintHome(root, state) {
   for (const m of view.items.filter((i) => i.kind === "hito")) hitosGroup.append(makeMission(state, m));
   main.append(hitosGroup);
   main.append(makeToolEntries(state, view));
-  main.append(makeComingSoon());
+  main.append(makeDespegue(state, view));
   layout.append(rail, main);
   shell.append(layout);
   root.replaceChildren(shell);
@@ -875,24 +945,484 @@ function makeLabView(root, state) {
   root.replaceChildren(shell);
 }
 
+/* ============================ BANCO DE ENTREVISTA ============================
+ * §6.3: las 18 tarjetas con la respuesta que José ESCRIBE. La semilla
+ * (su respuesta real) se muestra editable pero NO se guarda sola:
+ * solo entra a su banco cuando toca «Guardar». Los intentos se
+ * cronometran en la vista (Date.now, sin intervalos) y se registran
+ * con ingles.bankTry — el tiempo es suyo, declarado por su toque. */
+
+const fmtSecs = (s) => `${Math.floor(s / 60)}:${String(Math.max(0, s % 60)).padStart(2, "0")}`;
+
+function bankDraft(state, q) {
+  if (!state.bankDraft) state.bankDraft = {};
+  if (state.bankDraft[q.id] === undefined) {
+    state.bankDraft[q.id] = q.answer || q.seed || "";
+  }
+  return state.bankDraft[q.id];
+}
+
+function makeBankQuestion(state, q, index) {
+  const card = node("section", "torre-tool-card");
+  const head = node("div", "torre-srs-head");
+  head.append(
+    node("span", "torre-srs-count", `Tarjeta ${format(index + 1)} / 18`),
+    node("span", "torre-srs-deck", q.target ? `META ~${format(q.target)} s` : "SIN META DE TIEMPO")
+  );
+  card.append(head);
+  card.append(node("h3", "torre-bank-q", q.q));
+  card.append(node("p", "torre-tool-text", q.hint));
+  const sayRow = node("div", "torre-say-row");
+  sayRow.append(button("torre-say", "🔊 Oír la pregunta", () => {
+    if (!speak(q.q, { rate: 0.95 })) card.append(node("p", "torre-nospeech", "Sin voz en este dispositivo."));
+  }));
+  card.append(sayRow);
+
+  const draft = bankDraft(state, q);
+  const area = node("textarea", "torre-input torre-textarea");
+  area.rows = 5;
+  area.maxLength = 2000;
+  area.value = draft;
+  area.placeholder = "Escribí TU respuesta, con tus números y tu voz…";
+  area.addEventListener("input", () => { state.bankDraft[q.id] = area.value; });
+  card.append(area);
+  if (q.seed && !q.answer) {
+    card.append(node("p", "torre-tool-text", "✍️ Esto es tu respuesta real de la preparación de Envista, como semilla: editala a tu voz de hoy y guardala. Nada se guarda solo."));
+  }
+  const actions = node("div", "torre-say-row");
+  actions.append(button("campaign-button", q.answer ? "Actualizar mi respuesta" : "Guardar mi respuesta", async () => {
+    const result = await state.options.onMutate?.({ type: "ingles.bankSave", qid: q.id, answer: state.bankDraft[q.id] });
+    if (result && result.kind === "error") state.message = result;
+    else {
+      delete state.bankDraft[q.id];
+      state.message = { text: "Respuesta guardada en tu banco.", kind: "success" };
+    }
+    redraw(state.root, state);
+  }));
+  if (state.bankTimer && state.bankTimer.qid === q.id) {
+    actions.append(button("campaign-button campaign-button--primary", "⏹ Terminar intento y registrar", async () => {
+      const secs = Math.max(5, Math.round((Date.now() - state.bankTimer.startedAt) / 1000));
+      state.bankTimer = null;
+      const result = await state.options.onMutate?.({ type: "ingles.bankTry", qid: q.id, secs });
+      if (result && result.kind === "error") state.message = result;
+      else state.message = { text: `Intento registrado: ${fmtSecs(secs)}. La segunda pasada de la misma tarjeta es la que hace el trabajo.`, kind: "success" };
+      redraw(state.root, state);
+    }));
+    card.append(node("p", "torre-lab-msg", "⏱ Intento corriendo: respondé en voz alta, de corrido, y tocá «Terminar» al cerrar."));
+  } else {
+    actions.append(button("campaign-button", "▶ Empezar intento cronometrado", () => {
+      state.bankTimer = { qid: q.id, startedAt: Date.now() };
+      redraw(state.root, state);
+    }));
+  }
+  card.append(actions);
+  const meta = [];
+  meta.push(q.tries ? `${format(q.tries)} intento${q.tries === 1 ? "" : "s"}` : "Sin intentos todavía");
+  if (q.bestSecs != null) meta.push(`mejor: ${fmtSecs(q.bestSecs)}`);
+  if (q.twoPasses) meta.push("✓ dos pasadas");
+  card.append(node("p", "garage-mission-meta", meta.join(" · ")));
+  return card;
+}
+
+function makeMockCard(state, view) {
+  const fc = view.faseC;
+  if (!state.mockForm) state.mockForm = { min: "", sec: "", pauses: "" };
+  const form = state.mockForm;
+  const card = node("section", "torre-tool-card");
+  card.append(
+    node("h2", "torre-tool-title", "🎬 Simulacro completo"),
+    node("p", "torre-tool-text", "El mock entero de corrido (pitch + estrella + brecha + salario + tus preguntas), grabado con el teléfono. Al terminar, registrá acá el tiempo total y cuántas pausas largas (>3 s) contaste al escucharlo. Ese registro alimenta tu Tablero, el hito «Primer simulacro completo» y la misión final de la fase Entrevista de DESPEGUE.")
+  );
+  if (fc.mock.count) {
+    const last = fc.mock.last;
+    card.append(node("p", "torre-tool-text", `Simulacros registrados: ${format(fc.mock.count)} · último: ${fmtSecs(last.secs)} con ${format(last.pauses)} pausas largas · ${fmtDate(last.date)}.`));
+  }
+  const row = node("div", "torre-say-row");
+  const mkNum = (key, placeholder, max) => {
+    const input = node("input", "torre-input torre-num");
+    input.type = "number";
+    input.min = "0";
+    input.max = String(max);
+    input.placeholder = placeholder;
+    input.value = form[key];
+    input.addEventListener("input", () => { form[key] = input.value; });
+    return input;
+  };
+  row.append(mkNum("min", "min", 59), mkNum("sec", "seg", 59), mkNum("pauses", "pausas >3 s", 99));
+  card.append(row);
+  card.append(button("campaign-button campaign-button--primary", "Registrar simulacro", async () => {
+    const secs = (Number(form.min) || 0) * 60 + (Number(form.sec) || 0);
+    const pauses = Number(form.pauses);
+    if (secs < 60 || !Number.isSafeInteger(pauses) || pauses < 0) {
+      state.message = { text: "Registrá el tiempo total (mínimo 1 minuto) y el número de pausas largas.", kind: "error" };
+      redraw(state.root, state);
+      return;
+    }
+    const result = await state.options.onMutate?.({ type: "ingles.mock", secs, pauses });
+    if (result && result.kind === "error") state.message = result;
+    else {
+      state.mockForm = { min: "", sec: "", pauses: "" };
+      state.message = { text: "Simulacro registrado en tu Tablero.", kind: "success" };
+    }
+    redraw(state.root, state);
+  }));
+  return card;
+}
+
+function makeErrorLog(state, view) {
+  const fc = view.faseC;
+  if (!state.errForm) state.errForm = { text: "", source: "dictogloss" };
+  const form = state.errForm;
+  const card = node("section", "torre-tool-card");
+  card.append(
+    node("h2", "torre-tool-title", "📓 Bitácora de errores"),
+    node("p", "torre-tool-text", "Tus errores recurrentes, anotados donde aparecen: el hueco del dictogloss, la frase del simulacro que transcribiste, lo que el A/B te mostró, la palabra de la llamada real. Lo que se repite acá es lo que tu próximo turno ataca.")
+  );
+  if (!fc.errors.length) {
+    card.append(node("p", "torre-tool-text", "Bitácora vacía por ahora: el primer hueco que anotes empieza tu mapa de errores."));
+  }
+  for (const e of fc.errors) {
+    const row = node("div", "torre-deck-row");
+    row.append(
+      node("span", "torre-deck-name", e.text),
+      node("span", "torre-deck-count", `${ERROR_SOURCES[e.source] || e.source} · ${fmtDate(e.date)}`)
+    );
+    row.append(button("torre-say", "Quitar", async () => {
+      await state.options.onMutate?.({ type: "ingles.errorRemove", errorId: e.id });
+      redraw(state.root, state);
+    }));
+    card.append(row);
+  }
+  const input = node("input", "torre-input");
+  input.type = "text";
+  input.maxLength = 300;
+  input.placeholder = "El error, en pocas palabras (ej.: «me como el -ed de worked»)…";
+  input.value = form.text;
+  input.addEventListener("input", () => { form.text = input.value; });
+  card.append(input);
+  const srcRow = node("div", "torre-chip-row");
+  for (const [id, label] of Object.entries(ERROR_SOURCES)) {
+    srcRow.append(button(`torre-chip ${form.source === id ? "torre-chip--on" : ""}`, label, () => {
+      form.source = id;
+      redraw(state.root, state);
+    }));
+  }
+  card.append(srcRow);
+  card.append(button("campaign-button", "Anotar en la bitácora", async () => {
+    const result = await state.options.onMutate?.({ type: "ingles.errorAdd", text: form.text, source: form.source });
+    if (result && result.kind === "error") state.message = result;
+    else {
+      state.errForm = { text: "", source: form.source };
+      state.message = { text: "Anotado: ese hueco ya tiene nombre.", kind: "success" };
+    }
+    redraw(state.root, state);
+  }));
+  return card;
+}
+
+function makeBankView(root, state) {
+  const view = state.options.view;
+  state.view = view;
+  const shell = node("div", "campaign-shell torre-shell");
+  shell.append(subHeader(state, "🎙️ BANCO DE ENTREVISTA", "Tus 18 respuestas, escritas por vos y dichas en voz alta: la segunda pasada es donde la forma aparece."));
+  if (state.message) {
+    shell.append(node("p", `campaign-message campaign-message--${state.message.kind || "info"}`, state.message.text));
+  }
+  const rescue = node("section", "torre-tool-card");
+  rescue.append(
+    node("h2", "torre-tool-title", "🛟 Frases de rescate"),
+    node("p", "torre-tool-text", "Cuando una palabra no sale, estas tres frases te dan tiempo sin sonar perdido. Decilas hasta que salgan solas.")
+  );
+  for (const phrase of RESCUE_PHRASES) {
+    const row = node("div", "torre-say-row");
+    row.append(
+      node("span", "torre-rescue", phrase),
+      button("torre-say", "🔊", () => speak(phrase, { rate: 0.9 }))
+    );
+    rescue.append(row);
+  }
+  shell.append(rescue);
+  view.faseC.bank.questions.forEach((q, i) => shell.append(makeBankQuestion(state, q, i)));
+  shell.append(makeMockCard(state, view));
+  shell.append(makeErrorLog(state, view));
+  root.replaceChildren(shell);
+}
+
+/* ============================ ESCUCHA Y DICTADO ============================
+ * §6.4: el catálogo con el ciclo metacognitivo y, donde el material
+ * lo trae, un control local de 3 preguntas — la única «nota» de la
+ * zona que no es autoevaluación, porque las respuestas están en el
+ * contenido. El dictado de referencia compara por bolsa de palabras:
+ * el % y las palabras que se escaparon son el feedback. */
+
+function dictScore(targetText, heardText) {
+  const words = (s) => normalizeText(s).split(" ").filter(Boolean);
+  const target = words(targetText);
+  const bag = new Map();
+  for (const w of words(heardText)) bag.set(w, (bag.get(w) || 0) + 1);
+  let hit = 0;
+  const missed = [];
+  for (const w of target) {
+    if ((bag.get(w) || 0) > 0) { hit += 1; bag.set(w, bag.get(w) - 1); }
+    else missed.push(w);
+  }
+  return { pct: target.length ? Math.round((hit / target.length) * 100) : 0, missed, total: target.length };
+}
+
+function makeDictation(state, view) {
+  if (!state.dict) state.dict = { clipId: "dic-5", heard: "", result: null };
+  const d = state.dict;
+  const clip = DICTATION_BY_ID.get(d.clipId) || DICTATION_CLIPS[0];
+  const fc = view.faseC;
+  const card = node("section", "torre-tool-card");
+  card.append(
+    node("h2", "torre-tool-title", "✍️ Dictado de referencia"),
+    node("p", "torre-tool-text", "El modelo lee el clip a velocidad real (el botón lento es solo para rescatar un tramo). Escribí todo lo que oigas SIN mirar el texto, compará y registrá tu %: ese número alimenta tu habilidad Oído y abre la misión «Torre sorda» de DESPEGUE. El clip largo (dic-5) es la referencia de la zona.")
+  );
+  const chips = node("div", "torre-chip-row");
+  for (const c of DICTATION_CLIPS) {
+    const best = fc.listen.dictBest[c.id];
+    chips.append(button(`torre-chip ${clip.id === c.id ? "torre-chip--on" : ""}`,
+      `${c.title}${best != null ? ` · mejor ${format(best)}%` : ""}`,
+      () => { d.clipId = c.id; d.result = null; redraw(state.root, state); }));
+  }
+  card.append(chips);
+  const sayRow = node("div", "torre-say-row");
+  sayRow.append(
+    button("torre-say", "🔊 Escuchar a velocidad real", () => { if (!speak(clip.text, { rate: 1 })) card.append(node("p", "torre-nospeech", "Sin voz en este dispositivo.")); }),
+    button("torre-say", "🔊 Rescate lento (0.8×)", () => speak(clip.text, { rate: 0.8 }))
+  );
+  card.append(sayRow);
+  const area = node("textarea", "torre-input torre-textarea");
+  area.rows = 5;
+  area.placeholder = "Escribí lo que oíste, frase por frase…";
+  area.value = d.heard;
+  area.addEventListener("input", () => { d.heard = area.value; d.result = null; });
+  card.append(area);
+  const actions = node("div", "torre-say-row");
+  actions.append(button("campaign-button", "Comparar con el original", () => {
+    if (!d.heard.trim()) {
+      state.message = { text: "Escribí primero lo que oíste: el dictado es escribir sin mirar.", kind: "error" };
+    } else {
+      d.result = dictScore(clip.text, d.heard);
+    }
+    redraw(state.root, state);
+  }));
+  if (d.result) {
+    actions.append(button("campaign-button campaign-button--primary", `Registrar mi ${format(d.result.pct)}%`, async () => {
+      const result = await state.options.onMutate?.({ type: "ingles.dictation", clipId: clip.id, pct: d.result.pct });
+      if (result && result.kind === "error") state.message = result;
+      else state.message = { text: `Dictado registrado: ${format(d.result.pct)}% de palabras correctas.`, kind: "success" };
+      d.result = null;
+      redraw(state.root, state);
+    }));
+  }
+  card.append(actions);
+  if (d.result) {
+    card.append(node("p", "torre-dict-pct", `${format(d.result.pct)}%`));
+    card.append(node("p", "torre-tool-text", d.result.missed.length
+      ? `Palabras que se escaparon (${format(d.result.missed.length)} de ${format(d.result.total)}): ${d.result.missed.slice(0, 30).join(" · ")}${d.result.missed.length > 30 ? "…" : ""}. Si un hueco se repite, anotalo en tu bitácora (en el banco de entrevista).`
+      : "¡Completo! Ni una palabra se escapó en este clip."));
+    const original = node("details", "torre-original");
+    const sum = node("summary", "", "Ver el texto original del clip");
+    original.append(sum, node("p", "torre-tool-text", clip.text));
+    card.append(original);
+  }
+  if (fc.listen.dictRef.length) {
+    const last = fc.listen.dictRef[fc.listen.dictRef.length - 1];
+    const lastClip = DICTATION_BY_ID.get(last.clipId);
+    card.append(node("p", "torre-tool-text", `Dictados registrados: ${format(fc.listen.dictCount)} · último: «${lastClip ? lastClip.title : last.clipId}» con ${format(last.pct)}% · ${fmtDate(last.date)}${last.first ? " · primer intento de ese clip" : ""}.`));
+  }
+  return card;
+}
+
+function makeMaterial(state, m) {
+  const card = node("section", "torre-tool-card");
+  const badges = [
+    m.kind, `~${format(m.minutes)} min`, LISTEN_ACCENTS[m.accent] || m.accent,
+    m.speed === "claro" ? "Velocidad clara" : m.speed === "real" ? "Velocidad real" : "Rápido",
+    m.coverage === "fluye" ? "Fluye sin guion" : "Exige: pausá y repetí"
+  ];
+  if (m.series) badges.push("Serie: misma voz");
+  if (m.transcript) badges.push("Con transcripción/subtítulos");
+  card.append(node("h3", "torre-bank-q", m.title));
+  card.append(node("p", "garage-mission-meta", badges.join(" · ")));
+  card.append(node("p", "torre-tool-text", m.desc));
+  card.append(node("p", "torre-tool-text", "El ciclo: ① PREDICCIÓN — escribí de qué va y 3 palabras que esperás oír. ② ESCUCHA — de corrido, sin pausar ni subtitular la primera pasada. ③ VERIFICACIÓN — con la transcripción o el control: ¿qué se escapó? ④ ANOTACIÓN — 1 frase oída tal cual va a tu evidencia (y a la bitácora si es un hueco)."));
+  const link = node("a", "torre-say torre-link", "▶ Abrir el material");
+  link.href = m.url;
+  link.target = "_blank";
+  link.rel = "noopener";
+  card.append(link);
+  if (m.check) {
+    if (!state.listenPick) state.listenPick = {};
+    const picks = state.listenPick[m.id] || (state.listenPick[m.id] = []);
+    card.append(node("p", "torre-checks-title", "Control de comprensión (local, sin nota de voz):"));
+    m.check.forEach((item, qi) => {
+      card.append(node("p", "torre-tool-text", `${format(qi + 1)}. ${item.q}`));
+      const opts = node("div", "torre-chip-row");
+      item.options.forEach((opt, oi) => {
+        opts.append(button(`torre-chip ${picks[qi] === oi ? "torre-chip--on" : ""}`, opt, () => {
+          picks[qi] = oi;
+          redraw(state.root, state);
+        }));
+      });
+      card.append(opts);
+    });
+    const answered = m.check.every((_, qi) => picks[qi] !== undefined);
+    if (m.checkState) {
+      card.append(node("p", "garage-mission-meta", `Tu control: mejor ${format(m.checkState.best)}/3 · ${format(m.checkState.attempts)} intento${m.checkState.attempts === 1 ? "" : "s"}${m.checkState.approved ? " · ✓ aprobado" : ""}`));
+    }
+    if (answered) {
+      const correct = m.check.reduce((n, item, qi) => n + (picks[qi] === item.answer ? 1 : 0), 0);
+      card.append(node("p", "torre-tool-text", `Tu resultado en este intento: ${format(correct)}/3.`));
+      card.append(button("campaign-button campaign-button--primary", "Registrar el control", async () => {
+        const result = await state.options.onMutate?.({ type: "ingles.listenCheck", matId: m.id, correct });
+        if (result && result.kind === "error") state.message = result;
+        else state.message = { text: `Control registrado: ${format(correct)}/3. Con controles aprobados en EE. UU., británico e indio cae el hito «Tres acentos».`, kind: "success" };
+        redraw(state.root, state);
+      }));
+    }
+  }
+  return card;
+}
+
+function makeListenView(root, state) {
+  const view = state.options.view;
+  state.view = view;
+  const shell = node("div", "campaign-shell torre-shell");
+  shell.append(subHeader(state, "🎧 ESCUCHA", "Cantidad que fluye + dictado que segmenta: los dos carriles del oído, con material real y controles locales."));
+  if (state.message) {
+    shell.append(node("p", `campaign-message campaign-message--${state.message.kind || "info"}`, state.message.text));
+  }
+  shell.append(makeDictation(state, view));
+  for (const [speed, title] of [["claro", "🟢 Carril claro — que fluya"], ["real", "🟡 Velocidad real"], ["rapido", "🔴 Rápido — para cuando el real ya fluye"]]) {
+    const group = view.faseC.listen.materials.filter((m) => m.speed === speed);
+    if (!group.length) continue;
+    const section = node("section", "garage-group");
+    section.append(node("h2", "garage-group-title", title));
+    for (const m of group) section.append(makeMaterial(state, m));
+    shell.append(section);
+  }
+  root.replaceChildren(shell);
+}
+
+/* ============================ TABLERO DE HABILIDAD ============================
+ * §6.5: lo que pinta esta vista lo calculó inglesTableroView SOLO
+ * de registros. La medición EF SET se registra acá: la XP del hito
+ * es por medirte, jamás por el puntaje (que se guarda como texto,
+ * tal cual lo reporta el EF SET). */
+
+function makeBoardView(root, state) {
+  const view = state.options.view;
+  state.view = view;
+  const shell = node("div", "campaign-shell torre-shell");
+  shell.append(subHeader(state, "📊 TABLERO DE HABILIDAD", "Tus niveles de Torre por evidencia registrada: marcas, intentos y mediciones — no XP, no impresiones."));
+  if (state.message) {
+    shell.append(node("p", `campaign-message campaign-message--${state.message.kind || "info"}`, state.message.text));
+  }
+  for (const s of view.tablero.skills) {
+    const card = node("section", "torre-tool-card");
+    const head = node("div", "torre-srs-head");
+    head.append(
+      node("span", "torre-srs-count", `${s.icon} ${s.name}`),
+      node("span", "torre-srs-deck", `TORRE ${format(s.level)} · ${s.levelName.toUpperCase()}`)
+    );
+    card.append(head);
+    for (const ind of s.indicators) {
+      const row = node("div", "torre-deck-row");
+      row.append(
+        node("span", "torre-deck-name", `${ind.ok ? "✓" : "·"} ${ind.label}`),
+        node("span", "torre-deck-count", ind.value)
+      );
+      card.append(row);
+    }
+    card.append(node("p", "torre-tool-text", `Siguiente nivel: ${s.next}`));
+    shell.append(card);
+  }
+
+  const ef = view.faseC.efset;
+  const card = node("section", "torre-tool-card");
+  card.append(
+    node("h2", "torre-tool-title", "📏 Medición externa · EF SET"),
+    node("p", "torre-tool-text", "Tu nivel no lo dice la Torre: lo mide el EF SET gratuito (50 minutos, lectura y escucha — el habla se sigue con tus grabaciones A/B). La Torre paga el hito por MEDIRTE, sea el puntaje que sea; el número se guarda tal cual, sin convertirlo en promesas.")
+  );
+  const link = node("a", "torre-say torre-link", "▶ Hacer el EF SET (efset.org)");
+  link.href = "https://www.efset.org/";
+  link.target = "_blank";
+  link.rel = "noopener";
+  card.append(link);
+  if (!state.efsetDraft && state.efsetDraft !== "") state.efsetDraft = "";
+  const scoreInput = () => {
+    const input = node("input", "torre-input");
+    input.type = "text";
+    input.maxLength = 40;
+    input.placeholder = "Tu resultado, tal cual (ej.: B1 · 52/100)…";
+    input.value = state.efsetDraft || "";
+    input.addEventListener("input", () => { state.efsetDraft = input.value; });
+    return input;
+  };
+  if (!ef) {
+    card.append(node("p", "torre-tool-text", "Todavía no hay medición registrada: hacé el test y pegá acá el resultado."));
+    card.append(scoreInput());
+    card.append(button("campaign-button campaign-button--primary", "Registrar mi medición", async () => {
+      const result = await state.options.onMutate?.({ type: "ingles.efset", score: state.efsetDraft || "" });
+      if (result && result.kind === "error") state.message = result;
+      else {
+        state.efsetDraft = "";
+        state.message = { text: "Medición registrada: cayó el hito «Medición registrada». La XP fue por medirte, no por el número.", kind: "success" };
+      }
+      redraw(state.root, state);
+    }));
+  } else if (!ef.second) {
+    card.append(node("p", "torre-tool-text", `Primera medición: ${ef.first.score} · ${fmtDate(ef.first.date)}.`));
+    if (ef.canSecond) {
+      card.append(node("p", "torre-tool-text", "Ya pasaron 90 días: la segunda medición está habilitada — es el segundo punto de tu curva."));
+      card.append(scoreInput());
+      card.append(button("campaign-button campaign-button--primary", "Registrar la segunda medición", async () => {
+        const result = await state.options.onMutate?.({ type: "ingles.efset", score: state.efsetDraft || "" });
+        if (result && result.kind === "error") state.message = result;
+        else {
+          state.efsetDraft = "";
+          state.message = { text: "Segunda medición registrada: tu curva ya tiene dos puntos honestos.", kind: "success" };
+        }
+        redraw(state.root, state);
+      }));
+    } else {
+      card.append(node("p", "torre-tool-text", `La segunda medición se habilita el ${fmtDate(ef.secondDue)} (90 días después de la primera): dos puntos hacen una curva; uno solo, una foto.`));
+    }
+  } else {
+    card.append(node("p", "torre-tool-text", `Tu curva: ${ef.first.score} (${fmtDate(ef.first.date)}) → ${ef.second.score} (${fmtDate(ef.second.date)}). Dos mediciones reales, sin intermediarios.`));
+  }
+  shell.append(card);
+  root.replaceChildren(shell);
+}
+
 /* --------------------------------- Entrada --------------------------------- */
 
 function paint(root, state) {
   if (state.sub === "srs") { makeSrsView(root, state); return; }
   if (state.sub === "lab") { makeLabView(root, state); return; }
+  if (state.sub === "bank") { makeBankView(root, state); return; }
+  if (state.sub === "listen") { makeListenView(root, state); return; }
+  if (state.sub === "board") { makeBoardView(root, state); return; }
   paintHome(root, state);
 }
 
-export function renderIngles(root, { view, onComplete, onMutate, getSrsSession, onBack } = {}) {
+export function renderIngles(root, { view, onComplete, onMutate, getSrsSession, onBack, campaign, onOpenCampaign } = {}) {
   if (!root || typeof root.replaceChildren !== "function") {
     throw new TypeError("renderIngles necesita un elemento raíz del DOM.");
   }
   let state = sessions.get(root);
   if (!state) {
-    state = { root, message: null, view: null, options: null, sub: "home", srs: null, srsForm: null, lab: null };
+    state = {
+      root, message: null, view: null, options: null, sub: "home", srs: null, srsForm: null, lab: null,
+      bankDraft: null, bankTimer: null, errForm: null, mockForm: null,
+      listenPick: null, dict: null, efsetDraft: ""
+    };
     sessions.set(root, state);
   }
-  state.options = { view, onComplete, onMutate, getSrsSession, onBack };
+  state.options = { view, onComplete, onMutate, getSrsSession, onBack, campaign, onOpenCampaign };
   paint(root, state);
   return root;
 }
