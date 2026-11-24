@@ -1742,6 +1742,10 @@ function renderJarvisPanel() {
     /* v0.50.0 — manos: la tarjeta despacha por la ruta única de siempre. */
     onAct: (mutation) => saveJarvisAction(mutation),
     onActUndo: (mutation) => saveJarvisAction(mutation),
+    /* v0.52.0 — el banco de preguntas: guardar/borrar una entrada,
+       por la misma ruta única. Sin XP, sin monedas, sin Worker. */
+    onBankSave: (entry) => saveJarvisAction({ type: "jarvis.bankSave", entry }),
+    onBankRemove: (bankId) => saveJarvisAction({ type: "jarvis.bankRemove", bankId }),
     onOpenZonaIA: () => { closeCampaign(); openCampaign("zonaia"); },
     /* v0.51.0 — el Tutor: el catálogo (para el índice local de
        lecciones, que lee su clave `daily`) y la apertura de la campaña
