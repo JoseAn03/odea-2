@@ -1421,3 +1421,25 @@ button.jarvis-tutor-chip--lesson { cursor: pointer; }
 .inv-legend-piece.is-owned { border-color: #FFC53D; box-shadow: 0 0 9px rgba(255, 197, 61, 0.35); }
 .inv-legend-piece.is-silhouette { border-style: dashed; border-color: #4A3A10; opacity: 0.85; }
 .shop-sprite-relic { width: 56px; height: 56px; image-rendering: pixelated; }
+
+/* ---- La Torre de Control (v0.55.0): azul cielo #4FC3F7 sobre la
+   familia visual del Garaje/Estudio. ---- */
+.torre-hero { border-top: 3px solid #4FC3F7; }
+.torre-turno {
+  margin-top: 16px; padding: 14px; border: 1px solid rgba(79, 195, 247, .45);
+  border-radius: 12px; background: rgba(79, 195, 247, .07);
+}
+.torre-turno-title { margin: 0 0 4px; font-size: 16px; color: #b3e5fc; }
+.torre-turno-sub { margin: 0 0 12px; color: var(--campaign-muted); font-size: 13px; }
+.torre-turno-block { padding: 10px 0; border-top: 1px dashed rgba(79, 195, 247, .3); }
+.torre-turno-block:first-of-type { border-top: none; }
+.torre-turno-block-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.torre-turno-slot { font-size: 11px; letter-spacing: .08em; color: #4FC3F7; font-weight: 700; }
+.torre-turno-name { font-size: 15px; color: #f6f4e6; font-weight: 600; }
+.torre-turno-brief { margin: 4px 0 8px; color: #d7dee8; font-size: 13px; }
+.torre-coming {
+  margin-top: 16px; padding: 14px; border: 1px dashed rgba(79, 195, 247, .4);
+  border-radius: 12px; background: rgba(18, 8, 31, .35);
+}
+.torre-coming-title { margin: 0 0 6px; font-size: 15px; color: #b3e5fc; }
+.torre-coming-text { margin: 0; color: var(--campaign-muted); font-size: 13px; }
