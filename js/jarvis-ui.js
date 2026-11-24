@@ -39,6 +39,8 @@ import { buildTutorIndex, searchTutor, threadReusable } from "../src/tutor-index
 import { askJarvis, askTutor, jarvisConfigured } from "./jarvis-client.js";
 import {
   JARVIS_ACT_DAILY_LIMIT,
+  JARVIS_DRAFTS_MAX,
+  addDaysKey,
   describeJarvisAction,
   jarvisStaleMessage,
   newJarvisRequestId,
@@ -222,6 +224,14 @@ export function renderJarvis(root, options = {}) {
       focusId: (options.view && options.view.dayPlan && options.view.dayPlan.focusId) || null,
       order: (options.view && options.view.dayPlan && options.view.dayPlan.order) || null,
       busy: (options.view && options.view.dayPlan && options.view.dayPlan.busy) || null,
+    },
+    /* v0.54.0 — MANOS QUE CRUZAN: copia de sesión de los snoozes del
+       Garaje y los borradores (llegan de jarvisView vía options.view),
+       para re-validar propuestas de cruce contra el estado vivo y
+       espejar lo aplicado sin recargar el panel. */
+    cross: {
+      snoozes: (options.view && options.view.snoozes) || {},
+      drafts: Array.isArray(options.view && options.view.drafts) ? [...options.view.drafts] : [],
     },
     pendingCard: null,
   };
@@ -482,14 +492,33 @@ export function renderJarvis(root, options = {}) {
 
   function actionContext() {
     const ac = session.summary && session.summary.accionesContext;
+    const dailies = ac && Array.isArray(ac.diarias)
+      ? ac.diarias.map((d) => ({ id: d.id, title: d.titulo, completed: Boolean(d.hecha) }))
+      : [];
+    /* v0.54.0 — el universo de los cruces en la sesión: las rutinas
+       urgentes del resumen (el validador local las contrasta; el
+       reducer re-valida contra el Garaje ENTERO), los snoozes y
+       borradores de la sesión, y el mapa id→título de misiones
+       (próximas de campaña + diarias de hoy) para draft_evidence. */
+    const missionTitles = {};
+    if (ac && Array.isArray(ac.misiones)) {
+      for (const m of ac.misiones) missionTitles[m.id] = m.titulo;
+    }
+    for (const d of dailies) missionTitles[d.id] = d.title;
     return {
-      date: null,
-      dailies: ac && Array.isArray(ac.diarias)
-        ? ac.diarias.map((d) => ({ id: d.id, title: d.titulo, completed: Boolean(d.hecha) }))
-        : [],
+      date: localTodayKey(),
+      dailies,
       focusId: session.plan.focusId,
       order: session.plan.order,
       busy: session.plan.busy,
+      garage: ac && Array.isArray(ac.garajePorVencer)
+        ? ac.garajePorVencer.map((r) => ({ id: r.id, name: r.nombre, state: r.estado, kind: "rutina" }))
+        : [],
+      garageComplete: false,
+      snoozes: session.cross.snoozes,
+      drafts: session.cross.drafts,
+      draftCount: session.cross.drafts.length,
+      missionTitles,
     };
   }
 
@@ -498,6 +527,31 @@ export function renderJarvis(root, options = {}) {
     else if (name === "reorder_dailies") session.plan.order = [...args.order];
     else if (name === "set_busy_day") {
       session.plan.busy = { minutes: args.minutes, chosen: [...args.chosen], deferred: [...args.deferred] };
+    }
+  }
+
+  /* v0.54.0 — espejo local de un cruce aplicado (el reducer ya lo
+     guardó; esto solo mantiene viva la sesión): el snooze con su
+     fecha calculada y el borrador con su FIFO, como en el save. */
+  function applyCrossLocally(name, args, requestId) {
+    if (name === "snooze_garage_routine") {
+      const until = addDaysKey(localTodayKey(), args.days);
+      if (until) session.cross.snoozes[`garaje:${args.routineId}`] = until;
+    } else if (name === "draft_evidence") {
+      if (session.cross.drafts.length >= JARVIS_DRAFTS_MAX) {
+        const oldest = [...session.cross.drafts]
+          .sort((a, b) => String(a.at).localeCompare(String(b.at)) || String(a.id).localeCompare(String(b.id)))[0];
+        session.cross.drafts = session.cross.drafts.filter((d) => d.id !== oldest.id);
+      }
+      const titles = actionContext().missionTitles;
+      session.cross.drafts.unshift({
+        id: requestId,
+        missionId: args.missionId ?? null,
+        missionTitle: args.missionId ? (titles[args.missionId] ?? null) : null,
+        text: args.text,
+        date: localTodayKey(),
+        at: new Date().toISOString(),
+      });
     }
   }
 
@@ -525,6 +579,7 @@ export function renderJarvis(root, options = {}) {
 
     const requestId = newJarvisRequestId();
     const planSnapshot = structuredClone(session.plan);
+    const crossSnapshot = structuredClone(session.cross);
     session.pendingCard = { requestId, name: action.name, args: action.args };
     card.append(
       el("p", "jarvis-action-eyebrow", "🖐 JARVIS PROPONE"),
@@ -549,11 +604,34 @@ export function renderJarvis(root, options = {}) {
     accept.addEventListener("click", async () => {
       accept.disabled = true;
       discard.disabled = true;
-      const result = await options.onAct({ type: "jarvis.act", requestId, name: action.name, args: action.args });
+      /* v0.54.0 — el cruce a la Libreta (§3.5): la nota la crea el
+         JUEGO primero, con la mutación de la Libreta de siempre, y el
+         registro de Jarvis nace DESPUÉS con su refId. Si la nota no
+         se pudo crear, no hay registro: la tarjeta lo dice y listo. */
+      let noteId = null;
+      if (action.name === "create_libreta_note") {
+        if (typeof options.onLibretaCreate !== "function") {
+          session.pendingCard = null;
+          card.replaceChildren(el("p", "jarvis-action-body", "No se pudo aplicar. Probá de nuevo en un rato."));
+          return;
+        }
+        const created = await options.onLibretaCreate(action.args.text);
+        if (controller.signal.aborted) return;
+        if (!created || !created.ok || !created.noteId) {
+          session.pendingCard = null;
+          card.replaceChildren(el("p", "jarvis-action-body", "No se pudo crear la nota. Probá de nuevo en un rato."));
+          return;
+        }
+        noteId = created.noteId;
+      }
+      const mutation = { type: "jarvis.act", requestId, name: action.name, args: action.args };
+      if (noteId) mutation.refId = noteId;
+      const result = await options.onAct(mutation);
       if (controller.signal.aborted) return;
       if (result && (result.status === "applied" || result.status === "duplicate")) {
         if (result.status === "applied") session.actUsed += 1;
         applyPlanLocally(action.name, action.args);
+        applyCrossLocally(action.name, action.args, requestId);
         session.pendingCard = null;
         renderFoot();
         celebrate();
@@ -569,6 +647,13 @@ export function renderJarvis(root, options = {}) {
           if (controller.signal.aborted) return;
           if (undone && undone.status === "applied") {
             session.plan = planSnapshot;
+            session.cross = crossSnapshot;
+            /* La nota del cruce se borra con la mutación de la
+               Libreta, tras el OK del deshacer (§3.5). */
+            if (noteId && typeof options.onLibretaDelete === "function") {
+              await options.onLibretaDelete(noteId);
+              if (controller.signal.aborted) return;
+            }
             card.replaceChildren(el("p", "jarvis-action-discarded", "↩️ Deshecho: quedó como estaba."));
           } else {
             card.replaceChildren(el("p", "jarvis-action-discarded", "Ya no se puede deshacer: el ajuste cambió después."));
@@ -579,6 +664,12 @@ export function renderJarvis(root, options = {}) {
         card.append(undoRow);
         log.append(el("p", "jarvis-msg jarvis-msg--game", `✅ Aplicado: ${desc.applied}`));
       } else {
+        /* La nota quedó creada pero el registro falló: se compensa
+           borrándola — nunca queda una nota huérfana de un registro. */
+        if (noteId && typeof options.onLibretaDelete === "function") {
+          try { await options.onLibretaDelete(noteId); } catch { /* compensación best-effort */ }
+          if (controller.signal.aborted) return;
+        }
         const failCode = result && result.error && result.error.code;
         session.pendingCard = null;
         if (failCode === "ACTION_STALE") {
@@ -881,10 +972,34 @@ export function renderJarvis(root, options = {}) {
       }
     });
 
+    /* v0.54.0 — «Usar un borrador» (§3.6): carga el texto de un
+       borrador que Jarvis guardó en el campo de evidencia, EDITABLE
+       antes de enviar. Usarlo NO borra el borrador: sigue guardado
+       hasta que el FIFO lo saque o José deshaga la acción. */
+    const draftSelect = el("select", "jarvis-select");
+    if (session.cross.drafts.length) {
+      const placeholder = el("option", "", "Usar un borrador…");
+      placeholder.value = "";
+      draftSelect.append(placeholder);
+      for (const draft of session.cross.drafts) {
+        const option = el("option", "", draft.missionTitle ? `✍️ ${draft.missionTitle}` : "✍️ Borrador sin misión");
+        option.value = draft.id;
+        draftSelect.append(option);
+      }
+      draftSelect.addEventListener("change", () => {
+        const draft = session.cross.drafts.find((d) => d.id === draftSelect.value);
+        if (draft) evidence.value = draft.text;
+        draftSelect.value = "";
+      });
+    }
+
     panel.append(
       el("label", "campaign-label", "CAMPAÑA"), campaignSelect,
       el("label", "campaign-label", "MISIÓN COMPLETADA"), missionSelect,
       el("label", "campaign-label", "TU EVIDENCIA"), evidence,
+      ...(session.cross.drafts.length
+        ? [el("label", "campaign-label", "O CARGÁ UN BORRADOR"), draftSelect]
+        : []),
       submit, resultBox
     );
     /* Con los selects ya en el documento, su value es confiable:
