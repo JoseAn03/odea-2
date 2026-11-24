@@ -1429,6 +1429,20 @@ button.jarvis-tutor-chip--lesson { cursor: pointer; }
 /* ---- La Torre de Control (v0.55.0): azul cielo #4FC3F7 sobre la
    familia visual del Garaje/Estudio. ---- */
 .torre-hero { border-top: 3px solid #4FC3F7; }
+.torre-hero-art { margin: 2px 0 6px; }
+.torre-hero-art svg { display: block; width: 100%; max-width: 340px; height: auto; }
+.torre-badge {
+  display: inline-block; margin: 10px 0 0; padding: 5px 10px;
+  border: 1px solid #ff5da2; border-radius: 8px;
+  color: #ffb3d1; background: rgba(255, 93, 162, .12);
+  font-size: 12px; font-weight: 700; letter-spacing: .04em;
+}
+.torre-rutinas-head {
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  margin: 4px 0 10px;
+}
+.torre-rutinas-title { margin: 0; font-size: 16px; color: #ff8fbf; }
+.torre-rutinas-count { font-size: 12px; color: var(--campaign-muted); letter-spacing: .05em; }
 .torre-turno {
   margin-top: 16px; padding: 14px; border: 1px solid rgba(79, 195, 247, .45);
   border-radius: 12px; background: rgba(79, 195, 247, .07);
@@ -1521,3 +1535,17 @@ button.jarvis-tutor-chip--lesson { cursor: pointer; }
 .torre-hvpt-feedback--no { color: #ef9a9a; }
 .torre-keys-row { padding: 8px 0; border-top: 1px dashed rgba(79, 195, 247, .25); }
 .torre-keys-phrase { margin: 0 0 6px; font-size: 14px; color: #f6f4e6; }
+
+/* Fase C (v0.57.0): banco de entrevista, escucha/dictado y Tablero. */
+.torre-despegue { border-color: rgba(79, 195, 247, .65); }
+.torre-bank-q { margin: 0 0 6px; font-size: 16px; color: #fff; font-weight: 700; }
+.torre-textarea {
+  width: 100%; min-height: 96px; resize: vertical; margin: 6px 0;
+  font-family: inherit; line-height: 1.45;
+}
+.torre-rescue { font-size: 14px; color: #f6f4e6; align-self: center; }
+.torre-num { width: 92px; }
+.torre-link { text-decoration: none; display: inline-block; margin: 4px 0 10px; }
+.torre-dict-pct { margin: 6px 0 2px; font-size: 34px; font-weight: 800; color: #4FC3F7; }
+.torre-original { margin: 8px 0; }
+.torre-original summary { cursor: pointer; color: #b3e5fc; font-size: 13px; }
