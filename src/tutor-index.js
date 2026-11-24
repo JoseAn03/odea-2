@@ -4,9 +4,10 @@
  * Diseño maestro de Jarvis v2, §3.1: DeepSeek no «sabe» las lecciones
  * de José — el JUEGO busca en su material real y el modelo solo explica
  * los extractos que se le pasan. Este módulo es esa búsqueda: pura,
- * determinista y auditable, sobre los 510 textos que el juego ya trae
- * (342 misiones de `src/campaigns.js` + 168 diarias de
- * `data/xp-catalog.json`). Se construye EN MEMORIA, en el dispositivo,
+ * determinista y auditable, sobre los 568 textos que el juego ya trae
+ * (400 misiones de `src/campaigns.js` — DESPEGUE sumó las suyas en
+ * v0.57.0 — + 168 diarias de `data/xp-catalog.json`). Se construye
+ * EN MEMORIA, en el dispositivo,
  * la primera vez que se abre el Tutor en la sesión: 0 bytes nuevos de
  * red, 0 bytes de guardado (se reconstruye por sesión).
  *
