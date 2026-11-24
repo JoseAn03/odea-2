@@ -46,6 +46,9 @@ export const JARVIS_QUIZ_XP_PER_HIT = 2;
 export const JARVIS_QUIZ_DAILY_LIMIT = 2;
 export const JARVIS_CHAT_DAILY_LIMIT = 20;
 export const JARVIS_FEEDBACK_DAILY_LIMIT = 5;
+/* v0.51.0 — el Tutor de Estudio (diseño maestro §3.6): preguntar no
+   paga XP ni monedas; el tope solo acota las llamadas al Worker. */
+export const JARVIS_TUTOR_DAILY_LIMIT = 15;
 export const ENTREVISTA_FECHA = "2026-11-24";
 
 const USAGE_KINDS = ["quiz", "chat", "feedback", "calls"];
@@ -73,7 +76,7 @@ function cleanCount(value) {
 }
 
 function emptyUsage() {
-  return { quiz: 0, chat: 0, feedback: 0, calls: 0, act: 0 };
+  return { quiz: 0, chat: 0, feedback: 0, calls: 0, act: 0, tutor: 0 };
 }
 
 export const JARVIS_DAYPLAN_MAX_DAYS = 62;
@@ -148,6 +151,9 @@ export function jarvisStateOf(bundle) {
         /* v0.50.0: acciones aplicadas del día (Jarvis con manos). Clave
            opcional aditiva: un save viejo sin `act` lee 0, sin migración. */
         act: cleanCount(entry.act),
+        /* v0.51.0: preguntas del Tutor del día. Misma regla aditiva:
+           un save sin `tutor` lee 0, sin migración ni PLAY_VERSION. */
+        tutor: cleanCount(entry.tutor),
       };
     }
   }
@@ -190,6 +196,9 @@ export function jarvisView(bundle, today) {
     dayPlan,
     accionesHoy: usageToday.act || 0,
     actRestantes: Math.max(0, JARVIS_ACT_DAILY_LIMIT - (usageToday.act || 0)),
+    /* v0.51.0: el Tutor del día (usadas y restantes, para el pie). */
+    tutorHoy: usageToday.tutor || 0,
+    tutorRestantes: Math.max(0, JARVIS_TUTOR_DAILY_LIMIT - (usageToday.tutor || 0)),
   };
 }
 
@@ -312,6 +321,16 @@ export function jarvisProblems(bundle) {
       if (!isPlainObject(entry) || entry.act === undefined) continue;
       if (!Number.isInteger(entry.act) || entry.act < 0) {
         problems.push(`play.jarvis.usage.${date}.act debe ser un entero ≥ 0`);
+      }
+    }
+  }
+
+  /* `tutor` (v0.51.0) es opcional con la misma regla que `act`. */
+  if (isPlainObject(raw.usage)) {
+    for (const [date, entry] of Object.entries(raw.usage)) {
+      if (!isPlainObject(entry) || entry.tutor === undefined) continue;
+      if (!Number.isInteger(entry.tutor) || entry.tutor < 0) {
+        problems.push(`play.jarvis.usage.${date}.tutor debe ser un entero ≥ 0`);
       }
     }
   }
@@ -439,11 +458,15 @@ export function applyJarvisMutation(draft, mutation, { date, at, catalog } = {})
 
   if (mutation.type === "jarvis.usage") {
     const kind = mutation.kind;
-    if (kind !== "chat" && kind !== "feedback") return no("BAD_USAGE_KIND");
-    const limit = kind === "chat" ? JARVIS_CHAT_DAILY_LIMIT : JARVIS_FEEDBACK_DAILY_LIMIT;
+    if (kind !== "chat" && kind !== "feedback" && kind !== "tutor") return no("BAD_USAGE_KIND");
+    const limit = kind === "chat"
+      ? JARVIS_CHAT_DAILY_LIMIT
+      : kind === "feedback" ? JARVIS_FEEDBACK_DAILY_LIMIT : JARVIS_TUTOR_DAILY_LIMIT;
     const usage = usageOf(state, date);
-    if (usage[kind] >= limit) return no(kind === "chat" ? "JARVIS_CHAT_LIMIT" : "JARVIS_FEEDBACK_LIMIT");
-    usage[kind] += 1;
+    if (usage[kind] >= limit) {
+      return no(kind === "chat" ? "JARVIS_CHAT_LIMIT" : kind === "feedback" ? "JARVIS_FEEDBACK_LIMIT" : "JARVIS_TUTOR_LIMIT");
+    }
+    usage[kind] = (usage[kind] || 0) + 1;
     usage.calls += 1;
     return { changed: true, duplicate: false, reason: null, paths: [`play.jarvis.usage.${date}`] };
   }
