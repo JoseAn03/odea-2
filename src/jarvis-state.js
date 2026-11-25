@@ -28,6 +28,7 @@
 import { campaignView } from "./campaign-state.js";
 import { garageView } from "./garage-state.js";
 import { ianView } from "./ian-state.js";
+import { inglesView } from "./ingles-state.js";
 import { derive, deriveStreak, sourcesFromMigrated } from "./derive.js";
 import { planDayFor, routeForDay } from "./gameplay.js";
 import { CAMPAIGNS } from "./campaigns.js";
@@ -1166,6 +1167,23 @@ export function buildProgressSummary(bundle, catalog, today) {
        (jarvisLocalGreeting) lo dice tal cual. Como el repaso de v1 no
        guarda calificaciones (§3.4.3), «sin repasar» = guardadas. */
     bancoSinRepasar: view.bankCount >= 3 ? view.bankCount : null,
+    /* v0.59.0 — la línea del English Center en el briefing (Fase D,
+       diseño §7.3): SOLO lectura del estado real — si el turno del día
+       quedó completo (los 3 bloques de hoy hechos hoy) y cuántas
+       tarjetas de fraseología están vencidas. Viaja SOLO cuando hay
+       algo vivo (turno pendiente o tarjetas por repasar), como la
+       línea del banco: sin nada vivo, null y el briefing no naggea.
+       Un save sin play.ingles deriva la zona en cero: turno pendiente
+       y 0 vencidas → la línea viaja con el turno por hacer. */
+    inglesCenter: (() => {
+      const ingles = inglesView(bundle, today);
+      const turnoDelDiaHecho = ingles.turno.blocks.length > 0 && ingles.turno.blocks
+        .every((block) => block.item.lastDate === today && block.item.times > 0);
+      const tarjetasVencidas = ingles.faseB.srs.dueCount;
+      return !turnoDelDiaHecho || tarjetasVencidas > 0
+        ? { turnoDelDiaHecho, tarjetasVencidas }
+        : null;
+    })(),
     accionesContext,
   };
 }
