@@ -31,6 +31,55 @@ export function jarvisConfigured() {
   return typeof JARVIS_WORKER_URL === "string" && JARVIS_WORKER_URL.trim().length > 0;
 }
 
+/**
+ * v0.59.0 — Fase D del English Center: el MODO INGLÉS del chat vive en
+ * el Worker v6 (flag `mode: "en"` en la petición de chat). El Worker
+ * v5 lo ignora y respondería en español, así que el juego pregunta la
+ * versión por el GET de salud ANTES de encender el modo: con v6+ el
+ * botón enciende; con menos, el chat muestra el aviso honesto de que
+ * el modo se activa cuando José actualice su Jarvis (pegado del v6 en
+ * Cloudflare). Degradación elegante, como todo Jarvis.
+ */
+export const JARVIS_ENGLISH_MIN_WORKER = 6;
+
+/** La versión que declara el GET de salud: { ok, service, v } → v o null.
+ *  Función pura y exportada para tests, como validateTutorAnswer. */
+export function parseWorkerVersion(data) {
+  if (!data || typeof data !== "object" || Array.isArray(data)) return null;
+  const version = Number(data.v);
+  return Number.isInteger(version) && version > 0 ? version : null;
+}
+
+let workerVersionKnown = null;
+
+/** La versión del Worker en vivo, o null si no se pudo averiguar (sin
+ *  configurar, sin red, respuesta rara). Un acierto se cachea por
+ *  sesión de página; un fallo NO se cachea: el próximo intento vuelve
+ *  a preguntar (José pudo recuperar la conexión o pegar el v6). */
+export async function jarvisWorkerVersion({ signal } = {}) {
+  if (workerVersionKnown != null) return workerVersionKnown;
+  if (!jarvisConfigured()) return null;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8000);
+  const forwardAbort = () => controller.abort();
+  if (signal) {
+    if (signal.aborted) controller.abort();
+    else signal.addEventListener("abort", forwardAbort, { once: true });
+  }
+  try {
+    const response = await fetch(JARVIS_WORKER_URL, { method: "GET", signal: controller.signal });
+    if (!response.ok) return null;
+    const version = parseWorkerVersion(await response.json().catch(() => null));
+    if (version != null) workerVersionKnown = version;
+    return version;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+    if (signal) signal.removeEventListener("abort", forwardAbort);
+  }
+}
+
 function validateQuestion(raw) {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
   const { q, options, answer, why } = raw;
