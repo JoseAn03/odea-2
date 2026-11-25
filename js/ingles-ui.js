@@ -386,9 +386,9 @@ function makeDespegue(state, view) {
     wrap.append(card);
   }
   const faseD = node("section", "torre-coming");
-  faseD.append(node("h2", "torre-coming-title", "🔜 Próxima fase en este Center"));
+  faseD.append(node("h2", "torre-coming-title", "🗣️ Charla con Jarvis — ya abrió"));
   faseD.append(node("p", "torre-coming-text",
-    "Fase D: Jarvis en inglés — conversación en inglés dentro del chat de Jarvis, para practicar hablando con él. Todo lo demás del Center ya abrió: vivo, Fraseología, Laboratorio, banco, escucha, Tablero y DESPEGUE."));
+    "La Fase D ya vive en el chat de Jarvis: abrí a Jarvis (en la Zona IA o en su app del teléfono), entrá a «Preguntar algo» y tocá «🇬🇧 Talk in English» — conversa con vos en inglés simple y te corrige una sola cosa por mensaje. En «Practicar (quiz)» también está el tema «Inglés · Fraseología», con las frases de tus mazos. Si el botón avisa que se activa al actualizar tu Jarvis, es el pegado del Worker v6 en Cloudflare (el paso de tu PC)."));
   wrap.append(faseD);
   return wrap;
 }
