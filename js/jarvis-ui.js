@@ -24,6 +24,15 @@
  * aplicada). Debajo: el briefing, las acciones como píldoras neón y la
  * barra de pestañas Chat/Tutor/Quiz/Banco siempre visible. Ni el
  * estado, ni las mutaciones, ni las reglas de XP cambian en nada.
+ *
+ * v0.59.0 — FASE D del English Center («Charla con Jarvis», diseño §7):
+ * el chat suma el interruptor «🇬🇧 Talk in English» (modo inglés con
+ * Worker v6+: Jarvis conversa en inglés simple y corrige UNA sola
+ * cosa por mensaje; mismo chat, mismo historial, mismo tope), el quiz
+ * suma el tema «Inglés · Fraseología» alimentado por los mazos SRS del
+ * Center con las reglas de XP de siempre, y el saludo local dice la
+ * línea del Center cuando el resumen la trae. Nada de eso reemplaza
+ * el chat normal, las sugerencias rápidas, el briefing ni los quizzes.
  */
 
 import { CAMPAIGNS } from "../src/campaigns.js";
@@ -35,8 +44,9 @@ import {
   JARVIS_QUIZ_XP_PER_HIT,
   JARVIS_TUTOR_DAILY_LIMIT,
 } from "../src/jarvis-state.js";
+import { SRS_CARDS } from "../src/ingles-content.js";
 import { buildTutorIndex, searchTutor, threadReusable } from "../src/tutor-index.js";
-import { askJarvis, askTutor, jarvisConfigured } from "./jarvis-client.js";
+import { JARVIS_ENGLISH_MIN_WORKER, askJarvis, askTutor, jarvisConfigured, jarvisWorkerVersion } from "./jarvis-client.js";
 import {
   JARVIS_ACT_DAILY_LIMIT,
   JARVIS_DRAFTS_MAX,
@@ -55,6 +65,10 @@ const QUIZ_TOPICS = [
   { id: "brete", label: "El Brete", campaignId: "brete" },
   { id: "gamer", label: "Zona Gamer", campaignId: "gamer" },
   { id: "datos", label: "Datos en general", campaignId: null },
+  /* v0.59.0 — Fase D del English Center (diseño §7.2): el tema de
+     fraseología se alimenta de los 5 mazos SRS del Center, no de una
+     campaña. Las reglas del quiz son las de siempre, sin excepción. */
+  { id: "fraseologia", label: "Inglés · Fraseología", campaignId: null, ingles: true, workerTopic: "Inglés · Fraseología" },
 ];
 
 const NOT_CONNECTED =
@@ -154,6 +168,19 @@ export function jarvisLocalGreeting(summary) {
   if (summary.bancoSinRepasar) {
     parts.push(`Tenés ${summary.bancoSinRepasar} preguntas guardadas sin repasar. ¿Las vemos?`);
   }
+  /* v0.59.0 — la línea del English Center (Fase D, §7.3): el resumen
+     la trae solo cuando hay algo vivo; el saludo local la dice tal
+     cual, con los datos reales del save. */
+  if (summary.inglesCenter) {
+    const center = summary.inglesCenter;
+    const bits = [center.turnoDelDiaHecho
+      ? "el turno del día del English Center ya está hecho"
+      : "te falta el turno del día del English Center"];
+    if (center.tarjetasVencidas > 0) {
+      bits.push(`tenés ${center.tarjetasVencidas} tarjeta${center.tarjetasVencidas === 1 ? "" : "s"} de fraseología por repasar`);
+    }
+    parts.push(`En el English Center: ${bits.join(" y ")}.`);
+  }
   return parts.join(" ");
 }
 
@@ -164,7 +191,28 @@ export function jarvisLocalGreeting(summary) {
  *  Zona IA, que es su material de datos e IA. */
 const MATERIAL_LIMIT = 12;
 
+/** v0.59.0 — el material del tema «Inglés · Fraseología»: hasta 12
+ *  tarjetas de los 5 mazos SRS del English Center, muestreadas a lo
+ *  largo de todo el banco (130) para no sesgar a un solo mazo, en la
+ *  forma { title, brief, deliverable } que acepta el Worker: la frase
+ *  en inglés, su significado con un ejemplo de su mundo, y la guía de
+ *  pronunciación. Exportada para tests, como jarvisLocalGreeting. */
+export function fraseologiaQuizMaterial() {
+  const step = SRS_CARDS.length / MATERIAL_LIMIT;
+  const material = [];
+  for (let i = 0; i < MATERIAL_LIMIT; i += 1) {
+    const card = SRS_CARDS[Math.floor(i * step)];
+    material.push({
+      title: card.term,
+      brief: `Significado: ${card.meaning}. Ejemplo: ${card.example}`,
+      deliverable: `Pronunciación guía: ${card.pron}.`
+    });
+  }
+  return material;
+}
+
 function topicMaterial(topic) {
+  if (topic.ingles) return fraseologiaQuizMaterial();
   const campaign = CAMPAIGNS[topic.campaignId || "zonaia"];
   if (!campaign) return [];
   const all = campaign.chapters.flatMap((chapter) => chapter.missions);
@@ -216,6 +264,12 @@ export function renderJarvis(root, options = {}) {
     bankFilter: { kind: "all", module: null },
     bankQuery: "",
     chatLog: [],
+    /* v0.59.0 — Fase D del English Center: el modo inglés del chat es
+       de SESIÓN (como el historial: no se guarda en el save) y la nota
+       bajo su botón guarda el último aviso (encendido, sin conexión o
+       «se activa cuando actualices tu Jarvis»). */
+    chatEnglish: false,
+    chatNote: null,
     /* v0.50.0 — manos: contador de acciones aplicadas hoy, el plan del
        día conocido (para re-validar propuestas contra el estado vivo) y
        la ÚNICA tarjeta que puede estar pendiente a la vez. */
@@ -400,7 +454,7 @@ export function renderJarvis(root, options = {}) {
     panel.append(el("p", "jarvis-note", "Preparando tus preguntas…"));
     setFace("thinking");
     const result = await askJarvis("quiz",
-      { topic: topic.id, material: topicMaterial(topic) }, { signal: controller.signal });
+      { topic: topic.workerTopic || topic.id, material: topicMaterial(topic) }, { signal: controller.signal });
     if (controller.signal.aborted) return;
     setFace(baseFace);
     if (!result.ok) {
@@ -796,6 +850,44 @@ export function renderJarvis(root, options = {}) {
     setActiveTab("chat");
     panel.replaceChildren();
     panel.append(el("h3", "jarvis-panel-title", "Preguntar algo"));
+    /* v0.59.0 — «🇬🇧 Talk in English» (diseño §7.1): el modo inglés
+       NO reemplaza el chat — es un interruptor sobre este mismo chat,
+       con su mismo historial y su mismo tope de 20 mensajes/día.
+       Encenderlo pregunta primero la versión del Worker en vivo: con
+       v6+ enciende; con v5 o menos muestra el aviso honesto de que se
+       activa al pegar el Worker v6; sin conexión no abre. Apagarlo
+       vuelve al español al instante. */
+    const enToggle = el("button",
+      `jarvis-en-toggle${session.chatEnglish ? " jarvis-en-toggle--on" : ""}`,
+      session.chatEnglish
+        ? "🇬🇧 English mode: ON — tocá para volver al español"
+        : "🇬🇧 Talk in English");
+    enToggle.type = "button";
+    enToggle.addEventListener("click", async () => {
+      if (session.chatEnglish) {
+        session.chatEnglish = false;
+        session.chatNote = null;
+        showChat();
+        return;
+      }
+      enToggle.disabled = true;
+      enToggle.textContent = "🇬🇧 Un momento, reviso mi versión…";
+      const version = await jarvisWorkerVersion({ signal: controller.signal });
+      if (controller.signal.aborted) return;
+      if (version != null && version >= JARVIS_ENGLISH_MIN_WORKER) {
+        session.chatEnglish = true;
+        session.chatNote = "English mode is ON: I'll reply in simple English and fix just one thing per message. Tell me about your day! 🇬🇧";
+      } else if (version == null) {
+        session.chatNote = jarvisConfigured()
+          ? "No pude verificar mi versión (sin conexión). El modo inglés se enciende apenas me conecte."
+          : "Todavía no estoy conectado: el modo inglés llega cuando me conectés.";
+      } else {
+        session.chatNote = "Mi modo inglés se activa cuando actualices tu Jarvis: pegá el Worker v6 en Cloudflare (el paso de tu PC) y este botón se enciende solo. Mientras tanto, charlemos como siempre.";
+      }
+      showChat();
+    });
+    panel.append(enToggle);
+    if (session.chatNote) panel.append(el("p", "jarvis-note", session.chatNote));
     const log = el("div", "jarvis-chat-log");
     for (const entry of session.chatLog) {
       log.append(el("p", entry.role === "user" ? "jarvis-msg jarvis-msg--user" : "jarvis-msg jarvis-msg--jarvis", entry.text));
@@ -816,7 +908,9 @@ export function renderJarvis(root, options = {}) {
 
     const input = el("textarea", "jarvis-input");
     input.rows = 3;
-    input.placeholder = "Preguntame lo que sea de tu plan, tus campañas o tu preparación…";
+    input.placeholder = session.chatEnglish
+      ? "Write to me in English — your day, your work, anything…"
+      : "Preguntame lo que sea de tu plan, tus campañas o tu preparación…";
     const send = actionButton("➤", async () => {
       const message = String(input.value || "").trim();
       if (!message) return;
@@ -831,7 +925,10 @@ export function renderJarvis(root, options = {}) {
       const result = await askJarvis("chat", {
         message,
         summary: session.summary,
-        history: session.chatLog.slice(-6)
+        history: session.chatLog.slice(-6),
+        /* v0.59.0 — el flag del modo inglés: solo viaja encendido, y
+           solo pudo encenderse con Worker v6+ verificado. */
+        ...(session.chatEnglish ? { mode: "en" } : {})
       }, { signal: controller.signal });
       if (controller.signal.aborted) return;
       setFace(baseFace);
@@ -877,7 +974,9 @@ export function renderJarvis(root, options = {}) {
        (José la manda con el mismo botón de siempre, o la edita) y el
        atajo al quiz. Ningún camino nuevo: el envío es el de siempre. */
     const chips = el("div", "jarvis-quick-chips");
-    for (const text of ["¿Qué me falta hoy?", "¿Cómo va mi plan?"]) {
+    for (const text of (session.chatEnglish
+      ? ["How is my day going?", "What should I practice today?"]
+      : ["¿Qué me falta hoy?", "¿Cómo va mi plan?"])) {
       const chip = el("button", "jarvis-quick-chip", text);
       chip.type = "button";
       chip.addEventListener("click", () => { input.value = text; input.focus(); });
