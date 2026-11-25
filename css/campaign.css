@@ -1074,6 +1074,20 @@
   border-color: rgba(255, 46, 147, .6); color: #FFB3D1; background: rgba(255, 46, 147, .06);
 }
 .jarvis-quick-chip--quiz:hover { background: rgba(255, 46, 147, .14); }
+/* v0.59.0 — el interruptor del modo inglés del chat (Fase D): píldora
+   azul cielo del English Center (#4FC3F7); encendido se rellena. */
+.jarvis-en-toggle {
+  appearance: none; font: inherit; cursor: pointer; display: block;
+  margin: 0 0 10px; padding: 9px 16px; border-radius: 999px;
+  border: 1px solid rgba(79, 195, 247, .55); background: rgba(79, 195, 247, .06);
+  color: #BDE7FD; font-size: 13px; font-weight: 700;
+}
+.jarvis-en-toggle:hover { background: rgba(79, 195, 247, .14); }
+.jarvis-en-toggle:disabled { opacity: .55; cursor: wait; }
+.jarvis-en-toggle--on {
+  background: #4FC3F7; border-color: #4FC3F7; color: #06283D;
+}
+.jarvis-en-toggle--on:hover { background: #79D2FA; }
 .jarvis-tabbar {
   position: sticky; bottom: 0; z-index: 5;
   display: flex; gap: 4px;
